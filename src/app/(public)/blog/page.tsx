@@ -82,121 +82,121 @@ export default function BlogPage() {
   return (
     <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto px-4 py-12">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">SEO Blog</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Stay ahead of the SEO curve with insights, strategies, and best
-            practices from industry experts and AI-powered analysis.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          {posts.map((post, index) => {
-            const IconComponent = post.icon;
-            return (
-              <article
-                key={index}
-                className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 hover:shadow-lg transition-all duration-200"
-              >
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <span
-                      className={`text-xs px-3 py-1 rounded-full font-medium ${getCategoryColor(post.category)}`}
-                    >
-                      {post.category}
-                    </span>
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <IconComponent className="w-5 h-5 text-primary" />
-                    </div>
-                  </div>
-
-                  <Link href={post.href} className="block">
-                    <h2 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                      {post.title}
-                    </h2>
-
-                    <p className="text-muted-foreground mb-4 line-clamp-3">
-                      {post.description}
-                    </p>
-                  </Link>
-
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        <time dateTime={post.date}>{post.date}</time>
-                      </div>
-                      <div className="flex items-center">
-                        <User className="w-4 h-4 mr-1" />
-                        <span>{post.author}</span>
-                      </div>
-                    </div>
-                    <span>{post.readTime}</span>
-                  </div>
-
-                  <Link
-                    href={post.href}
-                    className="inline-flex items-center text-primary hover:text-primary/80 font-medium mt-4 group"
-                  >
-                    Read More
-                    <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-
-  <div className="mt-16 bg-gradient-to-r from-primary/10 to-muted border border-primary/20 rounded-lg p-8">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold mb-4">
-              Ready to Implement These Strategies?
-            </h2>
-            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Turn knowledge into action with RankPilot's AI-powered SEO
-              analysis tools. Get personalized insights and recommendations for
-              your website.
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold mb-4">SEO Blog</h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Stay ahead of the SEO curve with insights, strategies, and best
+              practices from industry experts and AI-powered analysis.
             </p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Link
-                href="/content-analyzer"
-                className="inline-flex items-center bg-primary text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 transition-colors"
-              >
-                Analyze Your Content
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-              <Link
-                href="/competitors"
-                className="inline-flex items-center bg-secondary text-secondary-foreground px-6 py-3 rounded-md hover:bg-secondary/90 transition-colors"
-              >
-                Study Your Competitors
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {posts.map((post, index) => {
+              const IconComponent = post.icon;
+              return (
+                <article
+                  key={index}
+                  className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 hover:shadow-lg transition-all duration-200"
+                >
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <span
+                        className={`text-xs px-3 py-1 rounded-full font-medium ${getCategoryColor(post.category)}`}
+                      >
+                        {post.category}
+                      </span>
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <IconComponent className="w-5 h-5 text-primary" />
+                      </div>
+                    </div>
+
+                    <Link href={post.href} className="block">
+                      <h2 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                        {post.title}
+                      </h2>
+
+                      <p className="text-muted-foreground mb-4 line-clamp-3">
+                        {post.description}
+                      </p>
+                    </Link>
+
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          <time dateTime={post.date}>{post.date}</time>
+                        </div>
+                        <div className="flex items-center">
+                          <User className="w-4 h-4 mr-1" />
+                          <span>{post.author}</span>
+                        </div>
+                      </div>
+                      <span>{post.readTime}</span>
+                    </div>
+
+                    <Link
+                      href={post.href}
+                      className="inline-flex items-center text-primary hover:text-primary/80 font-medium mt-4 group"
+                    >
+                      Read More
+                      <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="mt-16 bg-gradient-to-r from-primary/10 to-muted border border-primary/20 rounded-lg p-8">
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold mb-4">
+                Ready to Implement These Strategies?
+              </h2>
+              <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                Turn knowledge into action with RankPilot's AI-powered SEO
+                analysis tools. Get personalized insights and recommendations
+                for your website.
+              </p>
+              <div className="flex flex-wrap gap-3 justify-center">
+                <Link
+                  href="/content-analyzer"
+                  className="inline-flex items-center bg-primary text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 transition-colors"
+                >
+                  Analyze Your Content
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+                <Link
+                  href="/competitors"
+                  className="inline-flex items-center bg-secondary text-secondary-foreground px-6 py-3 rounded-md hover:bg-secondary/90 transition-colors"
+                >
+                  Study Your Competitors
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-12 text-center">
+            <h3 className="text-lg font-semibold mb-4">
+              Subscribe for SEO Updates
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              Get the latest SEO insights and RankPilot updates delivered to
+              your inbox.
+            </p>
+            <div className="max-w-md mx-auto flex gap-2">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="flex-1 px-4 py-2 border border-input rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <button className="bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 transition-colors">
+                Subscribe
+              </button>
             </div>
           </div>
         </div>
-
-        <div className="mt-12 text-center">
-          <h3 className="text-lg font-semibold mb-4">
-            Subscribe for SEO Updates
-          </h3>
-          <p className="text-muted-foreground mb-6">
-            Get the latest SEO insights and RankPilot updates delivered to your
-            inbox.
-          </p>
-          <div className="max-w-md mx-auto flex gap-2">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-2 border border-input rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-            <button className="bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 transition-colors">
-              Subscribe
-            </button>
-          </div>
-        </div>
-      </div>
       </div>
     </div>
   );

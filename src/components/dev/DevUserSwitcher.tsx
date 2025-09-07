@@ -9,10 +9,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { auth } from "@/lib/firebase";
-import {
-  signInWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { Bug, ChevronDown, ChevronUp, User } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -22,32 +19,32 @@ const TEST_USERS = {
     email: "abbas_ali_rizvi@hotmail.com",
     password: "123456",
     tier: "free",
-    displayName: "Abbas Ali (Free)"
+    displayName: "Abbas Ali (Free)",
   },
   starter: {
     email: "starter@rankpilot.com",
     password: "starter123",
     tier: "starter",
-    displayName: "Starter User"
+    displayName: "Starter User",
   },
   agency: {
     email: "agency@rankpilot.com",
     password: "agency123",
     tier: "agency",
-    displayName: "Agency User"
+    displayName: "Agency User",
   },
   enterprise: {
     email: "enterprise@rankpilot.com",
     password: "enterprise123",
     tier: "enterprise",
-    displayName: "Enterprise User"
+    displayName: "Enterprise User",
   },
   admin: {
     email: "admin@rankpilot.com",
     password: "admin123",
     tier: "admin",
-    displayName: "Admin User"
-  }
+    displayName: "Admin User",
+  },
 } as const;
 
 export function DevUserSwitcher() {
@@ -66,7 +63,9 @@ export function DevUserSwitcher() {
   }, []);
 
   const persistExpanded = useCallback((value: boolean) => {
-    try { window.localStorage.setItem(STORAGE_KEY, value ? "true" : "false"); } catch {}
+    try {
+      window.localStorage.setItem(STORAGE_KEY, value ? "true" : "false");
+    } catch {}
   }, []);
 
   const toggleExpanded = () => {
@@ -80,7 +79,9 @@ export function DevUserSwitcher() {
     return null;
   }
 
-  const handleUserSwitch = async (userType: keyof typeof TEST_USERS | "logout") => {
+  const handleUserSwitch = async (
+    userType: keyof typeof TEST_USERS | "logout"
+  ) => {
     try {
       if (userType === "logout") {
         await signOut(auth);
@@ -106,7 +107,11 @@ export function DevUserSwitcher() {
 
   const getCurrentUserTier = () => {
     if (!user?.email) return null;
-    return Object.entries(TEST_USERS).find(([_, config]) => config.email === user.email)?.[0] || null;
+    return (
+      Object.entries(TEST_USERS).find(
+        ([_, config]) => config.email === user.email
+      )?.[0] || null
+    );
   };
 
   const currentTier = getCurrentUserTier();
@@ -136,7 +141,10 @@ export function DevUserSwitcher() {
           <div className="p-3 border-b border-border flex items-start justify-between">
             <div className="flex flex-col gap-1 min-w-0">
               <div className="font-semibold text-primary flex items-center gap-2">
-                <div className="w-2 h-2 bg-warning rounded-full animate-pulse" aria-hidden="true"></div>
+                <div
+                  className="w-2 h-2 bg-warning rounded-full animate-pulse"
+                  aria-hidden="true"
+                ></div>
                 <span className="truncate">Dev Mode</span>
               </div>
               {user && (
@@ -158,7 +166,11 @@ export function DevUserSwitcher() {
                 title="Toggle debug details"
                 aria-label="Toggle debug info"
               >
-                {showDebugInfo ? <Bug className="h-4 w-4" /> : <Bug className="h-4 w-4 opacity-60" />}
+                {showDebugInfo ? (
+                  <Bug className="h-4 w-4" />
+                ) : (
+                  <Bug className="h-4 w-4 opacity-60" />
+                )}
               </button>
               <button
                 onClick={toggleExpanded}
@@ -172,72 +184,106 @@ export function DevUserSwitcher() {
           </div>
 
           {/* Body Scroll Container */}
-            <div className="max-h-[55vh] overflow-y-auto p-3 space-y-4">
-              {/* User Switcher */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  <User className="w-3.5 h-3.5" />
-                  <span>Switch User</span>
-                </div>
-                <div className="grid grid-cols-1 gap-1">
-                  {Object.entries(TEST_USERS).map(([tier, config]) => (
-                    <button
-                      key={tier}
-                      onClick={() => { void handleUserSwitch(tier as keyof typeof TEST_USERS); }}
-                      className={`group relative flex flex-col rounded-md border px-2.5 py-2 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${
-                        user?.email === config.email
-                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                          : "hover:bg-muted/70 border-border/60"
-                      }`}
-                    >
-                      <span className="text-[13px] font-medium leading-tight truncate flex items-center gap-2">
-                        {config.displayName}
-                        {user?.email === config.email && (
-                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-primary-foreground/15 text-primary-foreground/90">
-                            ACTIVE
-                          </span>
-                        )}
-                      </span>
-                      <span className="text-[10px] mt-0.5 opacity-80 truncate">
-                        {tier.charAt(0).toUpperCase() + tier.slice(1)} • {config.email}
-                      </span>
-                    </button>
-                  ))}
+          <div className="max-h-[55vh] overflow-y-auto p-3 space-y-4">
+            {/* User Switcher */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <User className="w-3.5 h-3.5" />
+                <span>Switch User</span>
+              </div>
+              <div className="grid grid-cols-1 gap-1">
+                {Object.entries(TEST_USERS).map(([tier, config]) => (
                   <button
-                  onClick={() => { void handleUserSwitch("logout"); }}
+                    key={tier}
+                    onClick={() => {
+                      void handleUserSwitch(tier as keyof typeof TEST_USERS);
+                    }}
                     className={`group relative flex flex-col rounded-md border px-2.5 py-2 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${
-                      !user
-                        ? "bg-destructive text-destructive-foreground border-destructive"
+                      user?.email === config.email
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
                         : "hover:bg-muted/70 border-border/60"
                     }`}
                   >
-                    <span className="text-[13px] font-medium leading-tight">Logout</span>
-                    <span className="text-[10px] mt-0.5 opacity-80">
-                      Sign out current user
+                    <span className="text-[13px] font-medium leading-tight truncate flex items-center gap-2">
+                      {config.displayName}
+                      {user?.email === config.email && (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-primary-foreground/15 text-primary-foreground/90">
+                          ACTIVE
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-[10px] mt-0.5 opacity-80 truncate">
+                      {tier.charAt(0).toUpperCase() + tier.slice(1)} •{" "}
+                      {config.email}
                     </span>
                   </button>
+                ))}
+                <button
+                  onClick={() => {
+                    void handleUserSwitch("logout");
+                  }}
+                  className={`group relative flex flex-col rounded-md border px-2.5 py-2 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+                    !user
+                      ? "bg-destructive text-destructive-foreground border-destructive"
+                      : "hover:bg-muted/70 border-border/60"
+                  }`}
+                >
+                  <span className="text-[13px] font-medium leading-tight">
+                    Logout
+                  </span>
+                  <span className="text-[10px] mt-0.5 opacity-80">
+                    Sign out current user
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Debug Info */}
+            {showDebugInfo && (
+              <div className="space-y-2 border-t pt-3 border-border/60">
+                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <Bug className="w-3.5 h-3.5" />
+                  <span>Debug Info</span>
+                </div>
+                <div className="space-y-1 text-[11px] leading-tight">
+                  <div>
+                    <span className="font-medium text-primary">User:</span>{" "}
+                    {user?.email || "Not logged in"}
+                  </div>
+                  <div>
+                    <span className="font-medium text-primary">Role:</span>{" "}
+                    {role || "None"}
+                  </div>
+                  <div>
+                    <span className="font-medium text-primary">
+                      Subscription:
+                    </span>{" "}
+                    {subscription?.tier || "Unknown"}
+                  </div>
+                  <div>
+                    <span className="font-medium text-primary">Plan Name:</span>{" "}
+                    {subscription?.planName || "None"}
+                  </div>
+                  <div>
+                    <span className="font-medium text-primary">Status:</span>{" "}
+                    {subscription?.status || "Unknown"}
+                  </div>
+                  <div>
+                    <span className="font-medium text-primary">
+                      Access Tier:
+                    </span>{" "}
+                    {subscription?.userAccess?.tier || "Unknown"}
+                  </div>
+                  <div className="pt-1 border-t border-border/40">
+                    <span className="font-medium text-success-foreground">
+                      Current Tier Match:
+                    </span>{" "}
+                    {currentTier || "Unknown"}
+                  </div>
                 </div>
               </div>
-
-              {/* Debug Info */}
-              {showDebugInfo && (
-                <div className="space-y-2 border-t pt-3 border-border/60">
-                  <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    <Bug className="w-3.5 h-3.5" />
-                    <span>Debug Info</span>
-                  </div>
-                  <div className="space-y-1 text-[11px] leading-tight">
-                    <div><span className="font-medium text-primary">User:</span> {user?.email || "Not logged in"}</div>
-                    <div><span className="font-medium text-primary">Role:</span> {role || "None"}</div>
-                    <div><span className="font-medium text-primary">Subscription:</span> {subscription?.tier || "Unknown"}</div>
-                    <div><span className="font-medium text-primary">Plan Name:</span> {subscription?.planName || "None"}</div>
-                    <div><span className="font-medium text-primary">Status:</span> {subscription?.status || "Unknown"}</div>
-                    <div><span className="font-medium text-primary">Access Tier:</span> {subscription?.userAccess?.tier || "Unknown"}</div>
-                    <div className="pt-1 border-t border-border/40"><span className="font-medium text-success-foreground">Current Tier Match:</span> {currentTier || "Unknown"}</div>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
+          </div>
         </div>
       )}
     </div>

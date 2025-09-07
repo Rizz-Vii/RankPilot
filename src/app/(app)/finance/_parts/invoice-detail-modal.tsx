@@ -1,25 +1,43 @@
 "use client";
-import React from 'react';
-import { useFinanceContext } from './finance-context';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import React from "react";
+import { useFinanceContext } from "./finance-context";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface Props { open: boolean; onOpenChange: (open:boolean)=>void; filter: 'unpaid' | 'all'; }
-export function InvoiceDetailModal({ open, onOpenChange, filter }: Props){
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  filter: "unpaid" | "all";
+}
+export function InvoiceDetailModal({ open, onOpenChange, filter }: Props) {
   const { data } = useFinanceContext();
-  const rows = (data?.invoices||[]).filter(i => filter==='all' ? true : i.status !== 'paid');
+  const rows = (data?.invoices || []).filter((i) =>
+    filter === "all" ? true : i.status !== "paid"
+  );
   const toDate = (v: unknown): Date | undefined => {
     if (!v) return undefined;
     if (v instanceof Date) return v;
     const maybe = v as { toDate?: () => Date };
-    return typeof maybe.toDate === 'function' ? maybe.toDate() : undefined;
+    return typeof maybe.toDate === "function" ? maybe.toDate() : undefined;
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{filter==='unpaid'? 'Outstanding Invoices':'All Recent Invoices'}</DialogTitle>
-          <DialogDescription>{rows.length} invoice(s) listed.</DialogDescription>
+          <DialogTitle>
+            {filter === "unpaid"
+              ? "Outstanding Invoices"
+              : "All Recent Invoices"}
+          </DialogTitle>
+          <DialogDescription>
+            {rows.length} invoice(s) listed.
+          </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[460px] pr-3">
           <table className="w-full text-sm">
@@ -34,17 +52,36 @@ export function InvoiceDetailModal({ open, onOpenChange, filter }: Props){
               </tr>
             </thead>
             <tbody>
-              {rows.map((r,i)=>(
-                <tr key={r.id||i} className="border-b last:border-none">
+              {rows.map((r, i) => (
+                <tr key={r.id || i} className="border-b last:border-none">
                   <td className="py-1 pr-2 font-medium">{r.period}</td>
-                  <td className="py-1 text-left">{r.planTier||'-'}</td>
-                  <td className="py-1 text-right tabular-nums">{(r.amount||0).toLocaleString()}</td>
+                  <td className="py-1 text-left">{r.planTier || "-"}</td>
+                  <td className="py-1 text-right tabular-nums">
+                    {(r.amount || 0).toLocaleString()}
+                  </td>
                   <td className="py-1 text-center text-xs">{r.status}</td>
-                  <td className="py-1 text-center text-xs">{toDate((r as unknown as { issuedAt?: unknown }).issuedAt)?.toISOString().slice(0,10)||'-'}</td>
-                  <td className="py-1 text-center text-xs">{toDate((r as unknown as { paidAt?: unknown }).paidAt)?.toISOString().slice(0,10) || '-'}</td>
+                  <td className="py-1 text-center text-xs">
+                    {toDate((r as unknown as { issuedAt?: unknown }).issuedAt)
+                      ?.toISOString()
+                      .slice(0, 10) || "-"}
+                  </td>
+                  <td className="py-1 text-center text-xs">
+                    {toDate((r as unknown as { paidAt?: unknown }).paidAt)
+                      ?.toISOString()
+                      .slice(0, 10) || "-"}
+                  </td>
                 </tr>
               ))}
-              {!rows.length && <tr><td colSpan={6} className="py-4 text-center text-xs text-muted-foreground">No invoices</td></tr>}
+              {!rows.length && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-4 text-center text-xs text-muted-foreground"
+                  >
+                    No invoices
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </ScrollArea>

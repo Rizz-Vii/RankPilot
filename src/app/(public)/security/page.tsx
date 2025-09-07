@@ -178,7 +178,11 @@ export default function SecurityPage() {
               <FileCheck className="mr-2 h-5 w-5" />
               View Security Report
             </Button>
-            <Button variant="outline" size="lg" aria-label="Report a security vulnerability">
+            <Button
+              variant="outline"
+              size="lg"
+              aria-label="Report a security vulnerability"
+            >
               <AlertTriangle className="mr-2 h-5 w-5" />
               Report Vulnerability
             </Button>
@@ -187,7 +191,11 @@ export default function SecurityPage() {
       </motion.section>
 
       {/* Security Features */}
-      <section className="pb-16 px-4" role="region" aria-labelledby="security-features-heading">
+      <section
+        className="pb-16 px-4"
+        role="region"
+        aria-labelledby="security-features-heading"
+      >
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
@@ -197,7 +205,10 @@ export default function SecurityPage() {
             custom={1}
             className="text-center mb-12"
           >
-            <h2 id="security-features-heading" className="text-3xl font-bold text-foreground mb-4">
+            <h2
+              id="security-features-heading"
+              className="text-3xl font-bold text-foreground mb-4"
+            >
               Security Features
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -224,7 +235,9 @@ export default function SecurityPage() {
                     <CardTitle className="text-lg">{feature.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">{feature.description}</p>
+                    <p className="text-muted-foreground">
+                      {feature.description}
+                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -234,7 +247,11 @@ export default function SecurityPage() {
       </section>
 
       {/* Compliance */}
-      <section className="pb-16 px-4" role="region" aria-labelledby="compliance-heading">
+      <section
+        className="pb-16 px-4"
+        role="region"
+        aria-labelledby="compliance-heading"
+      >
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
@@ -244,7 +261,10 @@ export default function SecurityPage() {
             custom={8}
             className="text-center mb-12"
           >
-            <h2 id="compliance-heading" className="text-3xl font-bold text-foreground mb-4">
+            <h2
+              id="compliance-heading"
+              className="text-3xl font-bold text-foreground mb-4"
+            >
               Compliance & Certifications
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -276,7 +296,9 @@ export default function SecurityPage() {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-bold text-lg mb-2">{item.title}</h3>
-                        <p className="text-muted-foreground">{item.description}</p>
+                        <p className="text-muted-foreground">
+                          {item.description}
+                        </p>
                         {item.status === "in-progress" && (
                           <p className="text-warning-foreground text-sm mt-2 font-medium">
                             Certification in progress - Expected Q2 2025
@@ -293,7 +315,11 @@ export default function SecurityPage() {
       </section>
 
       {/* Data Handling */}
-      <section className="pb-16 px-4" role="region" aria-labelledby="data-handling-heading">
+      <section
+        className="pb-16 px-4"
+        role="region"
+        aria-labelledby="data-handling-heading"
+      >
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
@@ -303,7 +329,10 @@ export default function SecurityPage() {
             custom={13}
             className="text-center mb-12"
           >
-            <h2 id="data-handling-heading" className="text-3xl font-bold text-foreground mb-4">
+            <h2
+              id="data-handling-heading"
+              className="text-3xl font-bold text-foreground mb-4"
+            >
               Data Handling & Retention
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -316,7 +345,10 @@ export default function SecurityPage() {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <caption className="sr-only">Data handling categories, retention, encryption, and access controls</caption>
+                  <caption className="sr-only">
+                    Data handling categories, retention, encryption, and access
+                    controls
+                  </caption>
                   <thead>
                     <tr className="border-b border-border bg-muted/30">
                       <th scope="col" className="text-left p-4 font-semibold">
@@ -345,9 +377,15 @@ export default function SecurityPage() {
                         className="border-b border-border hover:bg-muted/30"
                       >
                         <td className="p-4 font-medium">{item.category}</td>
-                        <td className="p-4 text-muted-foreground">{item.retention}</td>
-                        <td className="p-4 text-muted-foreground">{item.encryption}</td>
-                        <td className="p-4 text-muted-foreground">{item.access}</td>
+                        <td className="p-4 text-muted-foreground">
+                          {item.retention}
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          {item.encryption}
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          {item.access}
+                        </td>
                       </motion.tr>
                     ))}
                   </tbody>
@@ -368,16 +406,20 @@ export default function SecurityPage() {
         custom={18}
       >
         <div className="max-w-4xl mx-auto">
-  <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
+          <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl font-bold mb-6">Security Questions?</h2>
-        <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
+              <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
                 Our security team is available to answer questions about our
                 practices, compliance status, or to discuss enterprise security
                 requirements.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button variant="secondary" size="lg" aria-label="Contact the security team">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  aria-label="Contact the security team"
+                >
                   <Shield className="mr-2 h-5 w-5" />
                   Contact Security Team
                 </Button>

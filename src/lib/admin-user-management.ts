@@ -135,10 +135,14 @@ async function findUserByEmail(email: string): Promise<string | null> {
  */
 function getPlanPrice(tier: string): number {
   switch (tier) {
-    case 'starter': return 29;
-    case 'agency': return 79;
-    case 'enterprise': return 199;
-    default: return 0;
+    case "starter":
+      return 29;
+    case "agency":
+      return 79;
+    case "enterprise":
+      return 199;
+    default:
+      return 0;
   }
 }
 

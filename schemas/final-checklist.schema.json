@@ -9,4 +9,3 @@
   },
   "required": ["timestamp", "pass", "items"]
 }
-

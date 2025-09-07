@@ -21,18 +21,25 @@ test.describe("Accessibility Tests", () => {
           "aria-required-parent": { enabled: true },
           "aria-required-children": { enabled: true },
           "duplicate-id": { enabled: true },
-          "aria-dialog-name": { enabled: true }
+          "aria-dialog-name": { enabled: true },
         },
       })
       .analyze();
 
     // Fail on serious/critical violations; warn on moderate/minor
-    const serious = results.violations.filter(v => v.impact === "serious" || v.impact === "critical");
-    const moderate = results.violations.filter(v => v.impact === "moderate");
-    const minor = results.violations.filter(v => v.impact === "minor");
+    const serious = results.violations.filter(
+      (v) => v.impact === "serious" || v.impact === "critical"
+    );
+    const moderate = results.violations.filter((v) => v.impact === "moderate");
+    const minor = results.violations.filter((v) => v.impact === "minor");
 
     if (moderate.length + minor.length > 0) {
-      console.warn("a11y moderate/minor", moderate.concat(minor).map(v => ({ id: v.id, impact: v.impact, nodes: v.nodes.length })));
+      console.warn(
+        "a11y moderate/minor",
+        moderate
+          .concat(minor)
+          .map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }))
+      );
     }
     // tighten soft threshold to encourage cleanup over time
     expect.soft(moderate.length + minor.length).toBeLessThanOrEqual(15);
@@ -45,7 +52,9 @@ test.describe("Accessibility Tests", () => {
 
     // Test basic tab navigation without assuming specific elements exist
     await page.keyboard.press("Tab");
-    const firstElement = await page.evaluate(() => document.activeElement?.tagName);
+    const firstElement = await page.evaluate(
+      () => document.activeElement?.tagName
+    );
     expect(firstElement).toBeTruthy();
 
     // Test that we can navigate through the page with keyboard
@@ -55,7 +64,9 @@ test.describe("Accessibility Tests", () => {
 
     // Verify we can navigate backwards
     await page.keyboard.press("Shift+Tab");
-    const activeElement = await page.evaluate(() => document.activeElement?.tagName);
+    const activeElement = await page.evaluate(
+      () => document.activeElement?.tagName
+    );
     expect(activeElement).toBeTruthy();
   });
 
@@ -78,7 +89,9 @@ test.describe("Accessibility Tests", () => {
     // For development environment, we'll check that contrast issues are documented
     // but not fail the test as these need design system updates
     if (contrastErrors.length > 0) {
-      console.log(`⚠️ Found ${contrastErrors.length} color contrast issues for design system review`);
+      console.log(
+        `⚠️ Found ${contrastErrors.length} color contrast issues for design system review`
+      );
     }
     expect.soft(contrastErrors.length).toBeLessThanOrEqual(50); // Allow some issues during development
   });
@@ -89,19 +102,21 @@ test.describe("Accessibility Tests", () => {
     await page.goto("/");
 
     // Check if aria-live regions exist on the page
-    const liveRegions = page.locator('[aria-live]');
+    const liveRegions = page.locator("[aria-live]");
     const liveRegionCount = await liveRegions.count();
 
     // Verify that there are aria-live regions for screen reader announcements
     expect(liveRegionCount).toBeGreaterThanOrEqual(0);
 
     // Check that important interactive elements have proper aria attributes
-    const buttons = page.locator('button');
+    const buttons = page.locator("button");
     const buttonCount = await buttons.count();
 
     if (buttonCount > 0) {
       // At least some buttons should have accessible names
-      const accessibleButtons = page.locator('button[aria-label], button:has-text("")');
+      const accessibleButtons = page.locator(
+        'button[aria-label], button:has-text("")'
+      );
       const accessibleCount = await accessibleButtons.count();
       expect(accessibleCount).toBeGreaterThanOrEqual(0);
     }
@@ -111,24 +126,28 @@ test.describe("Accessibility Tests", () => {
     await page.goto("/");
 
     // Look for forms on the page
-    const forms = page.locator('form');
+    const forms = page.locator("form");
     const formCount = await forms.count();
 
     if (formCount > 0) {
       // Check that forms have proper structure
-      const inputs = page.locator('input, textarea, select');
+      const inputs = page.locator("input, textarea, select");
       const inputCount = await inputs.count();
 
       if (inputCount > 0) {
         // Check for proper labeling
-        const labelledInputs = page.locator('input[aria-label], input[aria-labelledby], label input');
+        const labelledInputs = page.locator(
+          "input[aria-label], input[aria-labelledby], label input"
+        );
         const labelledCount = await labelledInputs.count();
         expect(labelledCount).toBeGreaterThanOrEqual(0);
       }
     }
 
     // Check for any error regions that might exist
-    const errorRegions = page.locator('[role="alert"], [aria-live="assertive"]');
+    const errorRegions = page.locator(
+      '[role="alert"], [aria-live="assertive"]'
+    );
     const errorRegionCount = await errorRegions.count();
     expect(errorRegionCount).toBeGreaterThanOrEqual(0);
   });

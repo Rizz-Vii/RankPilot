@@ -1,7 +1,12 @@
 import type { Stripe } from "@stripe/stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 // Re-export unified plans from single source of truth
-export { FREE_PLAN, STRIPE_PLANS, type BillingInterval, type PlanType } from './stripe/tiers';
+export {
+  FREE_PLAN,
+  STRIPE_PLANS,
+  type BillingInterval,
+  type PlanType,
+} from "./stripe/tiers";
 
 let stripePromise: Promise<Stripe | null> | null = null;
 
@@ -21,4 +26,3 @@ const getStripe = () => {
 };
 
 export default getStripe;
-

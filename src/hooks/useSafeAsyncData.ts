@@ -4,23 +4,30 @@
  * Prevents infinite loops, handles errors, provides loading states
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type DependencyList } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DependencyList,
+} from "react";
 
 interface AsyncDataState<T> {
-    data: T;
-    loading: boolean;
-    error: string | null;
-    refetch: () => Promise<void>;
-    isStale: boolean;
+  data: T;
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+  isStale: boolean;
 }
 
 interface AsyncDataOptions<T> {
-    retryCount?: number;
-    retryDelay?: number;
-    onError?: (error: Error) => void;
-    onSuccess?: (data: T) => void;
-    enabled?: boolean;
-    staleTime?: number; // ms
+  retryCount?: number;
+  retryDelay?: number;
+  onError?: (error: Error) => void;
+  onSuccess?: (data: T) => void;
+  enabled?: boolean;
+  staleTime?: number; // ms
 }
 
 /**
@@ -28,117 +35,126 @@ interface AsyncDataOptions<T> {
  * in team/page.tsx, use-dashboard-data.ts, useSubscription.ts, etc.
  */
 export function useSafeAsyncData<T>(
-    fetchFn: () => Promise<T>,
-    dependencies: DependencyList,
-    defaultValue: T,
-    options: AsyncDataOptions<T> = {}
+  fetchFn: () => Promise<T>,
+  dependencies: DependencyList,
+  defaultValue: T,
+  options: AsyncDataOptions<T> = {}
 ): AsyncDataState<T> {
-    const [data, setData] = useState<T>(defaultValue);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [isStale, setIsStale] = useState(true);
+  const [data, setData] = useState<T>(defaultValue);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isStale, setIsStale] = useState(true);
 
-    const isMountedRef = useRef(true);
-    const retryCountRef = useRef(0);
-    const lastFetchRef = useRef<number>(0);
+  const isMountedRef = useRef(true);
+  const retryCountRef = useRef(0);
+  const lastFetchRef = useRef<number>(0);
 
-    const {
-        retryCount = 3,
-        retryDelay = 1000,
-        onError,
-        onSuccess,
-        enabled = true,
-        staleTime = 5 * 60 * 1000 // 5 minutes default
-    } = options;
+  const {
+    retryCount = 3,
+    retryDelay = 1000,
+    onError,
+    onSuccess,
+    enabled = true,
+    staleTime = 5 * 60 * 1000, // 5 minutes default
+  } = options;
 
-    // Stable fetch function that prevents infinite loops
-    const fetchData = useCallback(async () => {
-        if (!isMountedRef.current || !enabled) return;
+  // Stable fetch function that prevents infinite loops
+  const fetchData = useCallback(async () => {
+    if (!isMountedRef.current || !enabled) return;
 
-        try {
-            setLoading(true);
-            setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-            const result = await fetchFn();
+      const result = await fetchFn();
 
-            if (isMountedRef.current) {
-                setData(result);
-                setIsStale(false);
-                lastFetchRef.current = Date.now();
-                retryCountRef.current = 0;
-                onSuccess?.(result);
-            }
-        } catch (err) {
-            if (!isMountedRef.current) return;
-
-            const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-
-            // Retry logic with exponential backoff
-            if (retryCountRef.current < retryCount) {
-                retryCountRef.current++;
-                console.warn(`Retrying request (${retryCountRef.current}/${retryCount}):`, errorMessage);
-
-                window.setTimeout(() => {
-                    if (isMountedRef.current) {
-                        void fetchData();
-                    }
-                }, retryDelay * Math.pow(2, retryCountRef.current - 1)); // Exponential backoff
-            } else {
-                setError(errorMessage);
-                onError?.(err instanceof Error ? err : new Error(errorMessage));
-            }
-        } finally {
-            if (isMountedRef.current) {
-                setLoading(false);
-            }
-        }
-    }, [fetchFn, retryCount, retryDelay, onError, onSuccess, enabled]);
-
-    // Memoized key for dependency list to satisfy exhaustive-deps without spreading
-    const depsKey = useMemo(() => JSON.stringify(dependencies), [dependencies]);
-
-    // Effect with proper dependency management - prevents infinite loops
-    useEffect(() => {
-        isMountedRef.current = true;
-
-        const now = Date.now();
-        const dataAge = now - lastFetchRef.current;
-        if (dataAge > staleTime) setIsStale(true);
-
-        // Only fetch if enabled and (no data or data is stale)
-        if (enabled && (data === defaultValue || isStale)) {
-            void fetchData();
-        }
-
-        return () => { isMountedRef.current = false; };
-    }, [fetchData, enabled, isStale, staleTime, defaultValue, depsKey, data]);
-
-    // Manual refetch function
-    const refetch = useCallback(async () => {
+      if (isMountedRef.current) {
+        setData(result);
+        setIsStale(false);
+        lastFetchRef.current = Date.now();
         retryCountRef.current = 0;
+        onSuccess?.(result);
+      }
+    } catch (err) {
+      if (!isMountedRef.current) return;
+
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
+
+      // Retry logic with exponential backoff
+      if (retryCountRef.current < retryCount) {
+        retryCountRef.current++;
+        console.warn(
+          `Retrying request (${retryCountRef.current}/${retryCount}):`,
+          errorMessage
+        );
+
+        window.setTimeout(
+          () => {
+            if (isMountedRef.current) {
+              void fetchData();
+            }
+          },
+          retryDelay * Math.pow(2, retryCountRef.current - 1)
+        ); // Exponential backoff
+      } else {
+        setError(errorMessage);
+        onError?.(err instanceof Error ? err : new Error(errorMessage));
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [fetchFn, retryCount, retryDelay, onError, onSuccess, enabled]);
+
+  // Memoized key for dependency list to satisfy exhaustive-deps without spreading
+  const depsKey = useMemo(() => JSON.stringify(dependencies), [dependencies]);
+
+  // Effect with proper dependency management - prevents infinite loops
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    const now = Date.now();
+    const dataAge = now - lastFetchRef.current;
+    if (dataAge > staleTime) setIsStale(true);
+
+    // Only fetch if enabled and (no data or data is stale)
+    if (enabled && (data === defaultValue || isStale)) {
+      void fetchData();
+    }
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [fetchData, enabled, isStale, staleTime, defaultValue, depsKey, data]);
+
+  // Manual refetch function
+  const refetch = useCallback(async () => {
+    retryCountRef.current = 0;
+    setIsStale(true);
+    await fetchData();
+  }, [fetchData]);
+
+  // Mark data as stale after staleTime
+  useEffect(() => {
+    if (!isStale) {
+      const timer = window.setTimeout(() => {
         setIsStale(true);
-        await fetchData();
-    }, [fetchData]);
+      }, staleTime);
 
-    // Mark data as stale after staleTime
-    useEffect(() => {
-        if (!isStale) {
-            const timer = window.setTimeout(() => {
-                setIsStale(true);
-            }, staleTime);
+      return () => clearTimeout(timer);
+    }
+  }, [isStale, staleTime]);
 
-            return () => clearTimeout(timer);
-        }
-    }, [isStale, staleTime]);
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
-    // Cleanup on unmount
-    useEffect(() => {
-        return () => {
-            isMountedRef.current = false;
-        };
-    }, []);
-
-    return { data, loading, error, refetch, isStale };
+  return { data, loading, error, refetch, isStale };
 }
 
 /**
@@ -146,87 +162,95 @@ export function useSafeAsyncData<T>(
  * Prevents the subscription loops in use-dashboard-data.ts
  */
 export function useSafeFirestoreSubscription<T>(
-    subscriptionFn: (callback: (data: T) => void) => () => void,
-    dependencies: DependencyList,
-    defaultValue: T,
-    options: Pick<AsyncDataOptions<T>, 'onError' | 'onSuccess' | 'enabled'> = {}
-): Omit<AsyncDataState<T>, 'refetch'> {
-    const [data, setData] = useState<T>(defaultValue);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  subscriptionFn: (callback: (data: T) => void) => () => void,
+  dependencies: DependencyList,
+  defaultValue: T,
+  options: Pick<AsyncDataOptions<T>, "onError" | "onSuccess" | "enabled"> = {}
+): Omit<AsyncDataState<T>, "refetch"> {
+  const [data, setData] = useState<T>(defaultValue);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const isMountedRef = useRef(true);
-    const unsubscribeRef = useRef<(() => void) | null>(null);
+  const isMountedRef = useRef(true);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
-    const { onError, onSuccess, enabled = true } = options;
+  const { onError, onSuccess, enabled = true } = options;
 
-    const subscriptionDepsKey = useMemo(() => JSON.stringify(dependencies), [dependencies]);
+  const subscriptionDepsKey = useMemo(
+    () => JSON.stringify(dependencies),
+    [dependencies]
+  );
 
-    useEffect(() => {
-        if (!enabled) return;
+  useEffect(() => {
+    if (!enabled) return;
 
-        isMountedRef.current = true;
-        setLoading(true);
-        setError(null);
+    isMountedRef.current = true;
+    setLoading(true);
+    setError(null);
 
-        console.log('🔄 Setting up Firestore subscription');
+    console.log("🔄 Setting up Firestore subscription");
 
-        try {
-            const unsubscribe = subscriptionFn((newData: T) => {
-                if (isMountedRef.current) {
-                    setData(newData);
-                    setLoading(false);
-                    setError(null);
-                    onSuccess?.(newData);
-                    console.log('📊 Data updated via subscription');
-                }
-            });
-
-            unsubscribeRef.current = unsubscribe;
-
-            return () => {
-                isMountedRef.current = false;
-                if (unsubscribeRef.current) {
-                    console.log('🔌 Unsubscribing from Firestore');
-                    unsubscribeRef.current();
-                    unsubscribeRef.current = null;
-                }
-            };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Subscription failed';
-            setError(errorMessage);
-            setLoading(false);
-            onError?.(err instanceof Error ? err : new Error(errorMessage));
+    try {
+      const unsubscribe = subscriptionFn((newData: T) => {
+        if (isMountedRef.current) {
+          setData(newData);
+          setLoading(false);
+          setError(null);
+          onSuccess?.(newData);
+          console.log("📊 Data updated via subscription");
         }
-    }, [subscriptionFn, subscriptionDepsKey, enabled, onError, onSuccess]);
+      });
 
-    return { data, loading, error, isStale: false };
+      unsubscribeRef.current = unsubscribe;
+
+      return () => {
+        isMountedRef.current = false;
+        if (unsubscribeRef.current) {
+          console.log("🔌 Unsubscribing from Firestore");
+          unsubscribeRef.current();
+          unsubscribeRef.current = null;
+        }
+      };
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Subscription failed";
+      setError(errorMessage);
+      setLoading(false);
+      onError?.(err instanceof Error ? err : new Error(errorMessage));
+    }
+  }, [subscriptionFn, subscriptionDepsKey, enabled, onError, onSuccess]);
+
+  return { data, loading, error, isStale: false };
 }
 
 /**
  * Safe property access utilities - prevents undefined access in NeuroSEODashboard.tsx
  */
 export const safeAccess = {
-    array: <T>(arr: T[] | undefined | null): T[] => arr || [],
-    length: (arr: unknown[] | undefined | null): number => arr?.length || 0,
-    property: <T>(obj: unknown, path: string, fallback: T): T => {
-        if (obj == null) return fallback;
-        const parts = path.split('.');
-        let curr: unknown = obj;
-        for (const key of parts) {
-            if (curr && typeof curr === 'object' && key in (curr as Record<string, unknown>)) {
-                curr = (curr as Record<string, unknown>)[key];
-            } else {
-                return fallback;
-            }
-        }
-        return (curr as T) ?? fallback;
-    },
-    number: (value: unknown, fallback = 0): number => {
-        const num = Number(value);
-        return isNaN(num) ? fallback : num;
-    },
-    string: (value: unknown, fallback = ''): string => {
-        return value?.toString() || fallback;
+  array: <T>(arr: T[] | undefined | null): T[] => arr || [],
+  length: (arr: unknown[] | undefined | null): number => arr?.length || 0,
+  property: <T>(obj: unknown, path: string, fallback: T): T => {
+    if (obj == null) return fallback;
+    const parts = path.split(".");
+    let curr: unknown = obj;
+    for (const key of parts) {
+      if (
+        curr &&
+        typeof curr === "object" &&
+        key in (curr as Record<string, unknown>)
+      ) {
+        curr = (curr as Record<string, unknown>)[key];
+      } else {
+        return fallback;
+      }
     }
+    return (curr as T) ?? fallback;
+  },
+  number: (value: unknown, fallback = 0): number => {
+    const num = Number(value);
+    return isNaN(num) ? fallback : num;
+  },
+  string: (value: unknown, fallback = ""): string => {
+    return value?.toString() || fallback;
+  },
 };

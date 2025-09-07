@@ -1,8 +1,15 @@
 "use client";
-import { AuthContext } from '@/context/AuthContext';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
-import { useContext, useEffect, useState } from 'react';
+import { AuthContext } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import {
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
+import { useContext, useEffect, useState } from "react";
 
 interface Metric {
   key: string;
@@ -10,7 +17,7 @@ interface Metric {
   value: number;
   delta: number;
   trend: number[];
-  intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent';
+  intent?: "neutral" | "success" | "warning" | "danger" | "accent";
 }
 interface SerpResultItem {
   position?: number;
@@ -30,9 +37,15 @@ interface Result {
 }
 
 export function useSerpKeywordMetrics(): Result {
-  const authCtx = useContext(AuthContext) as Partial<{ user?: { uid: string } }> | null;
+  const authCtx = useContext(AuthContext) as Partial<{
+    user?: { uid: string };
+  }> | null;
   const user = authCtx?.user;
-  const [state, setState] = useState<Result>({ loading: true, kpis: [], rows: [] });
+  const [state, setState] = useState<Result>({
+    loading: true,
+    kpis: [],
+    rows: [],
+  });
 
   useEffect(() => {
     if (!user) {
@@ -46,15 +59,18 @@ export function useSerpKeywordMetrics(): Result {
     void (async () => {
       try {
         const q = query(
-          collection(db, 'serpData'),
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc'),
+          collection(db, "serpData"),
+          where("userId", "==", user.uid),
+          orderBy("createdAt", "desc"),
           limit(30)
         );
         const snap = await getDocs(q);
         if (cancelled) return;
 
-        const docs = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as SerpDoc[];
+        const docs = snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as Record<string, unknown>),
+        })) as SerpDoc[];
 
         if (!docs.length) {
           if (cancelled) return;
@@ -63,32 +79,52 @@ export function useSerpKeywordMetrics(): Result {
         }
 
         const featuredCount = docs.filter((d) =>
-          (d.results || []).some((r) => r.position === 1 && /result 1/i.test(r.title || ''))
+          (d.results || []).some(
+            (r) => r.position === 1 && /result 1/i.test(r.title || "")
+          )
         ).length;
 
         const paaCount = docs.filter((d) =>
-          (d.results || []).slice(0, 5).some((r) => /snippet/i.test(r.snippet || ''))
+          (d.results || [])
+            .slice(0, 5)
+            .some((r) => /snippet/i.test(r.snippet || ""))
         ).length;
 
         const top3Count = docs.filter((d) =>
           (d.results || []).some((r) => (r.position ?? 99) <= 3)
         ).length;
 
-        const featuredPct = docs.length ? (featuredCount / docs.length) * 100 : 0;
+        const featuredPct = docs.length
+          ? (featuredCount / docs.length) * 100
+          : 0;
         const paaPct = docs.length ? (paaCount / docs.length) * 100 : 0;
         const top3Presence = docs.length ? (top3Count / docs.length) * 100 : 0;
 
         const kpis: Metric[] = [
-          { key: 'featured', label: 'Featured Snippet %', value: Number(featuredPct), delta: 0, trend: [Number(featuredPct)], intent: 'neutral' },
-          { key: 'paa', label: 'PeopleAlsoAsk %', value: Number(paaPct), delta: 0, trend: [Number(paaPct)], intent: 'neutral' },
           {
-            key: 'top3',
-            label: 'Top-3 Presence %',
+            key: "featured",
+            label: "Featured Snippet %",
+            value: Number(featuredPct),
+            delta: 0,
+            trend: [Number(featuredPct)],
+            intent: "neutral",
+          },
+          {
+            key: "paa",
+            label: "PeopleAlsoAsk %",
+            value: Number(paaPct),
+            delta: 0,
+            trend: [Number(paaPct)],
+            intent: "neutral",
+          },
+          {
+            key: "top3",
+            label: "Top-3 Presence %",
             value: Number(top3Presence.toFixed(1)),
             delta: 0,
             trend: [Number(top3Presence.toFixed(1))],
-            intent: top3Presence > 40 ? 'success' : 'warning'
-          }
+            intent: top3Presence > 40 ? "success" : "warning",
+          },
         ];
 
         if (cancelled) return;
@@ -96,7 +132,12 @@ export function useSerpKeywordMetrics(): Result {
       } catch (e: unknown) {
         if (cancelled) return;
         const err = e as { message?: string };
-        setState({ loading: false, kpis: [], rows: [], error: err.message ?? String(e) });
+        setState({
+          loading: false,
+          kpis: [],
+          rows: [],
+          error: err.message ?? String(e),
+        });
       }
     })();
 

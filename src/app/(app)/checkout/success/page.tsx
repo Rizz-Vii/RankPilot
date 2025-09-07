@@ -35,7 +35,7 @@ export default function CheckoutSuccessPage() {
   }, [sessionId, router]);
 
   return (
-  <div className="min-h-screen bg-gradient-to-br from-success/10 via-background to-primary/10 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-success/10 via-background to-primary/10 flex items-center justify-center p-4">
       {showConfetti && <Confetti duration={5000} particleCount={100} />}
 
       <motion.div
@@ -44,7 +44,7 @@ export default function CheckoutSuccessPage() {
         transition={{ duration: 0.5 }}
         className="max-w-2xl w-full"
       >
-  <Card className="border-success/30 bg-white/80 backdrop-blur">
+        <Card className="border-success/30 bg-white/80 backdrop-blur">
           <CardHeader className="text-center pb-6">
             <motion.div
               initial={{ scale: 0 }}
@@ -141,4 +141,3 @@ export default function CheckoutSuccessPage() {
     </div>
   );
 }
-

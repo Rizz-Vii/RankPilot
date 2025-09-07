@@ -1,10 +1,12 @@
 # Route Crawl Summary
+
 Target: https://rankpilot-h3jpc.web.app
 Window: 2025-09-01T04:00:13.997Z → 2025-09-01T04:04:12.954Z
 
 APIs: 69 total → OK: 6, 4xx: 60, 5xx: 0
 
 ## Actionable API findings
+
 - [429] GET /api/bi/snapshot; preflight 204 (GET)
 - [429] GET /api/bi/timeseries; preflight 204 (GET)
 - [429] GET /api/billing/invoices; preflight 204 (GET)
@@ -52,6 +54,7 @@ APIs: 69 total → OK: 6, 4xx: 60, 5xx: 0
 - [403] POST /api/agents/enable; preflight 204 (GET)
 
 ## Top pages by console errors (max 15)
+
 - /admin/events: 19
 - /about: 18
 - /admin/observability: 18

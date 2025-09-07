@@ -214,7 +214,9 @@ export default function ApiManagementPage() {
                   </div>
                   <div className="flex items-end">
                     <Button
-                      onClick={() => { void createApiKey(); }}
+                      onClick={() => {
+                        void createApiKey();
+                      }}
                       disabled={isCreating}
                       className="gap-2"
                     >
@@ -273,7 +275,9 @@ export default function ApiManagementPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => { void copyToClipboard(key.keyPreview); }}
+                          onClick={() => {
+                            void copyToClipboard(key.keyPreview);
+                          }}
                           className="gap-1"
                         >
                           <Copy className="h-3 w-3" />
@@ -282,7 +286,9 @@ export default function ApiManagementPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => { void deleteApiKey(key.id); }}
+                          onClick={() => {
+                            void deleteApiKey(key.id);
+                          }}
                           className="gap-1 text-destructive-foreground hover:text-destructive-foreground/80"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -367,7 +373,9 @@ export default function ApiManagementPage() {
                   <div className="text-2xl font-bold">
                     {usage.avgResponseTime}ms
                   </div>
-                  <p className="text-xs text-success-foreground">Fast response times</p>
+                  <p className="text-xs text-success-foreground">
+                    Fast response times
+                  </p>
                 </CardContent>
               </Card>
             </div>

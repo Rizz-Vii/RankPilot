@@ -21,7 +21,7 @@ export function Confetti({
   >([]);
 
   useEffect(() => {
-  // Define color palette inside effect to avoid recreating array each render (exhaustive-deps warning)
+    // Define color palette inside effect to avoid recreating array each render (exhaustive-deps warning)
     const colors = [
       "rgb(255,107,107)",
       "rgb(78,205,196)",

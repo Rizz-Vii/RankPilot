@@ -1,8 +1,8 @@
 import type { FullConfig } from "@playwright/test";
 import { chromium } from "@playwright/test";
-import { spawn } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+import { spawn } from "child_process";
+import fs from "fs";
+import path from "path";
 
 /**
  * Global setup to ensure the development server is fully ready
@@ -16,7 +16,7 @@ async function globalSetup(config: FullConfig) {
   const page = await context.newPage();
 
   try {
-    const apiOnly = process.env.API_TESTS_ONLY === '1';
+    const apiOnly = process.env.API_TESTS_ONLY === "1";
     // Use TEST_BASE_URL if available, otherwise fall back to localhost
     const baseUrl = process.env.TEST_BASE_URL || "http://localhost:3000";
     console.log(`🌐 Warming up / ensuring server at ${baseUrl}...`);
@@ -26,52 +26,81 @@ async function globalSetup(config: FullConfig) {
     try {
       const controller = new AbortController();
       const t = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch(baseUrl, { signal: controller.signal }).catch(() => undefined);
+      const res = await fetch(baseUrl, { signal: controller.signal }).catch(
+        () => undefined
+      );
       clearTimeout(t);
       if (res && res.ok) serverAvailable = true;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     // If not available attempt to spawn dev server (once)
     if (!serverAvailable) {
       if (process.env.DISABLE_SPAWN_DEV) {
-        console.log('⏭️  Dev spawn disabled via DISABLE_SPAWN_DEV; will rely on external server.');
+        console.log(
+          "⏭️  Dev spawn disabled via DISABLE_SPAWN_DEV; will rely on external server."
+        );
       } else {
-        console.log('🚀 Dev server not detected, spawning "npm run dev-no-turbopack"...');
-        const devProc = spawn('npm', ['run', 'dev-no-turbopack'], {
+        console.log(
+          '🚀 Dev server not detected, spawning "npm run dev-no-turbopack"...'
+        );
+        const devProc = spawn("npm", ["run", "dev-no-turbopack"], {
           cwd: process.cwd(),
           env: { ...process.env },
-          stdio: 'inherit',
-          detached: true
+          stdio: "inherit",
+          detached: true,
         });
         // Detach so Playwright process does not wait on it; record pid for possible teardown/debug
         try {
           devProc.unref();
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         // Only record PID after a brief delay and confirming port responds to avoid stale PID on immediate exit.
-        const pidFileDir = path.resolve(process.cwd(), 'test-results');
-        const pidFile = path.join(pidFileDir, '.dev-server.json');
-        await new Promise(r => setTimeout(r, 2500));
+        const pidFileDir = path.resolve(process.cwd(), "test-results");
+        const pidFile = path.join(pidFileDir, ".dev-server.json");
+        await new Promise((r) => setTimeout(r, 2500));
         let postSpawnOk = false;
         try {
           const controller2 = new AbortController();
           const t2 = setTimeout(() => controller2.abort(), 2000);
-          const probe = await fetch(baseUrl, { signal: controller2.signal }).catch(() => undefined);
+          const probe = await fetch(baseUrl, {
+            signal: controller2.signal,
+          }).catch(() => undefined);
           clearTimeout(t2);
           postSpawnOk = !!(probe && probe.ok);
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         if (postSpawnOk) {
           try {
-            if (!fs.existsSync(pidFileDir)) fs.mkdirSync(pidFileDir, { recursive: true });
-            fs.writeFileSync(pidFile, JSON.stringify({ pid: devProc.pid, spawnedAt: new Date().toISOString() }, null, 2));
-            console.log(`📝 Recorded spawned dev server PID ${devProc.pid} at ${pidFile}`);
+            if (!fs.existsSync(pidFileDir))
+              fs.mkdirSync(pidFileDir, { recursive: true });
+            fs.writeFileSync(
+              pidFile,
+              JSON.stringify(
+                { pid: devProc.pid, spawnedAt: new Date().toISOString() },
+                null,
+                2
+              )
+            );
+            console.log(
+              `📝 Recorded spawned dev server PID ${devProc.pid} at ${pidFile}`
+            );
           } catch (e) {
-            console.warn('⚠️ Failed to record dev server PID:', (e as Error).message);
+            console.warn(
+              "⚠️ Failed to record dev server PID:",
+              (e as Error).message
+            );
           }
         } else {
-          console.warn('⚠️ Dev server spawn did not respond; PID not recorded.');
+          console.warn(
+            "⚠️ Dev server spawn did not respond; PID not recorded."
+          );
         }
         // Give initial compile head start
-        await new Promise(r => setTimeout(r, 4000));
+        await new Promise((r) => setTimeout(r, 4000));
       }
     }
 
@@ -80,18 +109,23 @@ async function globalSetup(config: FullConfig) {
     let retries = 0;
 
     // Detect if this is a deployed site for different handling
-    const isDeployedSite = baseUrl.includes('web.app') || baseUrl.includes('firebaseapp.com');
+    const isDeployedSite =
+      baseUrl.includes("web.app") || baseUrl.includes("firebaseapp.com");
 
     while (retries < maxRetries) {
       try {
-        console.log(`📡 Attempting to connect (${retries + 1}/${maxRetries})...`);
+        console.log(
+          `📡 Attempting to connect (${retries + 1}/${maxRetries})...`
+        );
 
         if (apiOnly) {
           // For API-only tests, probe a simple health endpoint instead of rendering pages
           const controller = new AbortController();
           const timeout = isDeployedSite ? 10000 : 12000;
           const t = setTimeout(() => controller.abort(), timeout);
-          const resp = await fetch(`${baseUrl}/api/health`, { signal: controller.signal }).catch(() => undefined);
+          const resp = await fetch(`${baseUrl}/api/health`, {
+            signal: controller.signal,
+          }).catch(() => undefined);
           clearTimeout(t);
           if (resp?.ok) {
             console.log("✅ API server is ready!");
@@ -101,14 +135,21 @@ async function globalSetup(config: FullConfig) {
           // For full runs, ensure homepage is renderable
           const waitCondition = "domcontentloaded";
           const timeout = isDeployedSite ? 15000 : 25000;
-          const response = await page.goto(baseUrl, { waitUntil: waitCondition, timeout });
-          console.log(`🔍 Response status: ${response?.status()}, URL: ${response?.url()}`);
+          const response = await page.goto(baseUrl, {
+            waitUntil: waitCondition,
+            timeout,
+          });
+          console.log(
+            `🔍 Response status: ${response?.status()}, URL: ${response?.url()}`
+          );
           if (response?.ok()) {
-          console.log("✅ Server is ready!");
+            console.log("✅ Server is ready!");
 
             // Pre-compile critical pages to speed up tests
             // For deployed sites, only warm the homepage to avoid routing issues
-            const pagesToWarm = isDeployedSite ? ["/"] : ["/", "/login", "/dashboard"];
+            const pagesToWarm = isDeployedSite
+              ? ["/"]
+              : ["/", "/login", "/dashboard"];
 
             console.log("🔥 Pre-compiling critical pages...");
             for (const path of pagesToWarm) {
@@ -119,7 +160,11 @@ async function globalSetup(config: FullConfig) {
                   timeout: 10000, // Shorter timeout for warming
                 });
                 // Wait explicitly for visible root (main or typical data-testid roots)
-                await page.locator('main, [data-testid], #root').first().waitFor({ state: 'visible', timeout: 8000 }).catch(() => { });
+                await page
+                  .locator("main, [data-testid], #root")
+                  .first()
+                  .waitFor({ state: "visible", timeout: 8000 })
+                  .catch(() => {});
                 // Shorter delay for deployed sites
                 await page.waitForTimeout(isDeployedSite ? 1000 : 1500);
               } catch {
@@ -132,26 +177,44 @@ async function globalSetup(config: FullConfig) {
             // Attempt programmatic login once to persist authenticated storage for later tests
             try {
               const loginPage = await context.newPage();
-              await loginPage.goto(`${baseUrl}/login`, { waitUntil: 'domcontentloaded', timeout: 15000 });
-              await loginPage.fill('#email', process.env.TEST_ADMIN_EMAIL || 'admin@rankpilot.com');
-              await loginPage.fill('#password', process.env.TEST_ADMIN_PASSWORD || 'admin123');
+              await loginPage.goto(`${baseUrl}/login`, {
+                waitUntil: "domcontentloaded",
+                timeout: 15000,
+              });
+              await loginPage.fill(
+                "#email",
+                process.env.TEST_ADMIN_EMAIL || "admin@rankpilot.com"
+              );
+              await loginPage.fill(
+                "#password",
+                process.env.TEST_ADMIN_PASSWORD || "admin123"
+              );
               await Promise.all([
-                loginPage.waitForURL(/dashboard|finance|app/, { timeout: 20000 }).catch(() => { }),
-                loginPage.press('#password', 'Enter')
+                loginPage
+                  .waitForURL(/dashboard|finance|app/, { timeout: 20000 })
+                  .catch(() => {}),
+                loginPage.press("#password", "Enter"),
               ]);
               await loginPage.waitForTimeout(1000);
-              const storagePath = process.env.PLAYWRIGHT_STORAGE || 'test-results/.auth/admin.json';
-              const fs = await import('fs');
-              const path = await import('path');
+              const storagePath =
+                process.env.PLAYWRIGHT_STORAGE ||
+                "test-results/.auth/admin.json";
+              const fs = await import("fs");
+              const path = await import("path");
               const dir = path.dirname(storagePath);
               if (!fs.existsSync(dir)) {
                 fs.mkdirSync(dir, { recursive: true });
               }
               await context.storageState({ path: storagePath });
-              console.log(`🗄️  Saved authenticated storage state to ${storagePath}`);
+              console.log(
+                `🗄️  Saved authenticated storage state to ${storagePath}`
+              );
               await loginPage.close();
             } catch (e) {
-              console.warn('⚠️  Auth storage state capture failed (continuing):', e instanceof Error ? e.message : e);
+              console.warn(
+                "⚠️  Auth storage state capture failed (continuing):",
+                e instanceof Error ? e.message : e
+              );
             }
             console.log("🎯 Server warmup complete!");
             break;
@@ -162,20 +225,26 @@ async function globalSetup(config: FullConfig) {
             if (!process.env.TEST_SKIP_KPI_SEED) {
               const seedResp = await fetch(`${baseUrl}/api/health`);
               // Only attempt Firestore write if local dev (localhost) and health endpoint reachable
-              if (baseUrl.includes('localhost') && seedResp.ok) {
-                await fetch(`${baseUrl}/api/dev/seed-kpi-daily`, { method: 'POST' }).catch(() => { });
+              if (baseUrl.includes("localhost") && seedResp.ok) {
+                await fetch(`${baseUrl}/api/dev/seed-kpi-daily`, {
+                  method: "POST",
+                }).catch(() => {});
               }
             }
-          } catch { /* ignore seed errors */ }
+          } catch {
+            /* ignore seed errors */
+          }
           break;
         }
       } catch (error) {
         retries++;
         const delay = isDeployedSite ? 2000 : 3000; // Shorter delay for deployed sites
-        console.log(`❌ Connection failed (${error}), retrying in ${delay / 1000} seconds...`);
+        console.log(
+          `❌ Connection failed (${error}), retrying in ${delay / 1000} seconds...`
+        );
         // When API-only, we don't need a browser page to wait; fall back to simple delay
         if (apiOnly) {
-          await new Promise(r => setTimeout(r, delay));
+          await new Promise((r) => setTimeout(r, delay));
         } else {
           await page.waitForTimeout(delay);
         }

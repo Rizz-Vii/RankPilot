@@ -17,7 +17,6 @@ import {
 } from "firebase/firestore";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-
 interface UserActivity {
   id: string;
   type: string;
@@ -52,7 +51,6 @@ export interface AuthContextType {
   activities: UserActivity[];
 }
 
-
 const defaultAuthContext: AuthContextType = {
   user: null,
   loading: true,
@@ -72,10 +70,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Use mock auth in development
   useMockAuth();
-  const isDevelopment = typeof window !== "undefined" && process.env.NODE_ENV === "development";
-
-
-
+  const isDevelopment =
+    typeof window !== "undefined" && process.env.NODE_ENV === "development";
 
   useEffect(() => {
     // Always use Firebase auth, but also listen for mock auth events in development
@@ -84,7 +80,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (currentUser) {
         // Ensure user has proper subscription data
         try {
-          await ensureUserSubscription(currentUser.uid, currentUser.email || "");
+          await ensureUserSubscription(
+            currentUser.uid,
+            currentUser.email || ""
+          );
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           console.error("Error ensuring user subscription:", msg);
@@ -96,16 +95,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (userDocSnap.exists()) {
           const userDataRaw = userDocSnap.data();
-          const userData = (userDataRaw && typeof userDataRaw === 'object') ? userDataRaw as Record<string, unknown> : {};
-          const roleField = typeof userData.role === 'string' ? userData.role : null;
+          const userData =
+            userDataRaw && typeof userDataRaw === "object"
+              ? (userDataRaw as Record<string, unknown>)
+              : {};
+          const roleField =
+            typeof userData.role === "string" ? userData.role : null;
           setRole(roleField);
           setProfile(userData as UserProfile);
           // Attach teamId from Firestore user doc if present without breaking User prototype methods
           try {
             // Safely attach teamId without using any casts
-            const possibleTeamId = ('teamId' in userData && typeof userData.teamId === 'string')
-              ? userData.teamId as string
-              : undefined;
+            const possibleTeamId =
+              "teamId" in userData && typeof userData.teamId === "string"
+                ? (userData.teamId as string)
+                : undefined;
             // Double cast via unknown to extend the FirebaseUser instance at runtime (non‑enumerable methods preserved)
             (currentUser as unknown as User).teamId = possibleTeamId;
           } catch (e) {
@@ -127,7 +131,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             currentUser.uid,
             "activities"
           );
-          const q = query(activitiesRef, orderBy("timestamp", "desc"), limit(50));
+          const q = query(
+            activitiesRef,
+            orderBy("timestamp", "desc"),
+            limit(50)
+          );
           const querySnapshot = await getDocs(q);
           const fetchedActivities = querySnapshot.docs.map(
             (snapshot) =>
@@ -151,7 +159,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     // Wrap async handler to satisfy no-misused-promises (we intentionally ignore returned promise)
-    const unsubscribe = auth.onAuthStateChanged((u) => { void handleAuthStateChange(u); });
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      void handleAuthStateChange(u);
+    });
 
     // In development, also listen for mock auth events
     let removeMockListener: (() => void) | undefined;
@@ -177,8 +187,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (removeMockListener) removeMockListener();
     };
   }, [isDevelopment]);
-
-
 
   return (
     <AuthContext.Provider value={{ user, loading, role, profile, activities }}>

@@ -7,50 +7,65 @@ import { UNIFIED_TEST_USERS } from "./unified-test-users";
  * Tests disaster-recovery functionality
  */
 
-test.describe('Feature - disaster-recovery', () => {
-    let auth: EnhancedAuth;
+test.describe("Feature - disaster-recovery", () => {
+  let auth: EnhancedAuth;
 
-    test.beforeEach(async ({ page }) => {
-        test.setTimeout(60000);
-        auth = new EnhancedAuth(page);
+  test.beforeEach(async ({ page }) => {
+    test.setTimeout(60000);
+    auth = new EnhancedAuth(page);
 
-        try {
-            const testUser = UNIFIED_TEST_USERS.agency;
-            await auth.loginAndGoToDashboard(testUser);
-        } catch (error: unknown) {
-            const msg = (error && typeof error === 'object' && 'message' in error)
-                ? String((error as { message?: unknown }).message)
-                : String(error);
-            console.warn('Login failed, using fallback:', msg);
-            await page.goto('/dashboard');
-            await page.waitForTimeout(2000);
-        }
-    });
+    try {
+      const testUser = UNIFIED_TEST_USERS.agency;
+      await auth.loginAndGoToDashboard(testUser);
+    } catch (error: unknown) {
+      const msg =
+        error && typeof error === "object" && "message" in error
+          ? String((error as { message?: unknown }).message)
+          : String(error);
+      console.warn("Login failed, using fallback:", msg);
+      await page.goto("/dashboard");
+      await page.waitForTimeout(2000);
+    }
+  });
 
-    test('should load disaster-recovery interface', async ({ page }) => {
-        await page.goto('/disaster-recovery');
-        await expect(page.locator('[data-testid="disaster-recovery-container"]')).toBeVisible();
-    });
+  test("should load disaster-recovery interface", async ({ page }) => {
+    await page.goto("/disaster-recovery");
+    await expect(
+      page.locator('[data-testid="disaster-recovery-container"]')
+    ).toBeVisible();
+  });
 
-    test('should handle disaster-recovery actions', async ({ page }) => {
-        await page.goto('/disaster-recovery');
-        await expect(page.locator('[data-testid="disaster-recovery-actions"]')).toBeVisible();
-    });
+  test("should handle disaster-recovery actions", async ({ page }) => {
+    await page.goto("/disaster-recovery");
+    await expect(
+      page.locator('[data-testid="disaster-recovery-actions"]')
+    ).toBeVisible();
+  });
 
-    test('should validate disaster-recovery data', async ({ page }) => {
-        await page.goto('/disaster-recovery');
-        await expect(page.locator('[data-testid="disaster-recovery-data"]')).toBeVisible();
-    });
+  test("should validate disaster-recovery data", async ({ page }) => {
+    await page.goto("/disaster-recovery");
+    await expect(
+      page.locator('[data-testid="disaster-recovery-data"]')
+    ).toBeVisible();
+  });
 
-    test('should display disaster-recovery correctly on mobile', async ({ page }) => {
-        await page.setViewportSize({ width: 375, height: 667 });
-        await page.goto('/disaster-recovery');
-        await expect(page.locator('[data-testid="disaster-recovery-mobile"]')).toBeVisible();
-    });
+  test("should display disaster-recovery correctly on mobile", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/disaster-recovery");
+    await expect(
+      page.locator('[data-testid="disaster-recovery-mobile"]')
+    ).toBeVisible();
+  });
 
-    test('should handle disaster-recovery errors gracefully', async ({ page }) => {
-        await page.goto('/disaster-recovery');
-        // Simulate error condition
-        await expect(page.locator('[data-testid="disaster-recovery-error-fallback"]')).toBeVisible();
-    });
+  test("should handle disaster-recovery errors gracefully", async ({
+    page,
+  }) => {
+    await page.goto("/disaster-recovery");
+    // Simulate error condition
+    await expect(
+      page.locator('[data-testid="disaster-recovery-error-fallback"]')
+    ).toBeVisible();
+  });
 });

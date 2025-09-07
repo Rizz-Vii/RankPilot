@@ -34,9 +34,15 @@ type BriefDoc = {
 } & Record<string, unknown>;
 
 export function useContentBriefMetrics(monthWindow = 6): Result {
-  const authCtx = useContext(AuthContext) as Partial<{ user?: { uid: string } }> | null;
+  const authCtx = useContext(AuthContext) as Partial<{
+    user?: { uid: string };
+  }> | null;
   const user = authCtx?.user;
-  const [state, setState] = useState<Result>({ loading: true, kpis: [], rows: [] });
+  const [state, setState] = useState<Result>({
+    loading: true,
+    kpis: [],
+    rows: [],
+  });
 
   useEffect(() => {
     if (!user) {
@@ -58,7 +64,10 @@ export function useContentBriefMetrics(monthWindow = 6): Result {
         const snap = await getDocs(q);
         if (cancelled) return;
 
-        const docs = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as BriefDoc[];
+        const docs = snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as Record<string, unknown>),
+        })) as BriefDoc[];
 
         if (!docs.length) {
           setState({ loading: false, kpis: [], rows: [] });
@@ -77,14 +86,19 @@ export function useContentBriefMetrics(monthWindow = 6): Result {
 
         const ordered = Object.keys(byPeriod).sort();
         const last = ordered.length ? ordered[ordered.length - 1] : undefined;
-        const prev = ordered.length > 1 ? ordered[ordered.length - 2] : undefined;
+        const prev =
+          ordered.length > 1 ? ordered[ordered.length - 2] : undefined;
 
         const lastCount = last ? byPeriod[last].length : 0;
         const prevCount = prev ? byPeriod[prev].length : lastCount;
 
         const avgTarget = (arr: BriefDoc[]) => {
-          const vals = arr.map((b) => b.brief?.seoGuidelines?.targetWordCount ?? 0);
-          return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+          const vals = arr.map(
+            (b) => b.brief?.seoGuidelines?.targetWordCount ?? 0
+          );
+          return vals.length
+            ? vals.reduce((a, b) => a + b, 0) / vals.length
+            : 0;
         };
 
         const lastAvg = last ? avgTarget(byPeriod[last]) : 0;

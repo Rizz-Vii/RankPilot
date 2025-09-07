@@ -3,13 +3,13 @@
 // RankPilot Favicon Generator
 // This script generates favicon files in multiple sizes
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 const COLORS = {
-  PRIMARY: 'rgb(102,153,204)',
-  WHITE: 'rgb(255,255,255)',
-  FLAME: 'rgb(255,107,107)'
+  PRIMARY: "rgb(102,153,204)",
+  WHITE: "rgb(255,255,255)",
+  FLAME: "rgb(255,107,107)",
 };
 
 // Create a simple canvas-like drawing system using ASCII art as a placeholder
@@ -44,51 +44,51 @@ const createFaviconSVG = (size) => `<?xml version="1.0" encoding="UTF-8"?>
 
 // Create favicon files
 const generateFavicons = () => {
-    const publicDir = path.join(__dirname, 'public');
+  const publicDir = path.join(__dirname, "public");
 
-    console.log('🚀 Generating RankPilot favicons...');
+  console.log("🚀 Generating RankPilot favicons...");
 
-    // Ensure public directory exists
-    if (!fs.existsSync(publicDir)) {
-        fs.mkdirSync(publicDir, { recursive: true });
+  // Ensure public directory exists
+  if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+  }
+
+  // Generate SVG files for different sizes
+  faviconSizes.forEach((size) => {
+    let filename;
+
+    switch (size) {
+      case 16:
+        filename = "favicon-16x16.svg";
+        break;
+      case 32:
+        filename = "favicon-32x32.svg";
+        break;
+      case 180:
+        filename = "apple-touch-icon.svg";
+        break;
+      case 192:
+        filename = "android-chrome-192x192.svg";
+        break;
+      case 512:
+        filename = "android-chrome-512x512.svg";
+        break;
+      default:
+        filename = `favicon-${size}x${size}.svg`;
     }
 
-    // Generate SVG files for different sizes
-    faviconSizes.forEach(size => {
-        let filename;
+    const svgContent = createFaviconSVG(size);
+    const filePath = path.join(publicDir, filename);
 
-        switch (size) {
-            case 16:
-                filename = 'favicon-16x16.svg';
-                break;
-            case 32:
-                filename = 'favicon-32x32.svg';
-                break;
-            case 180:
-                filename = 'apple-touch-icon.svg';
-                break;
-            case 192:
-                filename = 'android-chrome-192x192.svg';
-                break;
-            case 512:
-                filename = 'android-chrome-512x512.svg';
-                break;
-            default:
-                filename = `favicon-${size}x${size}.svg`;
-        }
+    fs.writeFileSync(filePath, svgContent);
+    console.log(`✅ Generated ${filename}`);
+  });
 
-        const svgContent = createFaviconSVG(size);
-        const filePath = path.join(publicDir, filename);
+  // Create the main favicon.svg (already created above)
+  console.log("✅ Main favicon.svg already created");
 
-        fs.writeFileSync(filePath, svgContent);
-        console.log(`✅ Generated ${filename}`);
-    });
-
-    // Create the main favicon.svg (already created above)
-    console.log('✅ Main favicon.svg already created');
-
-    // Create browserconfig.xml for Windows tiles
-    const browserConfig = `<?xml version="1.0" encoding="utf-8"?>
+  // Create browserconfig.xml for Windows tiles
+  const browserConfig = `<?xml version="1.0" encoding="utf-8"?>
 <browserconfig>
     <msapplication>
         <tile>
@@ -98,14 +98,16 @@ const generateFavicons = () => {
     </msapplication>
 </browserconfig>`;
 
-    fs.writeFileSync(path.join(publicDir, 'browserconfig.xml'), browserConfig);
-    console.log('✅ Generated browserconfig.xml');
+  fs.writeFileSync(path.join(publicDir, "browserconfig.xml"), browserConfig);
+  console.log("✅ Generated browserconfig.xml");
 
-    console.log('🎉 All favicon files generated successfully!');
-    console.log('\nNext steps:');
-    console.log('1. Update your layout.tsx with the new favicon links');
-    console.log('2. Convert SVG files to PNG using online tools or image libraries');
-    console.log('3. Test the favicons in different browsers');
+  console.log("🎉 All favicon files generated successfully!");
+  console.log("\nNext steps:");
+  console.log("1. Update your layout.tsx with the new favicon links");
+  console.log(
+    "2. Convert SVG files to PNG using online tools or image libraries"
+  );
+  console.log("3. Test the favicons in different browsers");
 };
 
 // Run the generator

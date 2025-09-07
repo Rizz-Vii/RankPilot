@@ -1,13 +1,13 @@
 /**
  * RankPilot Database Population Script
- * 
+ *
  * Executes comprehensive database seeding with realistic 1-year business data
  * for all RankPilot features and user tiers.
- * 
+ *
  * Usage: npm run seed-database
  */
 
-import { ComprehensiveDatabaseSeeder } from './comprehensive-database-schema';
+import { ComprehensiveDatabaseSeeder } from "./comprehensive-database-schema";
 
 console.log(`
 🚀 RankPilot Comprehensive Database Seeding
@@ -55,7 +55,7 @@ async function main() {
   try {
     // Confirm execution
     console.log("🔄 Starting database seeding in 3 seconds...");
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const seeder = new ComprehensiveDatabaseSeeder();
     await seeder.seedAll();
@@ -78,7 +78,6 @@ async function main() {
 💡 Pro Tip: Use the admin panel at /adminonly to explore the generated data
 and verify that all systems are working correctly with realistic volumes.
     `);
-
   } catch (error) {
     console.error(`
 ❌ Database seeding failed!

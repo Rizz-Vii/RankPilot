@@ -1,1 +1,1 @@
-export const useRouter = () => ({ push: (_path: string) => { } });
+export const useRouter = () => ({ push: (_path: string) => {} });

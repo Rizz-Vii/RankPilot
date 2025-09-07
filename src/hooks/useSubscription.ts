@@ -1,7 +1,13 @@
 "use client";
 import { useAuth } from "@/context/AuthContext";
 import type { SubscriptionTier, UserAccess } from "@/lib/access-control";
-import { canAccessCapability, getAccessibleFeatures, getRemainingUsage, isAtUsageLimit, normalizeUserAccess } from "@/lib/access-control";
+import {
+  canAccessCapability,
+  getAccessibleFeatures,
+  getRemainingUsage,
+  isAtUsageLimit,
+  normalizeUserAccess,
+} from "@/lib/access-control";
 import { db } from "@/lib/firebase";
 import type { PlanType } from "@/lib/stripe";
 import { FREE_PLAN, STRIPE_PLANS } from "@/lib/stripe";
@@ -14,7 +20,10 @@ import { useEffect, useState, useRef } from "react";
 // Use a loose reference type to avoid importing Firestore types here; we only need minimal shape.
 type FirestoreOnSnapshot = (
   reference: unknown,
-  onNext: (snapshot: { exists: () => boolean; data: () => Record<string, unknown> }) => void,
+  onNext: (snapshot: {
+    exists: () => boolean;
+    data: () => Record<string, unknown>;
+  }) => void,
   onError?: (error: unknown) => void
 ) => () => void;
 let _onSnapshot: FirestoreOnSnapshot | null = null;
@@ -51,56 +60,94 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
     async function fetchSubscription() {
       // Ultra-early test override (Playwright / E2E) via global variable to avoid auth & Firestore
       try {
-        if (typeof window !== 'undefined' && (window as unknown as { __SUBSCRIPTION_OVERRIDE__?: { tier: SubscriptionTier; status?: string } }).__SUBSCRIPTION_OVERRIDE__) {
-          const ov = (window as unknown as { __SUBSCRIPTION_OVERRIDE__?: { tier: SubscriptionTier; status?: string } }).__SUBSCRIPTION_OVERRIDE__!;
+        if (
+          typeof window !== "undefined" &&
+          (
+            window as unknown as {
+              __SUBSCRIPTION_OVERRIDE__?: {
+                tier: SubscriptionTier;
+                status?: string;
+              };
+            }
+          ).__SUBSCRIPTION_OVERRIDE__
+        ) {
+          const ov = (
+            window as unknown as {
+              __SUBSCRIPTION_OVERRIDE__?: {
+                tier: SubscriptionTier;
+                status?: string;
+              };
+            }
+          ).__SUBSCRIPTION_OVERRIDE__!;
           if (ov?.tier) {
             const forcedTier = ov.tier;
-            const defaultUserAccess: UserAccess = { role: 'user', tier: forcedTier, status: (ov.status as SubscriptionInfo['status']) || 'active' };
-            const planRef = forcedTier === 'free' ? FREE_PLAN : STRIPE_PLANS[forcedTier as PlanType] || FREE_PLAN;
-            if (!cancelled) setSubscription({
-              status: defaultUserAccess.status,
+            const defaultUserAccess: UserAccess = {
+              role: "user",
               tier: forcedTier,
-              planName: planRef.name,
-              planLimits: planRef.limits,
-              features: planRef.features,
-              isUnlimited: planRef.limits.auditsPerMonth === -1,
-              userAccess: defaultUserAccess,
-              accessibleFeatures: getAccessibleFeatures(defaultUserAccess)
-            });
+              status: (ov.status as SubscriptionInfo["status"]) || "active",
+            };
+            const planRef =
+              forcedTier === "free"
+                ? FREE_PLAN
+                : STRIPE_PLANS[forcedTier as PlanType] || FREE_PLAN;
+            if (!cancelled)
+              setSubscription({
+                status: defaultUserAccess.status,
+                tier: forcedTier,
+                planName: planRef.name,
+                planLimits: planRef.limits,
+                features: planRef.features,
+                isUnlimited: planRef.limits.auditsPerMonth === -1,
+                userAccess: defaultUserAccess,
+                accessibleFeatures: getAccessibleFeatures(defaultUserAccess),
+              });
             if (!cancelled) setLoading(false);
             return; // Skip rest
           }
         }
-      } catch { }
+      } catch {}
       // Development/testing override (Playwright/local) to bypass Firestore + Auth
       try {
-        if (typeof window !== 'undefined') {
-          const raw = localStorage.getItem('DEV_SUBSCRIPTION_OVERRIDE');
+        if (typeof window !== "undefined") {
+          const raw = localStorage.getItem("DEV_SUBSCRIPTION_OVERRIDE");
           if (raw) {
-            const ov = JSON.parse(raw || '{}');
+            const ov = JSON.parse(raw || "{}");
             if (ov && ov.tier) {
               const forcedTier = ov.tier as SubscriptionTier;
               const defaultUserAccess: UserAccess = {
-                role: 'user',
+                role: "user",
                 tier: forcedTier,
-                status: (ov.status as SubscriptionInfo['status']) || 'active'
+                status: (ov.status as SubscriptionInfo["status"]) || "active",
               };
-              if (!cancelled) setSubscription({
-                status: defaultUserAccess.status,
-                tier: forcedTier,
-                planName: forcedTier === 'free' ? FREE_PLAN.name : STRIPE_PLANS[forcedTier as PlanType]?.name || FREE_PLAN.name,
-                planLimits: forcedTier === 'free' ? FREE_PLAN.limits : STRIPE_PLANS[forcedTier as PlanType]?.limits || FREE_PLAN.limits,
-                features: forcedTier === 'free' ? FREE_PLAN.features : STRIPE_PLANS[forcedTier as PlanType]?.features || FREE_PLAN.features,
-                isUnlimited: forcedTier !== 'free',
-                userAccess: defaultUserAccess,
-                accessibleFeatures: getAccessibleFeatures(defaultUserAccess)
-              });
+              if (!cancelled)
+                setSubscription({
+                  status: defaultUserAccess.status,
+                  tier: forcedTier,
+                  planName:
+                    forcedTier === "free"
+                      ? FREE_PLAN.name
+                      : STRIPE_PLANS[forcedTier as PlanType]?.name ||
+                        FREE_PLAN.name,
+                  planLimits:
+                    forcedTier === "free"
+                      ? FREE_PLAN.limits
+                      : STRIPE_PLANS[forcedTier as PlanType]?.limits ||
+                        FREE_PLAN.limits,
+                  features:
+                    forcedTier === "free"
+                      ? FREE_PLAN.features
+                      : STRIPE_PLANS[forcedTier as PlanType]?.features ||
+                        FREE_PLAN.features,
+                  isUnlimited: forcedTier !== "free",
+                  userAccess: defaultUserAccess,
+                  accessibleFeatures: getAccessibleFeatures(defaultUserAccess),
+                });
               if (!cancelled) setLoading(false);
               return; // short-circuit normal fetch
             }
           }
         }
-      } catch { }
+      } catch {}
 
       if (!user?.uid) {
         if (!cancelled) setLoading(false);
@@ -115,18 +162,20 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
         // Development override: allow tests to force tier via localStorage flag (handled in page context)
         let forcedTier: string | undefined;
         try {
-          if (typeof window !== 'undefined') forcedTier = localStorage.getItem('DEV_FORCED_TIER') || undefined;
-        } catch { }
+          if (typeof window !== "undefined")
+            forcedTier = localStorage.getItem("DEV_FORCED_TIER") || undefined;
+        } catch {}
 
         const subData: SubscriptionData = userData
           ? {
-            status: userData.subscriptionStatus || "free",
-            tier: (forcedTier as unknown) || userData.subscriptionTier || "free",
-            customerId: userData.stripeCustomerId,
-            subscriptionId: userData.stripeSubscriptionId,
-            currentPeriodEnd: userData.nextBillingDate?.toDate(),
-            cancelAtPeriodEnd: userData.cancelAtPeriodEnd || false,
-          }
+              status: userData.subscriptionStatus || "free",
+              tier:
+                (forcedTier as unknown) || userData.subscriptionTier || "free",
+              customerId: userData.stripeCustomerId,
+              subscriptionId: userData.stripeSubscriptionId,
+              currentPeriodEnd: userData.nextBillingDate?.toDate(),
+              cancelAtPeriodEnd: userData.cancelAtPeriodEnd || false,
+            }
           : { status: "free", tier: "free" };
 
         let planInfo;
@@ -172,16 +221,17 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
           status: "free",
         };
 
-        if (!cancelled) setSubscription({
-          status: "free",
-          tier: "free",
-          planName: FREE_PLAN.name,
-          planLimits: FREE_PLAN.limits,
-          features: FREE_PLAN.features,
-          isUnlimited: false,
-          userAccess: defaultUserAccess,
-          accessibleFeatures: getAccessibleFeatures(defaultUserAccess),
-        });
+        if (!cancelled)
+          setSubscription({
+            status: "free",
+            tier: "free",
+            planName: FREE_PLAN.name,
+            planLimits: FREE_PLAN.limits,
+            features: FREE_PLAN.features,
+            isUnlimited: false,
+            userAccess: defaultUserAccess,
+            accessibleFeatures: getAccessibleFeatures(defaultUserAccess),
+          });
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -193,48 +243,100 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
     if (realtime && user?.uid) {
       void (async () => {
         if (!_onSnapshot) {
-          const mod = await import('firebase/firestore');
-          _onSnapshot = (mod.onSnapshot as unknown) as FirestoreOnSnapshot;
+          const mod = await import("firebase/firestore");
+          _onSnapshot = mod.onSnapshot as unknown as FirestoreOnSnapshot;
         }
-        const ref = doc(db, 'users', user.uid);
+        const ref = doc(db, "users", user.uid);
         if (!_onSnapshot) return; // safety
-        const unsub = _onSnapshot(ref, (snap) => {
-          if (!snap.exists()) return;
-          const raw = snap.data();
-          const data: Record<string, unknown> = raw || {};
-          const statusValue = typeof data.subscriptionStatus === 'string' ? data.subscriptionStatus : 'free';
-          const tierValue = typeof data.subscriptionTier === 'string' ? data.subscriptionTier : 'free';
-          // Narrow to allowed unions at runtime
-          const allowedStatus = ['active', 'free', 'canceled', 'past_due'] as const;
-          const allowedTiers = ['free', 'starter', 'agency', 'enterprise'] as const;
-          const narrowedStatus = (allowedStatus as readonly string[]).includes(statusValue) ? (statusValue as SubscriptionData['status']) : 'free';
-          const narrowedTier = (allowedTiers as readonly string[]).includes(tierValue) ? (tierValue as SubscriptionData['tier']) : 'free';
-          const subData: SubscriptionData = {
-            status: narrowedStatus,
-            tier: narrowedTier,
-            customerId: typeof data.stripeCustomerId === 'string' ? data.stripeCustomerId : undefined,
-            subscriptionId: typeof data.stripeSubscriptionId === 'string' ? data.stripeSubscriptionId : undefined,
-            currentPeriodEnd: (data.nextBillingDate as { toDate?: () => Date } | undefined)?.toDate?.() || (data.nextBillingDate as Date | undefined),
-            cancelAtPeriodEnd: typeof data.cancelAtPeriodEnd === 'boolean' ? data.cancelAtPeriodEnd : false,
-          };
-          let planInfo = subData.tier === 'free' ? FREE_PLAN : STRIPE_PLANS[subData.tier as PlanType] || FREE_PLAN;
-          if (subData.tier === ('admin' as unknown)) planInfo = STRIPE_PLANS.enterprise;
-          const userAccess = normalizeUserAccess({ role: profile?.role || 'user', subscriptionTier: subData.tier, subscriptionStatus: subData.status });
-          const subscriptionInfo: SubscriptionInfo = {
-            ...subData,
-            planName: planInfo.name,
-            planLimits: planInfo.limits,
-            features: planInfo.features,
-            isUnlimited: planInfo.limits.auditsPerMonth === -1,
-            userAccess,
-            accessibleFeatures: getAccessibleFeatures(userAccess)
-          };
-          if (!cancelled) setSubscription(subscriptionInfo);
-        }, (err: unknown) => console.error('[SubscriptionRealtime] snapshot error', err));
+        const unsub = _onSnapshot(
+          ref,
+          (snap) => {
+            if (!snap.exists()) return;
+            const raw = snap.data();
+            const data: Record<string, unknown> = raw || {};
+            const statusValue =
+              typeof data.subscriptionStatus === "string"
+                ? data.subscriptionStatus
+                : "free";
+            const tierValue =
+              typeof data.subscriptionTier === "string"
+                ? data.subscriptionTier
+                : "free";
+            // Narrow to allowed unions at runtime
+            const allowedStatus = [
+              "active",
+              "free",
+              "canceled",
+              "past_due",
+            ] as const;
+            const allowedTiers = [
+              "free",
+              "starter",
+              "agency",
+              "enterprise",
+            ] as const;
+            const narrowedStatus = (
+              allowedStatus as readonly string[]
+            ).includes(statusValue)
+              ? (statusValue as SubscriptionData["status"])
+              : "free";
+            const narrowedTier = (allowedTiers as readonly string[]).includes(
+              tierValue
+            )
+              ? (tierValue as SubscriptionData["tier"])
+              : "free";
+            const subData: SubscriptionData = {
+              status: narrowedStatus,
+              tier: narrowedTier,
+              customerId:
+                typeof data.stripeCustomerId === "string"
+                  ? data.stripeCustomerId
+                  : undefined,
+              subscriptionId:
+                typeof data.stripeSubscriptionId === "string"
+                  ? data.stripeSubscriptionId
+                  : undefined,
+              currentPeriodEnd:
+                (
+                  data.nextBillingDate as { toDate?: () => Date } | undefined
+                )?.toDate?.() || (data.nextBillingDate as Date | undefined),
+              cancelAtPeriodEnd:
+                typeof data.cancelAtPeriodEnd === "boolean"
+                  ? data.cancelAtPeriodEnd
+                  : false,
+            };
+            let planInfo =
+              subData.tier === "free"
+                ? FREE_PLAN
+                : STRIPE_PLANS[subData.tier as PlanType] || FREE_PLAN;
+            if (subData.tier === ("admin" as unknown))
+              planInfo = STRIPE_PLANS.enterprise;
+            const userAccess = normalizeUserAccess({
+              role: profile?.role || "user",
+              subscriptionTier: subData.tier,
+              subscriptionStatus: subData.status,
+            });
+            const subscriptionInfo: SubscriptionInfo = {
+              ...subData,
+              planName: planInfo.name,
+              planLimits: planInfo.limits,
+              features: planInfo.features,
+              isUnlimited: planInfo.limits.auditsPerMonth === -1,
+              userAccess,
+              accessibleFeatures: getAccessibleFeatures(userAccess),
+            };
+            if (!cancelled) setSubscription(subscriptionInfo);
+          },
+          (err: unknown) =>
+            console.error("[SubscriptionRealtime] snapshot error", err)
+        );
         unsubRef.current = unsub;
       })();
     }
-    return () => { cancelled = true; if (unsubRef.current) unsubRef.current(); };
+    return () => {
+      cancelled = true;
+      if (unsubRef.current) unsubRef.current();
+    };
   }, [user?.uid, profile?.role, realtime]);
 
   const canUseFeature = (featureName: string): boolean => {
@@ -286,13 +388,13 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
 
         const subData: SubscriptionData = userData
           ? {
-            status: userData.subscriptionStatus || "free",
-            tier: userData.subscriptionTier || "free",
-            customerId: userData.stripeCustomerId,
-            subscriptionId: userData.stripeSubscriptionId,
-            currentPeriodEnd: userData.nextBillingDate?.toDate(),
-            cancelAtPeriodEnd: userData.cancelAtPeriodEnd || false,
-          }
+              status: userData.subscriptionStatus || "free",
+              tier: userData.subscriptionTier || "free",
+              customerId: userData.stripeCustomerId,
+              subscriptionId: userData.stripeSubscriptionId,
+              currentPeriodEnd: userData.nextBillingDate?.toDate(),
+              cancelAtPeriodEnd: userData.cancelAtPeriodEnd || false,
+            }
           : { status: "free", tier: "free" };
 
         let planInfo;

@@ -3,10 +3,13 @@
  * Part of the NeuroSEO™ Suite for RankPilot
  */
 
-import type { RewriteTransition } from './types';
+import type { RewriteTransition } from "./types";
 
 // Local rewrite diagnostics
-const rewriteMetrics: { transitionVariantCount: number; transitionUniqueCount: number } = {
+const rewriteMetrics: {
+  transitionVariantCount: number;
+  transitionUniqueCount: number;
+} = {
   transitionVariantCount: 0,
   transitionUniqueCount: 0,
 };
@@ -17,12 +20,12 @@ export interface RewriteRequest {
   tone: "professional" | "casual" | "academic" | "conversational" | "technical";
   audience: "beginner" | "intermediate" | "expert" | "general";
   contentType:
-  | "blog"
-  | "article"
-  | "product"
-  | "landing"
-  | "technical"
-  | "news";
+    | "blog"
+    | "article"
+    | "product"
+    | "landing"
+    | "technical"
+    | "news";
   goals: RewriteGoal[];
   constraints: RewriteConstraint[];
   seoRequirements: SEORequirements;
@@ -30,13 +33,13 @@ export interface RewriteRequest {
 
 export interface RewriteGoal {
   type:
-  | "readability"
-  | "keyword_density"
-  | "length"
-  | "engagement"
-  | "conversion"
-  | "authority"
-  | "freshness";
+    | "readability"
+    | "keyword_density"
+    | "length"
+    | "engagement"
+    | "conversion"
+    | "authority"
+    | "freshness";
   target: number | string;
   priority: "high" | "medium" | "low";
   description: string;
@@ -44,12 +47,12 @@ export interface RewriteGoal {
 
 export interface RewriteConstraint {
   type:
-  | "preserve_facts"
-  | "maintain_structure"
-  | "keep_quotes"
-  | "preserve_links"
-  | "brand_voice"
-  | "legal_compliance";
+    | "preserve_facts"
+    | "maintain_structure"
+    | "keep_quotes"
+    | "preserve_links"
+    | "brand_voice"
+    | "legal_compliance";
   value: boolean | string;
   importance: "critical" | "high" | "medium" | "low";
 }
@@ -118,11 +121,11 @@ export interface ContentAnalysis {
 
 export interface ContentIssue {
   type:
-  | "keyword_stuffing"
-  | "low_readability"
-  | "poor_structure"
-  | "missing_keywords"
-  | "compliance_risk";
+    | "keyword_stuffing"
+    | "low_readability"
+    | "poor_structure"
+    | "missing_keywords"
+    | "compliance_risk";
   severity: "critical" | "high" | "medium" | "low";
   description: string;
   location: string;
@@ -622,7 +625,8 @@ export class RewriteGenEngine {
       conversational: ["You know", "By the way", "Also", "Plus"],
       technical: ["Subsequently", "Therefore", "Additionally", "Moreover"],
     };
-    const _chosenTransitions = transitions[tone as keyof typeof transitions] || transitions.professional; // reserved for future insertion logic
+    const _chosenTransitions =
+      transitions[tone as keyof typeof transitions] || transitions.professional; // reserved for future insertion logic
     // Instrument selected transition variety
     rewriteMetrics.transitionVariantCount = _chosenTransitions?.length ?? 0;
     rewriteMetrics.transitionUniqueCount = Array.isArray(_chosenTransitions)
@@ -761,7 +765,8 @@ export class RewriteGenEngine {
   }
 
   private generateVariantImprovements(
-    analysis: ContentAnalysis): RewriteImprovement[] {
+    analysis: ContentAnalysis
+  ): RewriteImprovement[] {
     const improvements: RewriteImprovement[] = [];
 
     // SEO improvements
@@ -832,8 +837,7 @@ export class RewriteGenEngine {
     return Math.max(0, Math.min(100, score));
   }
 
-  private estimatePerformance(
-    analysis: ContentAnalysis): PerformanceMetrics {
+  private estimatePerformance(analysis: ContentAnalysis): PerformanceMetrics {
     // Estimate various performance metrics based on content analysis
 
     const searchVisibility = Math.round(
@@ -844,8 +848,8 @@ export class RewriteGenEngine {
     );
     const conversionPotential = Math.round(
       analysis.seoScore * 0.3 +
-      analysis.readabilityScore * 0.4 +
-      analysis.sentimentScore * 0.3
+        analysis.readabilityScore * 0.4 +
+        analysis.sentimentScore * 0.3
     );
     const shareability = Math.round(
       (analysis.sentimentScore + analysis.readabilityScore) / 2
@@ -860,7 +864,7 @@ export class RewriteGenEngine {
         conversionPotential +
         shareability +
         trustScore) /
-      5
+        5
     );
 
     return {
@@ -882,7 +886,7 @@ export class RewriteGenEngine {
     // Find best performing variant
     const bestVariant = variants.reduce((best, current) =>
       current.estimatedPerformance.overallScore >
-        best.estimatedPerformance.overallScore
+      best.estimatedPerformance.overallScore
         ? current
         : best
     );
@@ -980,12 +984,12 @@ export class RewriteGenEngine {
 
 // Standalone helper (previously mis-indented inside class)
 export function generateTransitions(input: string): RewriteTransition[] {
-  const text = (input || '').toString();
+  const text = (input || "").toString();
   if (!text.trim()) return [];
   // Normalize: lowercase, collapse whitespace, strip most punctuation except hyphens within words
   const tokens = text
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]+/g, ' ')
+    .replace(/[^a-z0-9\s-]+/g, " ")
     .split(/\s+/)
     .filter(Boolean);
   if (tokens.length < 2) return [];
@@ -1002,15 +1006,22 @@ export function generateTransitions(input: string): RewriteTransition[] {
   if (counts.size === 0) return [];
   // Compute scores (0..100) relative to max frequency; stable order via key
   const max = Math.max(...counts.values());
-  const entries: Array<{ from: string; to: string; score: number; key: string }> = [];
+  const entries: Array<{
+    from: string;
+    to: string;
+    score: number;
+    key: string;
+  }> = [];
   for (const [key, freq] of counts.entries()) {
-    const [from, to] = key.split('\u0000');
+    const [from, to] = key.split("\u0000");
     const score = Math.round((freq / Math.max(1, max)) * 100);
     entries.push({ from, to, score, key });
   }
   // Sort by score desc then key for determinism; pick top 20 transitions
-  entries.sort((a, b) => b.score - a.score || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  entries.sort(
+    (a, b) => b.score - a.score || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)
+  );
   const top = entries.slice(0, 20);
   // Map to RewriteTransition shape
-  return top.map(e => ({ from: e.from, to: e.to, score: e.score }));
+  return top.map((e) => ({ from: e.from, to: e.to, score: e.score }));
 }

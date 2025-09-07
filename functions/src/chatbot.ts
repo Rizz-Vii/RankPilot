@@ -9,13 +9,18 @@ import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import OpenAI from "openai";
-import type { AdminContext, AuditContext, ChatContext, SiteContext } from "./context";
+import type {
+  AdminContext,
+  AuditContext,
+  ChatContext,
+  SiteContext,
+} from "./context";
 import {
   getAdminContext,
   getAuditContext,
   getChatContext,
   getNeuroSEOContext,
-  getSiteContext
+  getSiteContext,
 } from "./context";
 import { getAI as getManagedAI } from "./lib/ai-memory-manager.js";
 
@@ -65,7 +70,11 @@ interface ChatResponse {
  * Compose a single prompt string from system + history + user message so it can be sent
  * through the centralized AI manager (provider-agnostic).
  */
-function composePrompt(system: string, history: Array<{ role: "user" | "assistant"; content: string }>, userMessage: string): string {
+function composePrompt(
+  system: string,
+  history: Array<{ role: "user" | "assistant"; content: string }>,
+  userMessage: string
+): string {
   const parts: string[] = [];
   if (system) parts.push(`<system>\n${system.trim()}\n</system>`);
   if (history && history.length) {
@@ -77,7 +86,9 @@ function composePrompt(system: string, history: Array<{ role: "user" | "assistan
     parts.push(`</history>`);
   }
   parts.push(`<user>\n${userMessage}\n</user>`);
-  parts.push("Provide a helpful answer. If you include any JSON, ensure it is valid.");
+  parts.push(
+    "Provide a helpful answer. If you include any JSON, ensure it is valid."
+  );
   return parts.join("\n\n");
 }
 
@@ -111,10 +122,16 @@ export const customerChatHandler = onCall(
         throw new HttpsError("invalid-argument", "Message is required");
       }
 
-      logger.info("Customer chat request", { uid, messageLength: message.length, url });
+      logger.info("Customer chat request", {
+        uid,
+        messageLength: message.length,
+        url,
+      });
 
       // Generate session ID if not provided
-      const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const currentSessionId =
+        sessionId ||
+        `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Fetch context data
       const chatContext = await getChatContext(uid, false);
@@ -123,12 +140,17 @@ export const customerChatHandler = onCall(
       const neuroSEOContext = await getNeuroSEOContext(uid, url);
 
       // Build system prompt based on user tier and available data
-      const systemPrompt = buildCustomerSystemPrompt(chatContext, auditContext, siteContext, neuroSEOContext);
+      const systemPrompt = buildCustomerSystemPrompt(
+        chatContext,
+        auditContext,
+        siteContext,
+        neuroSEOContext
+      );
 
       // Create conversation messages
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         { role: "system", content: systemPrompt },
-        { role: "user", content: message }
+        { role: "user", content: message },
       ];
 
       // Add conversation history for context
@@ -139,11 +161,13 @@ export const customerChatHandler = onCall(
 
         recentHistory.forEach((raw) => {
           const r = raw as unknown;
-          if (r && typeof r === 'object') {
+          if (r && typeof r === "object") {
             const q = (r as Record<string, unknown>).question;
             const a = (r as Record<string, unknown>).response;
-            if (typeof q === 'string' && typeof a === 'string') {
-              messages.splice(-1, 0,
+            if (typeof q === "string" && typeof a === "string") {
+              messages.splice(
+                -1,
+                0,
                 { role: "user", content: q },
                 { role: "assistant", content: a }
               );
@@ -156,16 +180,28 @@ export const customerChatHandler = onCall(
       let aiResponse = "";
       let tokensUsed = 0;
       try {
-        const extract = (c: OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]): string =>
-          typeof c === 'string' ? c : '';
+        const extract = (
+          c: OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]
+        ): string => (typeof c === "string" ? c : "");
         const history = messages
           .filter((m) => m.role === "user" || m.role === "assistant")
-          .map((m) => ({ role: m.role as ("user" | "assistant"), content: extract(m.content) }));
+          .map((m) => ({
+            role: m.role as "user" | "assistant",
+            content: extract(m.content),
+          }));
         const sysMsg = messages.find((m) => m.role === "system");
-        const sys = sysMsg ? extract(sysMsg.content as OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]) : "";
+        const sys = sysMsg
+          ? extract(
+              sysMsg.content as OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]
+            )
+          : "";
         const prompt = composePrompt(sys, history, message);
-        aiResponse = await getManagedAI(prompt, "gpt-4o", { latencyBudgetMs: Number(process.env.AI_LATENCY_BUDGET_MS || 8000) });
-        tokensUsed = aiResponse ? Math.min(1500, Math.ceil(aiResponse.split(/\s+/).length * 1.3)) : 0;
+        aiResponse = await getManagedAI(prompt, "gpt-4o", {
+          latencyBudgetMs: Number(process.env.AI_LATENCY_BUDGET_MS || 8000),
+        });
+        tokensUsed = aiResponse
+          ? Math.min(1500, Math.ceil(aiResponse.split(/\s+/).length * 1.3))
+          : 0;
       } catch (e) {
         // Fallback to OpenAI SDK if configured
         const openai = getOpenAIClient();
@@ -178,17 +214,26 @@ export const customerChatHandler = onCall(
           presence_penalty: 0.1,
           frequency_penalty: 0.1,
         });
-        aiResponse = completion.choices[0]?.message?.content || "I apologize, but I couldn't generate a response. Please try again.";
+        aiResponse =
+          completion.choices[0]?.message?.content ||
+          "I apologize, but I couldn't generate a response. Please try again.";
         tokensUsed = completion.usage?.total_tokens || 0;
       }
 
       // Save conversation to Firestore
-      await saveConversation(uid, currentSessionId, message, aiResponse, "customer", {
-        auditContext: !!auditContext,
-        siteContext: !!siteContext,
-        neuroSEOContext: !!neuroSEOContext,
-        userTier: chatContext.userTier,
-      });
+      await saveConversation(
+        uid,
+        currentSessionId,
+        message,
+        aiResponse,
+        "customer",
+        {
+          auditContext: !!auditContext,
+          siteContext: !!siteContext,
+          neuroSEOContext: !!neuroSEOContext,
+          userTier: chatContext.userTier,
+        }
+      );
 
       // Prepare response
       const response: ChatResponse = {
@@ -202,17 +247,17 @@ export const customerChatHandler = onCall(
             auditContext ? "audit_data" : null,
             siteContext ? "site_content" : null,
             neuroSEOContext ? "neuroseo_insights" : null,
-            "user_tier_data"
+            "user_tier_data",
           ].filter((item): item is string => Boolean(item)),
         },
-      }; logger.info("Customer chat response generated", {
+      };
+      logger.info("Customer chat response generated", {
         uid,
         tokensUsed,
-        sessionId: currentSessionId
+        sessionId: currentSessionId,
       });
 
       return response;
-
     } catch (error) {
       logger.error("Customer chat error", error);
 
@@ -257,7 +302,7 @@ export const adminChatHandler = onCall(
       if (!isAdminUser) {
         const userDoc = await db.collection("users").doc(uid).get();
         const role = (userDoc.data() as { role?: string } | undefined)?.role;
-        if (role === 'admin') isAdminUser = true;
+        if (role === "admin") isAdminUser = true;
       }
       if (!isAdminUser) {
         throw new HttpsError("permission-denied", "Admin access required");
@@ -266,12 +311,16 @@ export const adminChatHandler = onCall(
       logger.info("Admin chat request", { uid, messageLength: message.length });
 
       // Generate session ID if not provided
-      const currentSessionId = sessionId || `admin_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const currentSessionId =
+        sessionId ||
+        `admin_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Fetch admin context data
       const chatContext = await getChatContext(uid, true);
       const userDoc = await db.collection("users").doc(uid).get();
-      const userTier = ((userDoc.data() as { subscriptionTier?: string } | undefined)?.subscriptionTier) || 'admin';
+      const userTier =
+        (userDoc.data() as { subscriptionTier?: string } | undefined)
+          ?.subscriptionTier || "admin";
       const adminContext = await getAdminContext(userTier);
 
       // Build admin system prompt
@@ -280,7 +329,7 @@ export const adminChatHandler = onCall(
       // Create conversation messages
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         { role: "system", content: systemPrompt },
-        { role: "user", content: message }
+        { role: "user", content: message },
       ];
 
       // Add admin conversation history
@@ -291,11 +340,13 @@ export const adminChatHandler = onCall(
 
         recentHistory.forEach((raw) => {
           const r = raw as unknown;
-          if (r && typeof r === 'object') {
+          if (r && typeof r === "object") {
             const q = (r as Record<string, unknown>).question;
             const a = (r as Record<string, unknown>).response;
-            if (typeof q === 'string' && typeof a === 'string') {
-              messages.splice(-1, 0,
+            if (typeof q === "string" && typeof a === "string") {
+              messages.splice(
+                -1,
+                0,
                 { role: "user", content: q },
                 { role: "assistant", content: a }
               );
@@ -308,16 +359,28 @@ export const adminChatHandler = onCall(
       let aiResponse = "";
       let tokensUsed = 0;
       try {
-        const extract = (c: OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]): string =>
-          typeof c === 'string' ? c : '';
+        const extract = (
+          c: OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]
+        ): string => (typeof c === "string" ? c : "");
         const history = messages
           .filter((m) => m.role === "user" || m.role === "assistant")
-          .map((m) => ({ role: m.role as ("user" | "assistant"), content: extract(m.content) }));
+          .map((m) => ({
+            role: m.role as "user" | "assistant",
+            content: extract(m.content),
+          }));
         const sysMsg = messages.find((m) => m.role === "system");
-        const sys = sysMsg ? extract(sysMsg.content as OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]) : "";
+        const sys = sysMsg
+          ? extract(
+              sysMsg.content as OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]
+            )
+          : "";
         const prompt = composePrompt(sys, history, message);
-        aiResponse = await getManagedAI(prompt, "gpt-4o", { latencyBudgetMs: Number(process.env.AI_LATENCY_BUDGET_MS || 8000) });
-        tokensUsed = aiResponse ? Math.min(1800, Math.ceil(aiResponse.split(/\s+/).length * 1.3)) : 0;
+        aiResponse = await getManagedAI(prompt, "gpt-4o", {
+          latencyBudgetMs: Number(process.env.AI_LATENCY_BUDGET_MS || 8000),
+        });
+        tokensUsed = aiResponse
+          ? Math.min(1800, Math.ceil(aiResponse.split(/\s+/).length * 1.3))
+          : 0;
       } catch (e) {
         const openai = getOpenAIClient();
         if (!openai) throw e;
@@ -329,15 +392,24 @@ export const adminChatHandler = onCall(
           presence_penalty: 0.1,
           frequency_penalty: 0.1,
         });
-        aiResponse = completion.choices[0]?.message?.content || "I couldn't process your admin request. Please try again.";
+        aiResponse =
+          completion.choices[0]?.message?.content ||
+          "I couldn't process your admin request. Please try again.";
         tokensUsed = completion.usage?.total_tokens || 0;
       }
 
       // Save admin conversation
-      await saveConversation(uid, currentSessionId, message, aiResponse, "admin", {
-        adminLevel: userTier,
-        systemMetrics: adminContext.systemMetrics,
-      });
+      await saveConversation(
+        uid,
+        currentSessionId,
+        message,
+        aiResponse,
+        "admin",
+        {
+          adminLevel: userTier,
+          systemMetrics: adminContext.systemMetrics,
+        }
+      );
 
       const response: ChatResponse = {
         response: aiResponse,
@@ -353,11 +425,10 @@ export const adminChatHandler = onCall(
       logger.info("Admin chat response generated", {
         uid,
         tokensUsed,
-        sessionId: currentSessionId
+        sessionId: currentSessionId,
       });
 
       return response;
-
     } catch (error) {
       logger.error("Admin chat error", error);
 
@@ -416,10 +487,16 @@ Accessibility Score: ${auditContext.score.accessibility}/100
 Best Practices Score: ${auditContext.score.bestPractices}/100
 
 Key Issues Found:
-${auditContext.issues.slice(0, 5).map((issue: string) => `- ${issue}`).join("\n")}
+${auditContext.issues
+  .slice(0, 5)
+  .map((issue: string) => `- ${issue}`)
+  .join("\n")}
 
 Recommended Actions:
-${auditContext.suggestions.slice(0, 5).map((suggestion: string) => `- ${suggestion}`).join("\n")}
+${auditContext.suggestions
+  .slice(0, 5)
+  .map((suggestion: string) => `- ${suggestion}`)
+  .join("\n")}
 
 Last Analyzed: ${auditContext.lastAnalyzed}
 `;
@@ -461,7 +538,10 @@ IMPORTANT: If the user asks about features beyond their tier, explain the limita
 /**
  * Builds system prompt for admin chatbot
  */
-function buildAdminSystemPrompt(chatContext: ChatContext, adminContext: AdminContext): string {
+function buildAdminSystemPrompt(
+  chatContext: ChatContext,
+  adminContext: AdminContext
+): string {
   return `You are RankPilot Admin AI, an advanced system management assistant for RankPilot administrators.
 
 ADMIN CONTEXT:
@@ -476,9 +556,13 @@ CURRENT SYSTEM METRICS:
 - Error Rate: ${adminContext.systemMetrics.errorRate}%
 
 RECENT ACTIVITY:
-${adminContext.recentActivity.slice(0, 3).map((activity) =>
-    `- ${activity.type || "Activity"}: ${activity.description || "No description"}`
-  ).join("\n")}
+${adminContext.recentActivity
+  .slice(0, 3)
+  .map(
+    (activity) =>
+      `- ${activity.type || "Activity"}: ${activity.description || "No description"}`
+  )
+  .join("\n")}
 
 PERFORMANCE INSIGHTS:
 ${adminContext.performanceInsights.map((insight: string) => `- ${insight}`).join("\n")}
@@ -547,13 +631,15 @@ async function saveConversation(
       .doc(uid)
       .collection("sessions")
       .doc(sessionId)
-      .set({
-        lastMessage: response.substring(0, 100),
-        lastActivity: FieldValue.serverTimestamp(),
-        messageCount: FieldValue.increment(1),
-        chatType,
-      }, { merge: true });
-
+      .set(
+        {
+          lastMessage: response.substring(0, 100),
+          lastActivity: FieldValue.serverTimestamp(),
+          messageCount: FieldValue.increment(1),
+          chatType,
+        },
+        { merge: true }
+      );
   } catch (error) {
     logger.error("Failed to save conversation", error);
     // Don't throw error to avoid breaking the chat flow

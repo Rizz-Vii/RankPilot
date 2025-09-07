@@ -130,7 +130,9 @@ class EnhancedErrorBoundary extends React.Component<Props, State> {
 
     // You could show a toast notification here
     // 'alert' is synchronous; retain for UX but explicit comment for lint clarity
-    alert("Error details copied to clipboard. Please send this to our support team.");
+    alert(
+      "Error details copied to clipboard. Please send this to our support team."
+    );
   };
 
   override render() {
@@ -271,7 +273,8 @@ export function withErrorBoundary<P extends object>(
   );
 
   // Assign a descriptive displayName without using an 'any' cast
-  (WrappedComponent as unknown as { displayName?: string }).displayName = `withErrorBoundary(${Wrapped.displayName || Wrapped.name || 'Component'})`;
+  (WrappedComponent as unknown as { displayName?: string }).displayName =
+    `withErrorBoundary(${Wrapped.displayName || Wrapped.name || "Component"})`;
 
   return WrappedComponent as React.ComponentType<P>;
 }

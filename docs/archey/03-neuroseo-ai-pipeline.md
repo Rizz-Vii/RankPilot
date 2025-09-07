@@ -47,11 +47,11 @@
 
 ```typescript
 interface NeuralCrawlerConfig {
-  maxDepth: number;           // Crawl depth limit
-  respectRobots: boolean;     // robots.txt compliance
-  userAgent: string;          // Custom user agent
-  timeout: number;            // Request timeout (ms)
-  cacheEnabled: boolean;      // Response caching
+  maxDepth: number; // Crawl depth limit
+  respectRobots: boolean; // robots.txt compliance
+  userAgent: string; // Custom user agent
+  timeout: number; // Request timeout (ms)
+  cacheEnabled: boolean; // Response caching
 }
 ```
 
@@ -211,7 +211,7 @@ interface AnalysisPipeline {
 ✅ **Processing Speed**: 30 seconds average per URL  
 ✅ **Accuracy Rate**: 94% across all engines  
 ✅ **Uptime**: 99.9% availability  
-✅ **Concurrent Users**: 500+ simultaneous analyses  
+✅ **Concurrent Users**: 500+ simultaneous analyses
 
 ### Optimization Features
 
@@ -275,5 +275,5 @@ Content-Type: application/json
 
 ---
 
-*Engine Documentation: src/lib/neuroseo/ implementation*  
-*Last Updated: July 30, 2025*
+_Engine Documentation: src/lib/neuroseo/ implementation_  
+_Last Updated: July 30, 2025_

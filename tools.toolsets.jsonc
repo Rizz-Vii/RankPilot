@@ -1,0 +1,117 @@
+{
+  "core-read-context": {
+    "tools": ["codebase", "search", "searchResults", "usages", "fetch"],
+    "description": "Fast repository and doc discovery before any edit; minimize unnecessary file reads.",
+    "icon": "book",
+  },
+  "analysis-planning": {
+    "tools": ["analysis-planning", "sequentialthinking"],
+    "description": "Structured reasoning for multi-step deliverable slices; produce micro‑checklists.",
+    "icon": "light-bulb",
+  },
+  "small-diff-edit": {
+    "tools": ["editFiles", "changes", "problems"],
+    "description": "Apply minimal, surgical edits and immediately surface diagnostics.",
+    "icon": "edit",
+  },
+  "delegation-mechanical": {
+    "tools": ["runTasks", "terminalLastCommand", "terminalSelection"],
+    "description": "Enqueue and process mechanical tasks via delegation: start/stop delegation:loop, run delegate:process.",
+    "icon": "rocket",
+  },
+  "test-core": {
+    "tools": ["runTests", "testFailure", "playwright"],
+    "description": "Run unit + Playwright specs; surface failing assertions for rapid red/green.",
+    "icon": "beaker",
+  },
+  "scheduler-D3": {
+    "tools": ["runTests", "codebase", "search"],
+    "description": "Focus on scheduler logic (next-run, emulator tests) for D3 acceptance.",
+    "icon": "clock",
+  },
+  "finance-D1": {
+    "tools": ["runTests", "codebase", "search"],
+    "description": "Finance metrics gating & contract scripts (revenue tests) without touching secrets.",
+    "icon": "graph",
+  },
+  "rate-limit-D2": {
+    "tools": ["codebase", "search", "runTests"],
+    "description": "Team-aware rate limiting expansion; verify no regression in 429 behavior.",
+    "icon": "shield",
+  },
+  "ai-adapter-D4": {
+    "tools": ["codebase", "search", "runTests"],
+    "description": "AI adapter observability + failover latency tests.",
+    "icon": "pulse",
+  },
+  "deprecations-D5": {
+    "tools": ["search", "codebase", "editFiles"],
+    "description": "Locate and remove deprecated endpoints; confirm no lingering references.",
+    "icon": "trash",
+  },
+  "data-parity-D6": {
+    "tools": ["runTests", "codebase", "search"],
+    "description": "CSV vs JSON parity + provenance audit stability.",
+    "icon": "diff",
+  },
+  "engine-ext-D7": {
+    "tools": ["think", "codebase", "editFiles", "runTests"],
+    "description": "Add new NeuroSEO engine under LOC budget with deterministic ordering.",
+    "icon": "circuit-board",
+  },
+  "docs-governance-D8": {
+    "tools": ["codebase", "search", "editFiles"],
+    "description": "CHANGE_LOG / Addendum synchronization after core deliverables merge.",
+    "icon": "notebook",
+  },
+  "observability-scan": {
+    "tools": ["search", "codebase"],
+    "description": "Survey metrics/log patterns before instrumentation changes.",
+    "icon": "eye",
+  },
+  "web-preview-minimal": {
+    "tools": ["openSimpleBrowser"],
+    "description": "Lightweight in-editor preview of running dev server pages.",
+    "icon": "browser",
+  },
+  "external-research-light": {
+    "tools": ["firecrawl"],
+    "description": "Occasional external doc/page retrieval when user explicitly requests market or SEO reference (opt-in).",
+    "icon": "globe",
+  },
+  "extension-insight": {
+    "tools": ["vscodeAPI", "extensions"],
+    "description": "Answer VS Code API or extension capability questions without code edits.",
+    "icon": "extensions",
+  },
+  "new-scaffold": {
+    "tools": ["new"],
+    "description": "Create small boilerplate (pages/tests) conforming to project conventions.",
+    "icon": "add",
+  },
+  "governance-safety": {
+    "tools": ["problems", "testFailure", "runTests"],
+    "description": "Fail-fast validation pass (lint/types/tests) before and after risky edits.",
+    "icon": "shield",
+  },
+  "emergency-triage": {
+    "tools": ["search", "codebase", "problems", "runTests"],
+    "description": "Rapid isolation of regression sources; minimal diff fix mode.",
+    "icon": "alert",
+  },
+  "batch-task-orchestration": {
+    "tools": ["runTasks"],
+    "description": "Invoke predefined VS Code tasks: dev-server, typecheck, lint, quality suites, delegation loop.",
+    "icon": "gear",
+  },
+  "git-diff-awareness": {
+    "tools": ["changes"],
+    "description": "Review pending diffs before finalizing or delegating follow-ups.",
+    "icon": "git-commit",
+  },
+  "reasoning-deep-dive": {
+    "tools": ["sequentialthinking"],
+    "description": "Multi-stage analysis for complex architectural or cross-deliverable tradeoffs.",
+    "icon": "lightbulb",
+  },
+}

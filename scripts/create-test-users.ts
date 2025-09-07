@@ -173,7 +173,10 @@ async function createTestUser(userKey: string) {
       success: true,
     };
   } catch (error: unknown) {
-    const code = (error && typeof error === 'object' && 'code' in error) ? String((error as { code?: unknown }).code) : '';
+    const code =
+      error && typeof error === "object" && "code" in error
+        ? String((error as { code?: unknown }).code)
+        : "";
     if (code === "auth/email-already-in-use") {
       console.log(`⚠️ User ${user.email} already exists, updating profile...`);
 
@@ -215,9 +218,12 @@ async function createTestUser(userKey: string) {
           success: true,
         };
       } catch (updateError: unknown) {
-        const updateMsg = (updateError && typeof updateError === 'object' && 'message' in updateError)
-          ? String((updateError as { message?: unknown }).message)
-          : String(updateError);
+        const updateMsg =
+          updateError &&
+          typeof updateError === "object" &&
+          "message" in updateError
+            ? String((updateError as { message?: unknown }).message)
+            : String(updateError);
         console.error(
           `❌ Failed to update existing user ${user.email}:`,
           updateMsg
@@ -230,9 +236,10 @@ async function createTestUser(userKey: string) {
         };
       }
     } else {
-      const msg = (error && typeof error === 'object' && 'message' in error)
-        ? String((error as { message?: unknown }).message)
-        : String(error);
+      const msg =
+        error && typeof error === "object" && "message" in error
+          ? String((error as { message?: unknown }).message)
+          : String(error);
       console.error(`❌ Failed to create user ${user.email}:`, msg);
       return {
         email: user.email,

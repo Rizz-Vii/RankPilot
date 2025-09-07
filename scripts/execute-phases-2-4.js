@@ -5,114 +5,116 @@
  * Priority: CRITICAL - Complete Autonomous Implementation
  */
 
-const { execSync } = require('child_process');
-const fs = require('fs');
+const { execSync } = require("child_process");
+const fs = require("fs");
 
-'use strict';
+("use strict");
 
 // Enhanced JavaScript implementation for all phases
 class ComprehensiveAgentExecutor {
-    constructor() {
-        this.agents = new Map();
-        this.executionLog = [];
-        this.currentPhase = 2;
+  constructor() {
+    this.agents = new Map();
+    this.executionLog = [];
+    this.currentPhase = 2;
+  }
+
+  registerAgent(name, executeFn, description, phase) {
+    this.agents.set(name, { executeFn, description, phase });
+  }
+
+  async executePhase(phaseNumber) {
+    console.log(`🎯 Executing Phase ${phaseNumber}...`);
+    const phaseAgents = Array.from(this.agents.entries()).filter(
+      ([_name, agent]) => agent.phase === phaseNumber
+    );
+
+    let phaseSuccess = true;
+    for (const [name, _agent] of phaseAgents) {
+      const success = await this.executeAgent(name);
+      if (!success) phaseSuccess = false;
     }
 
-    registerAgent(name, executeFn, description, phase) {
-        this.agents.set(name, { executeFn, description, phase });
+    return phaseSuccess;
+  }
+
+  async executeAgent(agentName) {
+    const agent = this.agents.get(agentName);
+    if (!agent) {
+      console.error(`❌ Agent not found: ${agentName}`);
+      return false;
     }
 
-    async executePhase(phaseNumber) {
-        console.log(`🎯 Executing Phase ${phaseNumber}...`);
-        const phaseAgents = Array.from(this.agents.entries()).filter(([_name, agent]) => agent.phase === phaseNumber);
+    console.log(`🎯 Executing: ${agentName} - ${agent.description}`);
+    const startTime = Date.now();
 
-        let phaseSuccess = true;
-        for (const [name, _agent] of phaseAgents) {
-            const success = await this.executeAgent(name);
-            if (!success) phaseSuccess = false;
-        }
+    try {
+      const success = await agent.executeFn();
+      const duration = Date.now() - startTime;
 
-        return phaseSuccess;
+      this.executionLog.push({
+        agent: agentName,
+        phase: agent.phase,
+        success,
+        duration,
+        timestamp: new Date().toISOString(),
+      });
+
+      if (success) {
+        console.log(`✅ ${agentName} completed successfully in ${duration}ms`);
+      } else {
+        console.log(`❌ ${agentName} failed after ${duration}ms`);
+      }
+
+      return success;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error(`🚨 ${agentName} threw exception:`, error.message);
+
+      this.executionLog.push({
+        agent: agentName,
+        phase: agent.phase,
+        success: false,
+        duration,
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      });
+
+      return false;
+    }
+  }
+
+  async executeAllPhases() {
+    console.log("🚀 Executing all phases (2-4) autonomously...");
+
+    const phases = [2, 3, 4];
+    let allSuccess = true;
+
+    for (const phase of phases) {
+      console.log(`\n${"=".repeat(60)}`);
+      console.log(`🏗️  PHASE ${phase} EXECUTION`);
+      console.log(`${"=".repeat(60)}`);
+
+      const phaseSuccess = await this.executePhase(phase);
+      if (!phaseSuccess) {
+        console.log(`⚠️  Phase ${phase} had some issues, but continuing...`);
+        allSuccess = false;
+      } else {
+        console.log(`✅ Phase ${phase} completed successfully!`);
+      }
     }
 
-    async executeAgent(agentName) {
-        const agent = this.agents.get(agentName);
-        if (!agent) {
-            console.error(`❌ Agent not found: ${agentName}`);
-            return false;
-        }
+    await this.generateComprehensiveReport();
+    return allSuccess;
+  }
 
-        console.log(`🎯 Executing: ${agentName} - ${agent.description}`);
-        const startTime = Date.now();
+  async generateComprehensiveReport() {
+    const phaseResults = {
+      2: this.executionLog.filter((log) => log.phase === 2),
+      3: this.executionLog.filter((log) => log.phase === 3),
+      4: this.executionLog.filter((log) => log.phase === 4),
+    };
 
-        try {
-            const success = await agent.executeFn();
-            const duration = Date.now() - startTime;
-
-            this.executionLog.push({
-                agent: agentName,
-                phase: agent.phase,
-                success,
-                duration,
-                timestamp: new Date().toISOString()
-            });
-
-            if (success) {
-                console.log(`✅ ${agentName} completed successfully in ${duration}ms`);
-            } else {
-                console.log(`❌ ${agentName} failed after ${duration}ms`);
-            }
-
-            return success;
-        } catch (error) {
-            const duration = Date.now() - startTime;
-            console.error(`🚨 ${agentName} threw exception:`, error.message);
-
-            this.executionLog.push({
-                agent: agentName,
-                phase: agent.phase,
-                success: false,
-                duration,
-                error: error.message,
-                timestamp: new Date().toISOString()
-            });
-
-            return false;
-        }
-    }
-
-    async executeAllPhases() {
-        console.log('🚀 Executing all phases (2-4) autonomously...');
-
-        const phases = [2, 3, 4];
-        let allSuccess = true;
-
-        for (const phase of phases) {
-            console.log(`\n${'='.repeat(60)}`);
-            console.log(`🏗️  PHASE ${phase} EXECUTION`);
-            console.log(`${'='.repeat(60)}`);
-
-            const phaseSuccess = await this.executePhase(phase);
-            if (!phaseSuccess) {
-                console.log(`⚠️  Phase ${phase} had some issues, but continuing...`);
-                allSuccess = false;
-            } else {
-                console.log(`✅ Phase ${phase} completed successfully!`);
-            }
-        }
-
-        await this.generateComprehensiveReport();
-        return allSuccess;
-    }
-
-    async generateComprehensiveReport() {
-        const phaseResults = {
-            2: this.executionLog.filter(log => log.phase === 2),
-            3: this.executionLog.filter(log => log.phase === 3),
-            4: this.executionLog.filter(log => log.phase === 4)
-        };
-
-        const report = `# 🤖 RankPilot Autonomous Agents - Phases 2-4 Execution Report
+    const report = `# 🤖 RankPilot Autonomous Agents - Phases 2-4 Execution Report
 
 Generated: ${new Date().toISOString()}
 Execution System: Comprehensive Agent Executor
@@ -120,20 +122,23 @@ Total Agents Executed: ${this.executionLog.length}
 
 ## 📊 Phase Execution Summary
 
-${Object.entries(phaseResults).map(([phase, logs]) => {
-            const successful = logs.filter(log => log.success).length;
-            const total = logs.length;
-            const successRate = total > 0 ? (successful / total * 100).toFixed(1) : '0.0';
+${Object.entries(phaseResults)
+  .map(([phase, logs]) => {
+    const successful = logs.filter((log) => log.success).length;
+    const total = logs.length;
+    const successRate =
+      total > 0 ? ((successful / total) * 100).toFixed(1) : "0.0";
 
-            return `### Phase ${phase} Results
+    return `### Phase ${phase} Results
 - **Agents Executed**: ${total}
 - **Successful**: ${successful}
 - **Success Rate**: ${successRate}%
-- **Status**: ${successRate >= 80 ? '✅ COMPLETE' : '⚠️  NEEDS ATTENTION'}
+- **Status**: ${successRate >= 80 ? "✅ COMPLETE" : "⚠️  NEEDS ATTENTION"}
 
-${logs.map(log => `- **${log.agent}**: ${log.success ? '✅ SUCCESS' : '❌ FAILED'} (${log.duration}ms)`).join('\n')}
+${logs.map((log) => `- **${log.agent}**: ${log.success ? "✅ SUCCESS" : "❌ FAILED"} (${log.duration}ms)`).join("\n")}
 `;
-        }).join('\n')}
+  })
+  .join("\n")}
 
 ## 🎯 Overall Achievement Summary
 
@@ -161,7 +166,7 @@ ${logs.map(log => `- **${log.agent}**: ${log.success ? '✅ SUCCESS' : '❌ FAIL
 
 ## 📈 Success Metrics
 - **Total Execution Time**: ${this.executionLog.reduce((sum, log) => sum + log.duration, 0)}ms
-- **Overall Success Rate**: ${(this.executionLog.filter(log => log.success).length / this.executionLog.length * 100).toFixed(1)}%
+- **Overall Success Rate**: ${((this.executionLog.filter((log) => log.success).length / this.executionLog.length) * 100).toFixed(1)}%
 - **Phases Completed**: 3/3 (100%)
 - **RankPilot Status**: 🚀 PRODUCTION READY
 
@@ -178,23 +183,26 @@ ${logs.map(log => `- **${log.agent}**: ${log.success ? '✅ SUCCESS' : '❌ FAIL
 Autonomous Agent System v4.0.0 • australia-southeast2 • ${new Date().toISOString()}
 `;
 
-        fs.writeFileSync('./phases-2-4-execution-report.md', report);
-        console.log('📊 Comprehensive execution report generated: phases-2-4-execution-report.md');
-    }
+    fs.writeFileSync("./phases-2-4-execution-report.md", report);
+    console.log(
+      "📊 Comprehensive execution report generated: phases-2-4-execution-report.md"
+    );
+  }
 
-    getMetrics() {
-        const total = this.executionLog.length;
-        const successful = this.executionLog.filter(log => log.success).length;
-        const successRate = total > 0 ? (successful / total) * 100 : 0;
+  getMetrics() {
+    const total = this.executionLog.length;
+    const successful = this.executionLog.filter((log) => log.success).length;
+    const successRate = total > 0 ? (successful / total) * 100 : 0;
 
-        return {
-            totalExecutions: total,
-            successfulExecutions: successful,
-            successRate: successRate.toFixed(1),
-            lastExecution: this.executionLog[this.executionLog.length - 1]?.timestamp || 'Never',
-            phasesCompleted: [2, 3, 4]
-        };
-    }
+    return {
+      totalExecutions: total,
+      successfulExecutions: successful,
+      successRate: successRate.toFixed(1),
+      lastExecution:
+        this.executionLog[this.executionLog.length - 1]?.timestamp || "Never",
+      phasesCompleted: [2, 3, 4],
+    };
+  }
 }
 
 // Agent executor instance
@@ -202,154 +210,167 @@ const agentExecutor = new ComprehensiveAgentExecutor();
 
 // Phase 2: Testing Orchestrator Agent Implementation
 async function executeTestingOrchestrator() {
-    console.log('🧪 Testing Orchestrator Agent - Phase 2 Starting...');
+  console.log("🧪 Testing Orchestrator Agent - Phase 2 Starting...");
+
+  try {
+    // Step 1: Validate testing infrastructure
+    console.log("📊 Validating testing infrastructure...");
+
+    // Check if Playwright configs exist
+    const playwrightConfigs = [
+      "playwright.config.ts",
+      "playwright.config.role-based.ts",
+      "playwright.config.performance.ts",
+    ];
+
+    let _configsValid = 0;
+    for (const config of playwrightConfigs) {
+      if (fs.existsSync(config)) {
+        _configsValid++;
+        console.log(`✅ Found: ${config}`);
+      } else {
+        console.log(`⚠️  Missing: ${config} - Using base configuration`);
+      }
+    }
+
+    // Step 2: Execute role-based tests (simulate across 5 tiers)
+    console.log("🔧 Executing role-based authentication tests...");
+    const tiers = ["free", "starter", "agency", "enterprise", "admin"];
+
+    for (const tier of tiers) {
+      try {
+        console.log(`Testing ${tier} tier authentication...`);
+
+        // Simulate test execution
+        const simulatedSuccess = Math.random() > 0.2; // 80% success rate
+
+        if (simulatedSuccess) {
+          console.log(`✅ ${tier} tier tests passed`);
+        } else {
+          console.log(
+            `⚠️  ${tier} tier tests had issues, but infrastructure validated`
+          );
+        }
+
+        // Small delay to simulate real test execution
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } catch {
+        console.log(`⚠️  ${tier} tier test execution simulated, continuing...`);
+      }
+    }
+
+    // Step 3: Performance testing validation
+    console.log("🔧 Validating performance testing capabilities...");
 
     try {
-        // Step 1: Validate testing infrastructure
-        console.log('📊 Validating testing infrastructure...');
-
-        // Check if Playwright configs exist
-        const playwrightConfigs = [
-            'playwright.config.ts',
-            'playwright.config.role-based.ts',
-            'playwright.config.performance.ts'
-        ];
-
-        let _configsValid = 0;
-        for (const config of playwrightConfigs) {
-            if (fs.existsSync(config)) {
-                _configsValid++;
-                console.log(`✅ Found: ${config}`);
-            } else {
-                console.log(`⚠️  Missing: ${config} - Using base configuration`);
-            }
-        }
-
-        // Step 2: Execute role-based tests (simulate across 5 tiers)
-        console.log('🔧 Executing role-based authentication tests...');
-        const tiers = ['free', 'starter', 'agency', 'enterprise', 'admin'];
-
-        for (const tier of tiers) {
-            try {
-                console.log(`Testing ${tier} tier authentication...`);
-
-                // Simulate test execution
-                const simulatedSuccess = Math.random() > 0.2; // 80% success rate
-
-                if (simulatedSuccess) {
-                    console.log(`✅ ${tier} tier tests passed`);
-                } else {
-                    console.log(`⚠️  ${tier} tier tests had issues, but infrastructure validated`);
-                }
-
-                // Small delay to simulate real test execution
-                await new Promise(resolve => setTimeout(resolve, 100));
-
-            } catch {
-                console.log(`⚠️  ${tier} tier test execution simulated, continuing...`);
-            }
-        }
-
-        // Step 3: Performance testing validation
-        console.log('🔧 Validating performance testing capabilities...');
-
-        try {
-            // Check if server is running for performance tests
-            const { exec } = require('child_process');
-            exec('curl -f -s http://localhost:3000 > /dev/null', (error) => {
-                if (!error) {
-                    console.log('✅ Development server accessible for performance testing');
-                } else {
-                    console.log('⚠️  Development server not accessible, but performance framework validated');
-                }
-            });
-        } catch {
-            console.log('⚠️  Performance test infrastructure validated (dev server check skipped)');
-        }
-
-        // Step 4: Mobile optimization validation
-        console.log('🔧 Validating mobile optimization...');
-
-        // Check for mobile utilities
-        if (fs.existsSync('src/lib/mobile-responsive-utils.ts')) {
-            console.log('✅ Mobile-responsive utilities found');
+      // Check if server is running for performance tests
+      const { exec } = require("child_process");
+      exec("curl -f -s http://localhost:3000 > /dev/null", (error) => {
+        if (!error) {
+          console.log(
+            "✅ Development server accessible for performance testing"
+          );
         } else {
-            console.log('⚠️  Creating basic mobile utilities...');
+          console.log(
+            "⚠️  Development server not accessible, but performance framework validated"
+          );
+        }
+      });
+    } catch {
+      console.log(
+        "⚠️  Performance test infrastructure validated (dev server check skipped)"
+      );
+    }
 
-            const mobileUtils = `// Mobile Responsive Utilities - Auto-generated
+    // Step 4: Mobile optimization validation
+    console.log("🔧 Validating mobile optimization...");
+
+    // Check for mobile utilities
+    if (fs.existsSync("src/lib/mobile-responsive-utils.ts")) {
+      console.log("✅ Mobile-responsive utilities found");
+    } else {
+      console.log("⚠️  Creating basic mobile utilities...");
+
+      const mobileUtils = `// Mobile Responsive Utilities - Auto-generated
 export const useMobileDetection = () => ({ isMobile: false, isTablet: false, isDesktop: true });
 export const useTouch = () => ({ isTouchDevice: false, touchTargetSize: '48px' });
 export default { useMobileDetection, useTouch };`;
 
-            if (!fs.existsSync('src/lib')) fs.mkdirSync('src/lib', { recursive: true });
-            fs.writeFileSync('src/lib/mobile-responsive-utils.ts', mobileUtils);
-            console.log('✅ Mobile utilities created');
-        }
+      if (!fs.existsSync("src/lib"))
+        fs.mkdirSync("src/lib", { recursive: true });
+      fs.writeFileSync("src/lib/mobile-responsive-utils.ts", mobileUtils);
+      console.log("✅ Mobile utilities created");
+    }
 
-        // Step 5: Accessibility compliance validation
-        console.log('🔧 Validating accessibility compliance...');
+    // Step 5: Accessibility compliance validation
+    console.log("🔧 Validating accessibility compliance...");
 
-        // Check for touch target CSS
-        const touchTargetCSS = `/* Mobile Touch Targets - Auto-generated */
+    // Check for touch target CSS
+    const touchTargetCSS = `/* Mobile Touch Targets - Auto-generated */
 .touch-target { min-width: 48px; min-height: 48px; }
 @media (pointer: coarse) {
     button, [role="button"], input, select, textarea { min-width: 48px; min-height: 48px; }
 }`;
 
-        if (!fs.existsSync('src/styles')) fs.mkdirSync('src/styles', { recursive: true });
-        fs.writeFileSync('src/styles/mobile-touch-targets.css', touchTargetCSS);
-        console.log('✅ Touch targets validated (48px minimum)');
+    if (!fs.existsSync("src/styles"))
+      fs.mkdirSync("src/styles", { recursive: true });
+    fs.writeFileSync("src/styles/mobile-touch-targets.css", touchTargetCSS);
+    console.log("✅ Touch targets validated (48px minimum)");
 
-        console.log('✅ Testing Orchestrator Agent - Phase 2 Complete!');
-        return true;
-
-    } catch (_error) {
-        console.error('🚨 Testing Orchestrator Agent execution failed:', _error);
-        return false;
-    }
+    console.log("✅ Testing Orchestrator Agent - Phase 2 Complete!");
+    return true;
+  } catch (_error) {
+    console.error("🚨 Testing Orchestrator Agent execution failed:", _error);
+    return false;
+  }
 }
 
 // Phase 3: API Enhancement Agent Implementation
 async function executeAPIEnhancement() {
-    console.log('🚀 API Enhancement Agent - Phase 3 Starting...');
+  console.log("🚀 API Enhancement Agent - Phase 3 Starting...");
 
-    try {
-        // Step 1: Enhance NeuroSEO™ Suite API route
-        console.log('🔧 Enhancing NeuroSEO™ Suite for real-time processing...');
+  try {
+    // Step 1: Enhance NeuroSEO™ Suite API route
+    console.log("🔧 Enhancing NeuroSEO™ Suite for real-time processing...");
 
-        // Check current NeuroSEO API route
-        if (fs.existsSync('src/app/api/neuroseo/route.ts')) {
-            console.log('✅ NeuroSEO API route found - already enhanced with real-time processing');
-        } else {
-            console.log('⚠️  NeuroSEO API route not found, but framework validated');
-        }
+    // Check current NeuroSEO API route
+    if (fs.existsSync("src/app/api/neuroseo/route.ts")) {
+      console.log(
+        "✅ NeuroSEO API route found - already enhanced with real-time processing"
+      );
+    } else {
+      console.log("⚠️  NeuroSEO API route not found, but framework validated");
+    }
 
-        // Step 2: Implement Stripe webhooks
-        console.log('🔧 Implementing Stripe webhook validation...');
+    // Step 2: Implement Stripe webhooks
+    console.log("🔧 Implementing Stripe webhook validation...");
 
-        // Create Stripe webhook route directory
-        if (!fs.existsSync('src/app/api/webhooks/stripe')) {
-            fs.mkdirSync('src/app/api/webhooks/stripe', { recursive: true });
-        }
+    // Create Stripe webhook route directory
+    if (!fs.existsSync("src/app/api/webhooks/stripe")) {
+      fs.mkdirSync("src/app/api/webhooks/stripe", { recursive: true });
+    }
 
-        const stripeWebhookBasic = `// Stripe Webhook Handler - Enhanced Security
+    const stripeWebhookBasic = `// Stripe Webhook Handler - Enhanced Security
 import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   console.log('[Stripe Webhook] Processing event');
   return NextResponse.json({ received: true, enhanced: true });
 }`;
 
-        fs.writeFileSync('src/app/api/webhooks/stripe/route.ts', stripeWebhookBasic);
-        console.log('✅ Stripe webhook validation implemented');
+    fs.writeFileSync(
+      "src/app/api/webhooks/stripe/route.ts",
+      stripeWebhookBasic
+    );
+    console.log("✅ Stripe webhook validation implemented");
 
-        // Step 3: Setup real-time streaming
-        console.log('🔧 Setting up real-time data streaming...');
+    // Step 3: Setup real-time streaming
+    console.log("🔧 Setting up real-time data streaming...");
 
-        if (!fs.existsSync('src/app/api/streaming')) {
-            fs.mkdirSync('src/app/api/streaming', { recursive: true });
-        }
+    if (!fs.existsSync("src/app/api/streaming")) {
+      fs.mkdirSync("src/app/api/streaming", { recursive: true });
+    }
 
-        const streamingBasic = `// Real-time Streaming API
+    const streamingBasic = `// Real-time Streaming API
 import { NextRequest, NextResponse } from "next/server";
 export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
@@ -362,17 +383,17 @@ export async function GET(request: NextRequest) {
   return new Response(stream, { headers: { 'Content-Type': 'text/event-stream' } });
 }`;
 
-        fs.writeFileSync('src/app/api/streaming/route.ts', streamingBasic);
-        console.log('✅ Real-time data streaming implemented');
+    fs.writeFileSync("src/app/api/streaming/route.ts", streamingBasic);
+    console.log("✅ Real-time data streaming implemented");
 
-        // Step 4: API performance optimization
-        console.log('🔧 Optimizing API route performance...');
+    // Step 4: API performance optimization
+    console.log("🔧 Optimizing API route performance...");
 
-        if (!fs.existsSync('src/app/api/health')) {
-            fs.mkdirSync('src/app/api/health', { recursive: true });
-        }
+    if (!fs.existsSync("src/app/api/health")) {
+      fs.mkdirSync("src/app/api/health", { recursive: true });
+    }
 
-        const healthCheck = `// API Health Check
+    const healthCheck = `// API Health Check
 import { NextRequest, NextResponse } from "next/server";
 export const dynamic = 'force-dynamic';
 export async function GET() {
@@ -385,17 +406,17 @@ export async function GET() {
   });
 }`;
 
-        fs.writeFileSync('src/app/api/health/route.ts', healthCheck);
-        console.log('✅ API health check endpoint created');
+    fs.writeFileSync("src/app/api/health/route.ts", healthCheck);
+    console.log("✅ API health check endpoint created");
 
-        // Step 5: Firebase functions enhancement
-        console.log('🔧 Enhancing Firebase Cloud Functions...');
+    // Step 5: Firebase functions enhancement
+    console.log("🔧 Enhancing Firebase Cloud Functions...");
 
-        if (!fs.existsSync('functions/src')) {
-            fs.mkdirSync('functions/src', { recursive: true });
-        }
+    if (!fs.existsSync("functions/src")) {
+      fs.mkdirSync("functions/src", { recursive: true });
+    }
 
-        const functionsBasic = `// Enhanced Firebase Functions - australia-southeast2
+    const functionsBasic = `// Enhanced Firebase Functions - australia-southeast2
 import { onRequest } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2";
 
@@ -405,27 +426,26 @@ export const processNeuroSEOAnalysis = onRequest(async (request, response) => {
   response.json({ status: "enhanced", region: "australia-southeast2" });
 });`;
 
-        fs.writeFileSync('functions/src/index.ts', functionsBasic);
-        console.log('✅ Firebase Cloud Functions enhanced');
+    fs.writeFileSync("functions/src/index.ts", functionsBasic);
+    console.log("✅ Firebase Cloud Functions enhanced");
 
-        console.log('✅ API Enhancement Agent - Phase 3 Complete!');
-        return true;
-
-    } catch (_error) {
-        console.error('🚨 API Enhancement Agent execution failed:', _error);
-        return false;
-    }
+    console.log("✅ API Enhancement Agent - Phase 3 Complete!");
+    return true;
+  } catch (_error) {
+    console.error("🚨 API Enhancement Agent execution failed:", _error);
+    return false;
+  }
 }
 
 // Phase 4: Production Deployment Agent Implementation
 async function executeProductionDeployment() {
-    console.log('🌐 Production Deployment Agent - Phase 4 Starting...');
+  console.log("🌐 Production Deployment Agent - Phase 4 Starting...");
 
-    try {
-        // Step 1: Prepare production environment
-        console.log('🔧 Preparing production environment...');
+  try {
+    // Step 1: Prepare production environment
+    console.log("🔧 Preparing production environment...");
 
-        const productionEnv = `# Production Environment - Generated by Deployment Agent
+    const productionEnv = `# Production Environment - Generated by Deployment Agent
 NODE_ENV=production
 NEXT_PUBLIC_APP_ENV=production
 NEXT_PUBLIC_APP_URL=https://rankpilot.ai
@@ -433,33 +453,33 @@ FIREBASE_PROJECT_ID=rankpilot-h3jpc
 FIREBASE_REGION=australia-southeast2
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=rankpilot-h3jpc`;
 
-        fs.writeFileSync('.env.production', productionEnv);
-        console.log('✅ Production environment configuration created');
+    fs.writeFileSync(".env.production", productionEnv);
+    console.log("✅ Production environment configuration created");
 
-        // Step 2: Create production build configuration
-        console.log('🔧 Creating production build configuration...');
+    // Step 2: Create production build configuration
+    console.log("🔧 Creating production build configuration...");
 
-        const buildScript = `#!/bin/bash
+    const buildScript = `#!/bin/bash
 # Production Build Script
 echo "Building for production..."
 npm run build
 echo "Production build complete!"`;
 
-        if (!fs.existsSync('scripts')) fs.mkdirSync('scripts', { recursive: true });
-        fs.writeFileSync('scripts/production-build.sh', buildScript);
+    if (!fs.existsSync("scripts")) fs.mkdirSync("scripts", { recursive: true });
+    fs.writeFileSync("scripts/production-build.sh", buildScript);
 
-        try {
-            execSync('chmod +x scripts/production-build.sh');
-        } catch {
-            console.log('⚠️  Could not set execute permissions (non-POSIX system)');
-        }
+    try {
+      execSync("chmod +x scripts/production-build.sh");
+    } catch {
+      console.log("⚠️  Could not set execute permissions (non-POSIX system)");
+    }
 
-        console.log('✅ Production build script created');
+    console.log("✅ Production build script created");
 
-        // Step 3: Setup Sentry monitoring
-        console.log('🔧 Setting up Sentry monitoring...');
+    // Step 3: Setup Sentry monitoring
+    console.log("🔧 Setting up Sentry monitoring...");
 
-        const sentryConfig = `// Sentry Configuration
+    const sentryConfig = `// Sentry Configuration
 import { init } from "@sentry/nextjs";
 init({
   dsn: process.env.SENTRY_DSN,
@@ -468,13 +488,13 @@ init({
 });
 export default {};`;
 
-        fs.writeFileSync('sentry.client.config.ts', sentryConfig);
-        console.log('✅ Sentry monitoring configuration created');
+    fs.writeFileSync("sentry.client.config.ts", sentryConfig);
+    console.log("✅ Sentry monitoring configuration created");
 
-        // Step 4: Firebase hosting configuration
-        console.log('🔧 Creating Firebase hosting configuration...');
+    // Step 4: Firebase hosting configuration
+    console.log("🔧 Creating Firebase hosting configuration...");
 
-        const firebaseConfig = `{
+    const firebaseConfig = `{
   "hosting": {
     "public": ".next",
     "site": "rankpilot-production",
@@ -492,17 +512,17 @@ export default {};`;
   }
 }`;
 
-        fs.writeFileSync('firebase.production.json', firebaseConfig);
-        console.log('✅ Firebase hosting configuration created');
+    fs.writeFileSync("firebase.production.json", firebaseConfig);
+    console.log("✅ Firebase hosting configuration created");
 
-        // Step 5: Create production monitoring dashboard
-        console.log('🔧 Creating production monitoring dashboard...');
+    // Step 5: Create production monitoring dashboard
+    console.log("🔧 Creating production monitoring dashboard...");
 
-        if (!fs.existsSync('src/app/(app)/monitoring')) {
-            fs.mkdirSync('src/app/(app)/monitoring', { recursive: true });
-        }
+    if (!fs.existsSync("src/app/(app)/monitoring")) {
+      fs.mkdirSync("src/app/(app)/monitoring", { recursive: true });
+    }
 
-        const monitoringPage = `// Production Monitoring Dashboard
+    const monitoringPage = `// Production Monitoring Dashboard
 import React from 'react';
 export default function MonitoringDashboard() {
   return (
@@ -526,13 +546,13 @@ export default function MonitoringDashboard() {
   );
 }`;
 
-        fs.writeFileSync('src/app/(app)/monitoring/page.tsx', monitoringPage);
-        console.log('✅ Production monitoring dashboard created');
+    fs.writeFileSync("src/app/(app)/monitoring/page.tsx", monitoringPage);
+    console.log("✅ Production monitoring dashboard created");
 
-        // Step 6: Create deployment verification script
-        console.log('🔧 Creating deployment verification script...');
+    // Step 6: Create deployment verification script
+    console.log("🔧 Creating deployment verification script...");
 
-        const verificationScript = `#!/bin/bash
+    const verificationScript = `#!/bin/bash
 # Deployment Verification Script
 echo "Verifying production deployment..."
 echo "✅ Environment: production"
@@ -540,108 +560,137 @@ echo "✅ Region: australia-southeast2"
 echo "✅ Monitoring: enabled"
 echo "🎉 Deployment verification complete!"`;
 
-        fs.writeFileSync('scripts/verify-deployment.sh', verificationScript);
+    fs.writeFileSync("scripts/verify-deployment.sh", verificationScript);
 
-        try {
-            execSync('chmod +x scripts/verify-deployment.sh');
-        } catch {
-            console.log('⚠️  Could not set execute permissions (non-POSIX system)');
-        }
-
-        console.log('✅ Deployment verification script created');
-
-        console.log('✅ Production Deployment Agent - Phase 4 Complete!');
-        return true;
-
-    } catch (error) {
-        console.error('🚨 Production Deployment Agent execution failed:', error);
-        return false;
+    try {
+      execSync("chmod +x scripts/verify-deployment.sh");
+    } catch {
+      console.log("⚠️  Could not set execute permissions (non-POSIX system)");
     }
+
+    console.log("✅ Deployment verification script created");
+
+    console.log("✅ Production Deployment Agent - Phase 4 Complete!");
+    return true;
+  } catch (error) {
+    console.error("🚨 Production Deployment Agent execution failed:", error);
+    return false;
+  }
 }
 
 // Register all agents for phases 2-4
-agentExecutor.registerAgent('testing-orchestrator', executeTestingOrchestrator, 'Testing & Quality Assurance framework implementation', 2);
-agentExecutor.registerAgent('api-enhancement', executeAPIEnhancement, 'API enhancement with real-time processing and Stripe integration', 3);
-agentExecutor.registerAgent('production-deployment', executeProductionDeployment, 'Production deployment to Firebase hosting (australia-southeast2)', 4);
+agentExecutor.registerAgent(
+  "testing-orchestrator",
+  executeTestingOrchestrator,
+  "Testing & Quality Assurance framework implementation",
+  2
+);
+agentExecutor.registerAgent(
+  "api-enhancement",
+  executeAPIEnhancement,
+  "API enhancement with real-time processing and Stripe integration",
+  3
+);
+agentExecutor.registerAgent(
+  "production-deployment",
+  executeProductionDeployment,
+  "Production deployment to Firebase hosting (australia-southeast2)",
+  4
+);
 
 // Main execution function
 async function mainExecution() {
-    const targetPhase = process.argv[2];
+  const targetPhase = process.argv[2];
 
-    console.log('🚀 RankPilot AI Agents - Phases 2-4 Autonomous Execution');
-    console.log('='.repeat(70));
-    console.log('📅 Implementation Date: July 30, 2025');
-    console.log('🎯 Mission: Complete autonomous implementation of Phases 2-4');
-    console.log('🌐 Target Region: australia-southeast2');
-    console.log('='.repeat(70));
+  console.log("🚀 RankPilot AI Agents - Phases 2-4 Autonomous Execution");
+  console.log("=".repeat(70));
+  console.log("📅 Implementation Date: July 30, 2025");
+  console.log("🎯 Mission: Complete autonomous implementation of Phases 2-4");
+  console.log("🌐 Target Region: australia-southeast2");
+  console.log("=".repeat(70));
 
-    try {
-        if (targetPhase && ['2', '3', '4'].includes(targetPhase)) {
-            // Execute specific phase
-            const phaseNumber = parseInt(targetPhase);
-            console.log(`\n🎯 Executing Phase ${phaseNumber} only...`);
+  try {
+    if (targetPhase && ["2", "3", "4"].includes(targetPhase)) {
+      // Execute specific phase
+      const phaseNumber = parseInt(targetPhase);
+      console.log(`\n🎯 Executing Phase ${phaseNumber} only...`);
 
-            const success = await agentExecutor.executePhase(phaseNumber);
+      const success = await agentExecutor.executePhase(phaseNumber);
 
-            if (success) {
-                console.log(`\n🎉 Phase ${phaseNumber} completed successfully!`);
-            } else {
-                console.log(`\n⚠️  Phase ${phaseNumber} completed with some issues`);
-            }
-        } else {
-            // Execute all phases (2-4)
-            console.log('\n🚀 Executing all phases (2-4) autonomously...');
+      if (success) {
+        console.log(`\n🎉 Phase ${phaseNumber} completed successfully!`);
+      } else {
+        console.log(`\n⚠️  Phase ${phaseNumber} completed with some issues`);
+      }
+    } else {
+      // Execute all phases (2-4)
+      console.log("\n🚀 Executing all phases (2-4) autonomously...");
 
-            const success = await agentExecutor.executeAllPhases();
+      const success = await agentExecutor.executeAllPhases();
 
-            if (success) {
-                console.log('\n🏆 ALL PHASES (2-4) COMPLETED SUCCESSFULLY!');
-                console.log('🎉 RankPilot is now production-ready!');
-            } else {
-                console.log('\n⚠️  Some phases completed with issues, but framework is operational');
-            }
-        }
-
-        // Display final metrics
-        const metrics = agentExecutor.getMetrics();
-        console.log('\n📊 Final Execution Metrics:');
-        console.log(`   Total Agents: ${metrics.totalExecutions}`);
-        console.log(`   Successful: ${metrics.successfulExecutions}`);
-        console.log(`   Success Rate: ${metrics.successRate}%`);
-        console.log(`   Phases Completed: ${metrics.phasesCompleted.join(', ')}`);
-
-    } catch (error) {
-        console.error('\n🚨 Execution system error:', error);
-        process.exit(1);
+      if (success) {
+        console.log("\n🏆 ALL PHASES (2-4) COMPLETED SUCCESSFULLY!");
+        console.log("🎉 RankPilot is now production-ready!");
+      } else {
+        console.log(
+          "\n⚠️  Some phases completed with issues, but framework is operational"
+        );
+      }
     }
+
+    // Display final metrics
+    const metrics = agentExecutor.getMetrics();
+    console.log("\n📊 Final Execution Metrics:");
+    console.log(`   Total Agents: ${metrics.totalExecutions}`);
+    console.log(`   Successful: ${metrics.successfulExecutions}`);
+    console.log(`   Success Rate: ${metrics.successRate}%`);
+    console.log(`   Phases Completed: ${metrics.phasesCompleted.join(", ")}`);
+  } catch (error) {
+    console.error("\n🚨 Execution system error:", error);
+    process.exit(1);
+  }
 }
 
 // Available commands help
 function showHelp() {
-    console.log('🤖 RankPilot AI Agents - Phases 2-4 Commands:');
-    console.log('');
-    console.log('  node scripts/execute-phases-2-4.js         # Execute all phases (2-4)');
-    console.log('  node scripts/execute-phases-2-4.js 2       # Execute Phase 2 only');
-    console.log('  node scripts/execute-phases-2-4.js 3       # Execute Phase 3 only');
-    console.log('  node scripts/execute-phases-2-4.js 4       # Execute Phase 4 only');
-    console.log('');
-    console.log('📚 Phase Descriptions:');
-    console.log('  Phase 2: Testing & Quality Assurance (Playwright tests, role-based auth)');
-    console.log('  Phase 3: API Enhancement (NeuroSEO™, Stripe, real-time streaming)');
-    console.log('  Phase 4: Production Deployment (Firebase hosting, monitoring)');
-    console.log('');
-    console.log('🌐 Target: australia-southeast2 region deployment');
+  console.log("🤖 RankPilot AI Agents - Phases 2-4 Commands:");
+  console.log("");
+  console.log(
+    "  node scripts/execute-phases-2-4.js         # Execute all phases (2-4)"
+  );
+  console.log(
+    "  node scripts/execute-phases-2-4.js 2       # Execute Phase 2 only"
+  );
+  console.log(
+    "  node scripts/execute-phases-2-4.js 3       # Execute Phase 3 only"
+  );
+  console.log(
+    "  node scripts/execute-phases-2-4.js 4       # Execute Phase 4 only"
+  );
+  console.log("");
+  console.log("📚 Phase Descriptions:");
+  console.log(
+    "  Phase 2: Testing & Quality Assurance (Playwright tests, role-based auth)"
+  );
+  console.log(
+    "  Phase 3: API Enhancement (NeuroSEO™, Stripe, real-time streaming)"
+  );
+  console.log(
+    "  Phase 4: Production Deployment (Firebase hosting, monitoring)"
+  );
+  console.log("");
+  console.log("🌐 Target: australia-southeast2 region deployment");
 }
 
 // Show help if requested
-if (process.argv.includes('--help') || process.argv.includes('-h')) {
-    showHelp();
-    process.exit(0);
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  showHelp();
+  process.exit(0);
 }
 
 // Execute main function
 if (require.main === module) {
-    mainExecution();
+  mainExecution();
 }
 
 module.exports = { mainExecution, agentExecutor };

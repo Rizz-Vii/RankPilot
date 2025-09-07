@@ -91,10 +91,7 @@ export default function SeoAuditForm({
   }
 
   return (
-    <EnhancedCard
-      className="h-full"
-      variant="elevated"
-    >
+    <EnhancedCard className="h-full" variant="elevated">
       <EnhancedCardHeader>
         <EnhancedCardTitle className="font-headline flex items-center gap-2">
           <Gauge className="h-5 w-5 text-primary" />

@@ -1,34 +1,40 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 // Canonical Stripe webhook is handled by Firebase Cloud Functions (functions/src/stripe-webhook.ts).
 // This Next.js route stays disabled by default to prevent duplicate processing.
 // If STRIPE_WEBHOOK_FORWARD_URL is set, we forward the request to the canonical endpoint.
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
-    const forwardUrl = process.env.STRIPE_WEBHOOK_FORWARD_URL;
-    if (!forwardUrl) {
-        return NextResponse.json({ error: 'Stripe webhook handled by Cloud Functions' }, { status: 410 });
-    }
-    try {
-        const body = await request.text();
-        const signature = request.headers.get('stripe-signature') || '';
-        const contentType = request.headers.get('content-type') || 'application/json';
-        const res = await fetch(forwardUrl, {
-            method: 'POST',
-            headers: {
-                'stripe-signature': signature,
-                'content-type': contentType,
-            },
-            body,
-        });
-        const text = await res.text();
-        return new NextResponse(text, {
-            status: res.status,
-            headers: { 'content-type': res.headers.get('content-type') || 'application/json' },
-        });
-    } catch {
-        return NextResponse.json({ error: 'Forwarding failed' }, { status: 502 });
-    }
+  const forwardUrl = process.env.STRIPE_WEBHOOK_FORWARD_URL;
+  if (!forwardUrl) {
+    return NextResponse.json(
+      { error: "Stripe webhook handled by Cloud Functions" },
+      { status: 410 }
+    );
+  }
+  try {
+    const body = await request.text();
+    const signature = request.headers.get("stripe-signature") || "";
+    const contentType =
+      request.headers.get("content-type") || "application/json";
+    const res = await fetch(forwardUrl, {
+      method: "POST",
+      headers: {
+        "stripe-signature": signature,
+        "content-type": contentType,
+      },
+      body,
+    });
+    const text = await res.text();
+    return new NextResponse(text, {
+      status: res.status,
+      headers: {
+        "content-type": res.headers.get("content-type") || "application/json",
+      },
+    });
+  } catch {
+    return NextResponse.json({ error: "Forwarding failed" }, { status: 502 });
+  }
 }
 /*
 import { adminDb } from '@/lib/firebase-admin';

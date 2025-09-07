@@ -26,9 +26,7 @@ interface FeatureGateProps {
 /**
  * Helper to produce a human friendly tier label.
  */
-function getTierLabel(
-  tier?: FeatureGateProps["requiredTier"]
-): string {
+function getTierLabel(tier?: FeatureGateProps["requiredTier"]): string {
   switch (tier) {
     case "starter":
       return "Starter";
@@ -56,7 +54,8 @@ export function FeatureGate({
   showUpgrade = true,
   adminOnly = false,
 }: FeatureGateProps): JSX.Element | null {
-  const { subscription, canUseFeature, userAccess, loading } = useSubscription();
+  const { subscription, canUseFeature, userAccess, loading } =
+    useSubscription();
 
   // Test bypass: if window.__TEST_MODE__ true, always render children (Playwright deterministic bypass)
   const w =
@@ -80,7 +79,7 @@ export function FeatureGate({
     ? (() => {
         const effectiveTier = (userAccess?.tier ||
           subscription?.tier ||
-          "free") as typeof TIER_HIERARCHY[number];
+          "free") as (typeof TIER_HIERARCHY)[number];
         const userTierIndex = TIER_HIERARCHY.indexOf(effectiveTier);
         const requiredTierIndex = TIER_HIERARCHY.indexOf(requiredTier);
         if (userTierIndex === -1 || requiredTierIndex === -1) return false;
@@ -106,16 +105,18 @@ export function FeatureGate({
   const tierLabel = getTierLabel(requiredTier);
 
   return (
-    <Card data-testid="upgrade-banner" className="border-dashed border-2 border-muted-foreground/25">
+    <Card
+      data-testid="upgrade-banner"
+      className="border-dashed border-2 border-muted-foreground/25"
+    >
       <CardContent className="flex flex-col items-center justify-center py-8 text-center">
         <div className="rounded-full bg-muted p-3 mb-4">
           <Lock className="h-6 w-6 text-muted-foreground" />
         </div>
-        <CardTitle className="mb-2">
-          {tierLabel} Feature
-        </CardTitle>
+        <CardTitle className="mb-2">{tierLabel} Feature</CardTitle>
         <CardDescription className="mb-4 max-w-sm">
-          This feature is available with the {tierLabel} plan. Upgrade to unlock advanced capabilities.
+          This feature is available with the {tierLabel} plan. Upgrade to unlock
+          advanced capabilities.
         </CardDescription>
         <Link href="/settings/billing">
           <Button>
@@ -152,7 +153,10 @@ export function UsageLimit({
 
   if (atLimit) {
     return (
-      <Card data-testid="upgrade-banner" className="border-warning/30 bg-warning/10">
+      <Card
+        data-testid="upgrade-banner"
+        className="border-warning/30 bg-warning/10"
+      >
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
             <Lock className="h-4 w-4 text-warning-foreground" />
@@ -161,7 +165,8 @@ export function UsageLimit({
             </span>
           </div>
           <p className="text-sm text-warning-foreground/80 mb-3">
-            You've reached your monthly limit for {humanizeUsageType(usageType)}. Upgrade your plan to continue using this feature.
+            You've reached your monthly limit for {humanizeUsageType(usageType)}
+            . Upgrade your plan to continue using this feature.
           </p>
           <Link href="/settings/billing">
             <Button
@@ -177,10 +182,17 @@ export function UsageLimit({
     );
   }
 
-  if (showWarning && usagePercentage >= warningThreshold && !subscription?.isUnlimited) {
+  if (
+    showWarning &&
+    usagePercentage >= warningThreshold &&
+    !subscription?.isUnlimited
+  ) {
     return (
       <div className="space-y-4">
-        <Card data-testid="upgrade-banner" className="border-warning/30 bg-warning/10">
+        <Card
+          data-testid="upgrade-banner"
+          className="border-warning/30 bg-warning/10"
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -188,7 +200,8 @@ export function UsageLimit({
                   Usage Warning: {Math.round(usagePercentage)}% used
                 </p>
                 <p className="text-xs text-warning-foreground/80">
-                  {remaining} {humanizeUsageType(usageType)} remaining this month
+                  {remaining} {humanizeUsageType(usageType)} remaining this
+                  month
                 </p>
               </div>
               <Link href="/settings/billing">
@@ -238,7 +251,8 @@ export function withSubscriptionAccess<P extends object>(
 
     const userIndex = TIER_HIERARCHY.indexOf(userTier);
     const requiredIndex = TIER_HIERARCHY.indexOf(requiredTier);
-    const hasAccess = userIndex !== -1 && requiredIndex !== -1 && userIndex >= requiredIndex;
+    const hasAccess =
+      userIndex !== -1 && requiredIndex !== -1 && userIndex >= requiredIndex;
 
     if (!hasAccess) {
       return (

@@ -5,7 +5,14 @@ import nodemailer from "nodemailer";
 // Resolve theme-like colors to hex fallbacks for email clients (no CSS vars support)
 const emailColorPalette = () => {
   // Fallback RGBs tuned to brand tokens
-  const hex = (r: number, g: number, b: number) => `#${[r, g, b].map(n => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')).join('')}`;
+  const hex = (r: number, g: number, b: number) =>
+    `#${[r, g, b]
+      .map((n) =>
+        Math.max(0, Math.min(255, Math.round(n)))
+          .toString(16)
+          .padStart(2, "0")
+      )
+      .join("")}`;
   return {
     primary500: hex(79, 70, 229),
     primary600: hex(67, 56, 202),
@@ -90,8 +97,9 @@ const getReceiptEmailTemplate = (data: {
           </div>
 
             <h3>Your ${data.plan} Features Include:</h3>
-            ${data.plan === "Starter"
-      ? `
+            ${
+              data.plan === "Starter"
+                ? `
               <div class="feature-item">
                 <span class="feature-icon">📊</span>
                 <span>50 Link Analyses per month</span>
@@ -105,8 +113,8 @@ const getReceiptEmailTemplate = (data: {
                 <span>Email Support</span>
               </div>
             `
-      : data.plan === "Agency"
-        ? `
+                : data.plan === "Agency"
+                  ? `
               <div class="feature-item">
                 <span class="feature-icon">♾️</span>
                 <span>Unlimited Link Analyses</span>
@@ -124,8 +132,8 @@ const getReceiptEmailTemplate = (data: {
                 <span>Custom Integrations</span>
               </div>
             `
-        : ""
-    }
+                  : ""
+            }
           ${data.invoiceUrl ? `<a href="${data.invoiceUrl}" class="btn" style="background:${C.primary500};color:${C.primaryFg}">Download Invoice</a>` : ""}
 
           <h3>What's Next?</h3>
@@ -186,8 +194,11 @@ const getWelcomeEmailTemplate = (data: {
 
           <div class="feature-list">
             <h3>Your ${data.plan} Features Include:</h3>
-            ${data.plan === "Agency" || data.plan === "Starter" || data.plan === "Enterprise"
-      ? `
+            ${
+              data.plan === "Agency" ||
+              data.plan === "Starter" ||
+              data.plan === "Enterprise"
+                ? `
               <div class="feature-item">
                 <span class="feature-icon">📊</span>
                 <span>100 Link Analyses per month</span>
@@ -205,8 +216,8 @@ const getWelcomeEmailTemplate = (data: {
                 <span>API Access</span>
               </div>
             `
-      : data.plan === "Enterprise"
-        ? `
+                : data.plan === "Enterprise"
+                  ? `
               <div class="feature-item">
                 <span class="feature-icon">♾️</span>
                 <span>Unlimited Link Analyses</span>
@@ -224,7 +235,7 @@ const getWelcomeEmailTemplate = (data: {
                 <span>Custom Integrations</span>
               </div>
             `
-        : `
+                  : `
               <div class="feature-item">
                 <span class="feature-icon">📈</span>
                 <span>10 Link Analyses per month</span>
@@ -238,7 +249,7 @@ const getWelcomeEmailTemplate = (data: {
                 <span>Email Support</span>
               </div>
             `
-    }
+            }
           </div>
 
           <h3>Getting Started Guide:</h3>

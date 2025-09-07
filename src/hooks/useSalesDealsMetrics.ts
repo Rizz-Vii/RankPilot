@@ -10,7 +10,14 @@
 
 "use client";
 import { useEffect, useState, useContext } from "react";
-import { collection, query, where, orderBy, getDocs, limit } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  limit,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { AuthContext } from "@/context/AuthContext";
 
@@ -40,7 +47,9 @@ interface UseSalesDealsMetricsResult {
 }
 
 export function useSalesDealsMetrics(): UseSalesDealsMetricsResult {
-  const authContext = useContext(AuthContext) as unknown as { user?: { uid?: string } } | undefined;
+  const authContext = useContext(AuthContext) as unknown as
+    | { user?: { uid?: string } }
+    | undefined;
   const user = authContext?.user;
   const [state, setState] = useState<UseSalesDealsMetricsResult>({
     loading: true,
@@ -69,7 +78,10 @@ export function useSalesDealsMetrics(): UseSalesDealsMetricsResult {
         const snap = await getDocs(dealsQ);
         if (isCancelled) return;
 
-        const deals = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as DealDoc[];
+        const deals = snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as Record<string, unknown>),
+        })) as DealDoc[];
         if (!deals.length) {
           setState({ loading: false, kpis: [], dealsSample: [] });
           return;
@@ -85,7 +97,8 @@ export function useSalesDealsMetrics(): UseSalesDealsMetricsResult {
         const last = periods[periods.length - 1];
         const prev = periods[periods.length - 2];
 
-        const sum = (arr: DealDoc[], f: (x: DealDoc) => number): number => arr.reduce((s, x) => s + f(x), 0);
+        const sum = (arr: DealDoc[], f: (x: DealDoc) => number): number =>
+          arr.reduce((s, x) => s + f(x), 0);
 
         const lastDeals = byPeriod[last] ?? [];
         const prevDeals = prev ? byPeriod[prev] : [];
@@ -94,25 +107,38 @@ export function useSalesDealsMetrics(): UseSalesDealsMetricsResult {
         const prevPipelineSafe = prevPipeline || 1;
 
         const closedWon = lastDeals.filter((d) => d.stage === "closed_won");
-        const winRate = lastDeals.length ? (closedWon.length / lastDeals.length) * 100 : 0;
+        const winRate = lastDeals.length
+          ? (closedWon.length / lastDeals.length) * 100
+          : 0;
 
         const stageAges = lastDeals
           .map((d) => {
-            const closed = d.closedAt instanceof Date ? d.closedAt : d.closedAt?.toDate?.() ?? new Date();
-            const created = d.createdAt instanceof Date ? d.createdAt : d.createdAt?.toDate?.() ?? new Date();
+            const closed =
+              d.closedAt instanceof Date
+                ? d.closedAt
+                : (d.closedAt?.toDate?.() ?? new Date());
+            const created =
+              d.createdAt instanceof Date
+                ? d.createdAt
+                : (d.createdAt?.toDate?.() ?? new Date());
             return closed.getTime() - created.getTime();
           })
           .filter((v) => !Number.isNaN(v));
 
-        const avgCycleDays = stageAges.length ? (stageAges.reduce((a, b) => a + b, 0) / stageAges.length) / 86400000 : 0;
+        const avgCycleDays = stageAges.length
+          ? stageAges.reduce((a, b) => a + b, 0) / stageAges.length / 86400000
+          : 0;
 
         const kpis: DealMetric[] = [
           {
             key: "pipeline",
             label: "Pipeline Value",
             value: pipelineValue,
-            delta: ((pipelineValue - prevPipelineSafe) / prevPipelineSafe) * 100,
-            trend: periods.map((p) => sum(byPeriod[p] ?? [], (d) => d.value ?? 0)),
+            delta:
+              ((pipelineValue - prevPipelineSafe) / prevPipelineSafe) * 100,
+            trend: periods.map((p) =>
+              sum(byPeriod[p] ?? [], (d) => d.value ?? 0)
+            ),
             intent: "success",
           },
           {
@@ -122,7 +148,11 @@ export function useSalesDealsMetrics(): UseSalesDealsMetricsResult {
             delta: 0,
             trend: periods.map((p) => {
               const arr = byPeriod[p] ?? [];
-              return (arr.filter((d) => d.stage === "closed_won").length / (arr.length || 1)) * 100;
+              return (
+                (arr.filter((d) => d.stage === "closed_won").length /
+                  (arr.length || 1)) *
+                100
+              );
             }),
             intent: winRate > 30 ? "success" : "warning",
           },
@@ -134,11 +164,19 @@ export function useSalesDealsMetrics(): UseSalesDealsMetricsResult {
             trend: periods.map((p) => {
               const arr = byPeriod[p] ?? [];
               const ages = arr.map((d) => {
-                const c = d.closedAt instanceof Date ? d.closedAt : d.closedAt?.toDate?.() ?? new Date();
-                const s = d.createdAt instanceof Date ? d.createdAt : d.createdAt?.toDate?.() ?? new Date();
+                const c =
+                  d.closedAt instanceof Date
+                    ? d.closedAt
+                    : (d.closedAt?.toDate?.() ?? new Date());
+                const s =
+                  d.createdAt instanceof Date
+                    ? d.createdAt
+                    : (d.createdAt?.toDate?.() ?? new Date());
                 return c.getTime() - s.getTime();
               });
-              return ages.length ? (ages.reduce((a, b) => a + b, 0) / ages.length) / 86400000 : 0;
+              return ages.length
+                ? ages.reduce((a, b) => a + b, 0) / ages.length / 86400000
+                : 0;
             }),
             intent: avgCycleDays < 15 ? "success" : "warning",
           },
@@ -148,7 +186,9 @@ export function useSalesDealsMetrics(): UseSalesDealsMetricsResult {
       } catch (e: unknown) {
         if (isCancelled) return;
         const msg =
-          e && typeof e === "object" && "message" in e ? String((e as { message?: unknown }).message) : "failed";
+          e && typeof e === "object" && "message" in e
+            ? String((e as { message?: unknown }).message)
+            : "failed";
         setState((s) => ({ ...s, loading: false, error: msg }));
       }
     };

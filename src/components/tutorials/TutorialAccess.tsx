@@ -78,7 +78,7 @@ export function TutorialAccess({
           tier: "agency",
         },
       ],
-  link_view: [
+      link_view: [
         {
           id: "la-1",
           title: "Link Analysis & Building",

@@ -142,15 +142,15 @@ export default function CookiesPage() {
         custom={1}
       >
         <div className="max-w-4xl mx-auto">
-  <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
+          <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold mb-4">What Are Cookies?</h2>
-        <p className="text-primary-foreground/80 mb-4">
+              <p className="text-primary-foreground/80 mb-4">
                 Cookies are small text files stored on your device when you
                 visit websites. They help websites remember your preferences,
                 keep you logged in, and provide personalized experiences.
               </p>
-        <p className="text-primary-foreground/80">
+              <p className="text-primary-foreground/80">
                 We use cookies responsibly and transparently, giving you control
                 over non-essential cookies while ensuring our website functions
                 properly for your SEO analysis needs.
@@ -203,7 +203,9 @@ export default function CookiesPage() {
                         {cookie.canDisable ? "Optional" : "Required"}
                       </div>
                     </div>
-                    <p className="text-muted-foreground">{cookie.description}</p>
+                    <p className="text-muted-foreground">
+                      {cookie.description}
+                    </p>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -282,7 +284,9 @@ export default function CookiesPage() {
                         className="border-b border-border hover:bg-muted/30"
                       >
                         <td className="p-4 font-medium">{item.purpose}</td>
-                        <td className="p-4 text-muted-foreground">{item.data}</td>
+                        <td className="p-4 text-muted-foreground">
+                          {item.data}
+                        </td>
                         <td className="p-4">
                           <span
                             className={`px-2 py-1 rounded text-xs font-medium ${item.legalBasis === "Consent" ? "bg-primary/10 text-primary" : "bg-warning/15 text-warning-foreground"}`}
@@ -290,7 +294,9 @@ export default function CookiesPage() {
                             {item.legalBasis}
                           </span>
                         </td>
-                        <td className="p-4 text-muted-foreground">{item.retention}</td>
+                        <td className="p-4 text-muted-foreground">
+                          {item.retention}
+                        </td>
                       </motion.tr>
                     ))}
                   </tbody>
@@ -362,7 +368,7 @@ export default function CookiesPage() {
         custom={13}
       >
         <div className="max-w-4xl mx-auto">
-            <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
+          <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl font-bold mb-6">
                 Questions About Cookies?
@@ -376,7 +382,11 @@ export default function CookiesPage() {
                   <Settings className="mr-2 h-5 w-5" />
                   Update Cookie Preferences
                 </Button>
-                <Button variant="outline" size="lg" className="border-transparent bg-white text-primary hover:bg-white/90">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-transparent bg-white text-primary hover:bg-white/90"
+                >
                   Contact Privacy Team
                 </Button>
               </div>

@@ -15,8 +15,16 @@ import { Separator } from "@/components/ui/separator";
 
 export function UserSubscriptionDebugger() {
   const { user, profile } = useAuth();
-  interface ProfileLike { email?: string; role?: string; subscriptionStatus?: string; subscriptionTier?: string; stripeCustomerId?: string; nextBillingDate?: { seconds?: number }; }
-  const prof: ProfileLike | null = profile && typeof profile === 'object' ? (profile as ProfileLike) : null;
+  interface ProfileLike {
+    email?: string;
+    role?: string;
+    subscriptionStatus?: string;
+    subscriptionTier?: string;
+    stripeCustomerId?: string;
+    nextBillingDate?: { seconds?: number };
+  }
+  const prof: ProfileLike | null =
+    profile && typeof profile === "object" ? (profile as ProfileLike) : null;
   const { subscription, loading } = useSubscription();
 
   if (!user) {
@@ -83,7 +91,11 @@ export function UserSubscriptionDebugger() {
                 <div>
                   Next Billing:{" "}
                   <code>
-                    {prof.nextBillingDate?.seconds ? new Date(prof.nextBillingDate.seconds * 1000).toLocaleDateString() : ''}
+                    {prof.nextBillingDate?.seconds
+                      ? new Date(
+                          prof.nextBillingDate.seconds * 1000
+                        ).toLocaleDateString()
+                      : ""}
                   </code>
                 </div>
               )}
@@ -145,7 +157,11 @@ export function UserSubscriptionDebugger() {
             <summary className="text-sm cursor-pointer">
               Click to expand
             </summary>
-            <pre className="text-xs bg-muted p-2 rounded mt-2 overflow-auto font-mono" aria-label="Raw user, profile, and subscription data" role="region">
+            <pre
+              className="text-xs bg-muted p-2 rounded mt-2 overflow-auto font-mono"
+              aria-label="Raw user, profile, and subscription data"
+              role="region"
+            >
               {JSON.stringify(
                 {
                   user: {

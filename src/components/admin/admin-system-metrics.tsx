@@ -74,22 +74,46 @@ export default function AdminSystemMetrics() {
     switch (metric) {
       case "errorRate":
         if (value < 1)
-          return <Badge className="bg-success/15 text-success-foreground">Healthy</Badge>;
+          return (
+            <Badge className="bg-success/15 text-success-foreground">
+              Healthy
+            </Badge>
+          );
         if (value < 3)
           return (
-            <Badge className="bg-warning/15 text-warning-foreground">Warning</Badge>
+            <Badge className="bg-warning/15 text-warning-foreground">
+              Warning
+            </Badge>
           );
-        return <Badge className="bg-destructive/15 text-destructive-foreground">Critical</Badge>;
+        return (
+          <Badge className="bg-destructive/15 text-destructive-foreground">
+            Critical
+          </Badge>
+        );
       case "responseTime":
         if (value < 100)
-          return <Badge className="bg-success/15 text-success-foreground">Fast</Badge>;
+          return (
+            <Badge className="bg-success/15 text-success-foreground">
+              Fast
+            </Badge>
+          );
         if (value < 300)
           return (
-            <Badge className="bg-warning/15 text-warning-foreground">Moderate</Badge>
+            <Badge className="bg-warning/15 text-warning-foreground">
+              Moderate
+            </Badge>
           );
-        return <Badge className="bg-destructive/15 text-destructive-foreground">Slow</Badge>;
+        return (
+          <Badge className="bg-destructive/15 text-destructive-foreground">
+            Slow
+          </Badge>
+        );
       default:
-  return <Badge className="bg-success/15 text-success-foreground">Healthy</Badge>;
+        return (
+          <Badge className="bg-success/15 text-success-foreground">
+            Healthy
+          </Badge>
+        );
     }
   };
 
@@ -124,7 +148,12 @@ export default function AdminSystemMetrics() {
             Last updated: {lastRefresh.toLocaleTimeString()}
           </p>
         </div>
-        <Button onClick={() => { void fetchSystemMetrics(); }} disabled={loading}>
+        <Button
+          onClick={() => {
+            void fetchSystemMetrics();
+          }}
+          disabled={loading}
+        >
           <RefreshCw
             className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
           />
@@ -224,7 +253,9 @@ export default function AdminSystemMetrics() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Connection Status</span>
-              <Badge className="bg-success/15 text-success-foreground">Connected</Badge>
+              <Badge className="bg-success/15 text-success-foreground">
+                Connected
+              </Badge>
             </div>
           </CardContent>
         </Card>
@@ -256,7 +287,9 @@ export default function AdminSystemMetrics() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">CDN Status</span>
-              <Badge className="bg-success/15 text-success-foreground">Optimized</Badge>
+              <Badge className="bg-success/15 text-success-foreground">
+                Optimized
+              </Badge>
             </div>
           </CardContent>
         </Card>
@@ -326,28 +359,36 @@ export default function AdminSystemMetrics() {
                 <CheckCircle className="h-5 w-5 text-success-foreground" />
                 <span className="font-medium">Authentication Service</span>
               </div>
-              <Badge className="bg-success/15 text-success-foreground">Healthy</Badge>
+              <Badge className="bg-success/15 text-success-foreground">
+                Healthy
+              </Badge>
             </div>
             <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg border border-success/20">
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-5 w-5 text-success-foreground" />
                 <span className="font-medium">Database Connection</span>
               </div>
-              <Badge className="bg-success/15 text-success-foreground">Healthy</Badge>
+              <Badge className="bg-success/15 text-success-foreground">
+                Healthy
+              </Badge>
             </div>
             <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg border border-success/20">
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-5 w-5 text-success-foreground" />
                 <span className="font-medium">File Storage</span>
               </div>
-              <Badge className="bg-success/15 text-success-foreground">Healthy</Badge>
+              <Badge className="bg-success/15 text-success-foreground">
+                Healthy
+              </Badge>
             </div>
             <div className="flex items-center justify-between p-3 bg-warning/10 rounded-lg border border-warning/20">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-warning-foreground" />
                 <span className="font-medium">External APIs</span>
               </div>
-              <Badge className="bg-warning/15 text-warning-foreground">Degraded</Badge>
+              <Badge className="bg-warning/15 text-warning-foreground">
+                Degraded
+              </Badge>
             </div>
           </div>
         </CardContent>

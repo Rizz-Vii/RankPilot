@@ -173,18 +173,18 @@ async function createProperUserSubscription(): Promise<void> {
   console.log("- Next billing: 3 months from today");
 }
 
- // Function to get the actual UID when user logs in
- export async function captureRealUID(email: string): Promise<string | null> {
-   try {
-     // This would be called from the frontend when the user actually logs in
-     // The frontend would then call this with the real UID
-     console.log(`🔍 Waiting for real UID for ${email}`);
-     return null;
-   } catch (error) {
-     console.error("Error capturing real UID:", error);
-     return null;
-   }
- }
+// Function to get the actual UID when user logs in
+export async function captureRealUID(email: string): Promise<string | null> {
+  try {
+    // This would be called from the frontend when the user actually logs in
+    // The frontend would then call this with the real UID
+    console.log(`🔍 Waiting for real UID for ${email}`);
+    return null;
+  } catch (error) {
+    console.error("Error capturing real UID:", error);
+    return null;
+  }
+}
 
 // Main execution
 if (require.main === module) {

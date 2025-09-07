@@ -9,16 +9,18 @@ interface KeyboardNavConfig {
 }
 
 export function useKeyboardNavigation(config: KeyboardNavConfig = {}): null {
-  const {
-    enableTabNavigation = true,
-    enableShortcuts = true,
-  } = config;
+  const { enableTabNavigation = true, enableShortcuts = true } = config;
 
   const { setLastFocusedElement, scrollToTop } = useUI();
 
   const handleTab = useCallback((e: KeyboardEvent) => {
     const target = e.target as HTMLElement | null;
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+    if (
+      target &&
+      (target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable)
+    ) {
       return; // don't trap tab inside regular typing contexts
     }
     if (e.key === "Tab") {
@@ -44,7 +46,12 @@ export function useKeyboardNavigation(config: KeyboardNavConfig = {}): null {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
         return; // ignore global shortcuts while typing
       }
       // Store last focused element

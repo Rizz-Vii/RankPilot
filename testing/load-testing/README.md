@@ -266,18 +266,21 @@ npx playwright test testing/load-testing/production-test-suite.spec.ts
 1. **Add to Firebase Functions Integration:**
 
 ```typescript
-test('New Function - API Contract', async ({ page }) => {
-    const testData = {
-        // Your test data structure
-    };
+test("New Function - API Contract", async ({ page }) => {
+  const testData = {
+    // Your test data structure
+  };
 
-    const response = await page.request.post(`${PRODUCTION_BASE_URL}/newFunction`, {
-        data: testData,
-        timeout: 30000
-    });
+  const response = await page.request.post(
+    `${PRODUCTION_BASE_URL}/newFunction`,
+    {
+      data: testData,
+      timeout: 30000,
+    }
+  );
 
-    console.log(`New Function Status: ${response.status()}`);
-    expect([200, 401]).toContain(response.status());
+  console.log(`New Function Status: ${response.status()}`);
+  expect([200, 401]).toContain(response.status());
 });
 ```
 
@@ -285,10 +288,10 @@ test('New Function - API Contract', async ({ page }) => {
 
 ```typescript
 const FUNCTIONS_TO_TEST = [
-    'performanceDashboard',
-    'realtimeMetrics',
-    // ... existing functions
-    'newFunction' // Add your new function
+  "performanceDashboard",
+  "realtimeMetrics",
+  // ... existing functions
+  "newFunction", // Add your new function
 ];
 ```
 
@@ -296,27 +299,27 @@ const FUNCTIONS_TO_TEST = [
 
 ```typescript
 // Update performance expectations
-test('Performance Function - Load Test', async ({ page }) => {
-    const response = await page.request.post(url, { data, timeout: 45000 });
-    const responseTime = Date.now() - startTime;
-    
-    // Adjust target as needed
-    expect(responseTime).toBeLessThan(20000); // 20 seconds instead of 15
+test("Performance Function - Load Test", async ({ page }) => {
+  const response = await page.request.post(url, { data, timeout: 45000 });
+  const responseTime = Date.now() - startTime;
+
+  // Adjust target as needed
+  expect(responseTime).toBeLessThan(20000); // 20 seconds instead of 15
 });
 ```
 
 ### Adding Security Tests
 
 ```typescript
-test('New Security Validation', async ({ page }) => {
-    const maliciousInput = "your-attack-vector";
-    
-    const response = await page.request.post(url, {
-        data: { input: maliciousInput }
-    });
-    
-    // Should reject malicious input
-    expect([400, 401, 403, 422]).toContain(response.status());
+test("New Security Validation", async ({ page }) => {
+  const maliciousInput = "your-attack-vector";
+
+  const response = await page.request.post(url, {
+    data: { input: maliciousInput },
+  });
+
+  // Should reject malicious input
+  expect([400, 401, 403, 422]).toContain(response.status());
 });
 ```
 
@@ -363,8 +366,8 @@ console.log(`Response Status:`, response.status());
 console.log(`Response Headers:`, response.headers());
 
 if (response.status() !== 401) {
-    const responseBody = await response.json();
-    console.log(`Response Body:`, JSON.stringify(responseBody, null, 2));
+  const responseBody = await response.json();
+  console.log(`Response Body:`, JSON.stringify(responseBody, null, 2));
 }
 ```
 
@@ -379,9 +382,9 @@ console.log(`Total execution time: ${totalTime}ms`);
 
 // Track multiple metrics
 const metrics = {
-    responseTime: totalTime,
-    status: response.status(),
-    timestamp: new Date().toISOString()
+  responseTime: totalTime,
+  status: response.status(),
+  timestamp: new Date().toISOString(),
 };
 ```
 
@@ -394,8 +397,8 @@ const metrics = {
 name: Production Tests
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Every 6 hours
-  workflow_dispatch:       # Manual trigger
+    - cron: "0 */6 * * *" # Every 6 hours
+  workflow_dispatch: # Manual trigger
 
 jobs:
   production-tests:
@@ -404,7 +407,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: "20"
       - run: npm ci
       - run: npx playwright install
       - run: npx playwright test testing/load-testing/
@@ -419,15 +422,15 @@ jobs:
 ```typescript
 // Add to monitoring configuration
 const alertThresholds = {
-    responseTime: 10000,     // 10 seconds
-    errorRate: 5,           // 5% error rate
-    availability: 95        // 95% uptime
+  responseTime: 10000, // 10 seconds
+  errorRate: 5, // 5% error rate
+  availability: 95, // 95% uptime
 };
 
 // Integrate with monitoring service
 if (responseTime > alertThresholds.responseTime) {
-    // Send alert to monitoring system
-    console.error(`Performance degradation detected: ${responseTime}ms`);
+  // Send alert to monitoring system
+  console.error(`Performance degradation detected: ${responseTime}ms`);
 }
 ```
 

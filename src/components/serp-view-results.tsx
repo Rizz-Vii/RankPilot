@@ -161,7 +161,10 @@ export default function SerpViewResults({ results }: SerpViewResultsProps) {
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 {results.peopleAlsoAsk.map((item, index) => (
-                  <motion.div key={`${item.question}-${index}`} variants={itemVariant}>
+                  <motion.div
+                    key={`${item.question}-${index}`}
+                    variants={itemVariant}
+                  >
                     <AccordionItem value={`item-${index}`}>
                       <AccordionTrigger className="font-body text-left hover:no-underline">
                         {item.question}

@@ -233,13 +233,13 @@ function ToastComponent({ toast, onRemove }: ToastComponentProps) {
   const getColorClasses = () => {
     switch (toast.type) {
       case "success":
-  return "border-success/30 bg-success/10 text-success-foreground";
+        return "border-success/30 bg-success/10 text-success-foreground";
       case "error":
-  return "border-destructive/30 bg-destructive/10 text-destructive-foreground";
+        return "border-destructive/30 bg-destructive/10 text-destructive-foreground";
       case "warning":
-  return "border-warning/30 bg-warning/10 text-warning-foreground";
+        return "border-warning/30 bg-warning/10 text-warning-foreground";
       case "info":
-  return "border-primary/30 bg-primary/10 text-primary";
+        return "border-primary/30 bg-primary/10 text-primary";
       default:
         return "border-border bg-background text-foreground";
     }

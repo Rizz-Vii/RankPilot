@@ -69,10 +69,7 @@ export default function KeywordToolForm({
   }
 
   return (
-    <EnhancedCard
-      className="h-full"
-      variant="elevated"
-    >
+    <EnhancedCard className="h-full" variant="elevated">
       <EnhancedCardHeader>
         <EnhancedCardTitle className="font-headline flex items-center gap-2">
           <Search className="h-5 w-5 text-primary" />
@@ -87,7 +84,9 @@ export default function KeywordToolForm({
       <Form {...form}>
         <form
           // Wrap submit handler to avoid returning a naked promise to React (no-misused-promises)
-          onSubmit={(e) => { void form.handleSubmit(handleFormSubmit)(e); }}
+          onSubmit={(e) => {
+            void form.handleSubmit(handleFormSubmit)(e);
+          }}
           className="space-y-6"
           aria-busy={isLoading}
           aria-disabled={isLoading}

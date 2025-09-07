@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function NotFound() {
   return (
@@ -11,21 +11,37 @@ export default function NotFound() {
               <span className="text-primary font-semibold">Oops!</span>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-3 font-headline">
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">404</span>
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                404
+              </span>
             </h1>
             <h2 className="text-xl md:text-2xl font-semibold text-muted-foreground mb-3 font-body">
               Page not found
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto font-body">
-              The page you’re looking for doesn’t exist or may have moved. Try the homepage or jump into one of our tools below.
+              The page you’re looking for doesn’t exist or may have moved. Try
+              the homepage or jump into one of our tools below.
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-3 mt-8">
-            <Button asChild size="lg" className="w-full mobile-touch-target" aria-label="Go to Homepage" role="button">
+            <Button
+              asChild
+              size="lg"
+              className="w-full mobile-touch-target"
+              aria-label="Go to Homepage"
+              role="button"
+            >
               <Link href="/">Go to Homepage</Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="w-full mobile-touch-target" aria-label="Try Keyword Tool" role="button">
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="w-full mobile-touch-target"
+              aria-label="Try Keyword Tool"
+              role="button"
+            >
               <Link href="/keyword-tool">Try Keyword Tool</Link>
             </Button>
           </div>

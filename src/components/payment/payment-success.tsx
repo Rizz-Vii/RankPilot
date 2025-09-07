@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
-import { asVoidHandler } from '@/lib/react/handlers';
+import { asVoidHandler } from "@/lib/react/handlers";
 import { updateUserSubscription } from "@/lib/subscription";
 import confetti from "canvas-confetti";
 import { motion } from "framer-motion";
@@ -28,7 +28,6 @@ export default function PaymentSuccess(): JSX.Element {
   const [emailSent, setEmailSent] = useState(false);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
 
-
   const searchParams = useSearchParams();
   const { user } = useAuth();
 
@@ -42,7 +41,7 @@ export default function PaymentSuccess(): JSX.Element {
   const sendConfirmationEmail = useCallback(async () => {
     try {
       // Placeholder – in real implementation call backend/email service
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 400));
       setEmailSent(true);
     } catch {
       // silent – non‑critical
@@ -59,21 +58,27 @@ export default function PaymentSuccess(): JSX.Element {
     }, 500);
 
     if (user?.uid) {
-      const allowedTiers = ['starter', 'agency', 'enterprise', 'free'] as const;
-      const normalizedTier = ((): typeof allowedTiers[number] => {
-        return (allowedTiers as readonly string[]).includes(plan) ? (plan as typeof allowedTiers[number]) : 'agency';
+      const allowedTiers = ["starter", "agency", "enterprise", "free"] as const;
+      const normalizedTier = ((): (typeof allowedTiers)[number] => {
+        return (allowedTiers as readonly string[]).includes(plan)
+          ? (plan as (typeof allowedTiers)[number])
+          : "agency";
       })();
       void updateUserSubscription(user.uid, {
-        status: 'active',
+        status: "active",
         tier: normalizedTier,
-      }).catch(() => { /* ignore – webhook will reconcile */ });
+      }).catch(() => {
+        /* ignore – webhook will reconcile */
+      });
     }
 
     if (!emailSent) {
       void sendConfirmationEmail();
     }
 
-    return () => { clearTimeout(timer); };
+    return () => {
+      clearTimeout(timer);
+    };
   }, [user, plan, emailSent, sendConfirmationEmail]);
 
   const downloadInvoice = useCallback(async () => {
@@ -93,7 +98,10 @@ export default function PaymentSuccess(): JSX.Element {
   const planDetails = {
     starter: { name: "Starter", color: "bg-primary text-primary-foreground" },
     agency: { name: "Agency", color: "bg-accent text-accent-foreground" },
-    enterprise: { name: "Enterprise", color: "bg-warning text-warning-foreground" },
+    enterprise: {
+      name: "Enterprise",
+      color: "bg-warning text-warning-foreground",
+    },
   } as const;
 
   const planKey = plan as keyof typeof planDetails;
@@ -101,11 +109,13 @@ export default function PaymentSuccess(): JSX.Element {
 
   const nextBillingDate = useMemo(() => {
     const days = cycle === "yearly" ? 365 : 30;
-    return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toLocaleDateString();
+    return new Date(
+      Date.now() + days * 24 * 60 * 60 * 1000
+    ).toLocaleDateString();
   }, [cycle]);
 
   return (
-  <div className="min-h-screen bg-gradient-to-br from-success/10 via-background to-success/10 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-success/10 via-background to-success/10 py-8">
       <div className="max-w-2xl mx-auto px-4">
         {/* Success Header */}
         <motion.div
@@ -144,7 +154,9 @@ export default function PaymentSuccess(): JSX.Element {
                 <div>
                   <p className="text-sm text-muted-foreground">Plan</p>
                   <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${currentPlan.color.split(' ')[0]}`} />
+                    <div
+                      className={`w-3 h-3 rounded-full ${currentPlan.color.split(" ")[0]}`}
+                    />
                     <span className="font-semibold">{currentPlan.name}</span>
                   </div>
                 </div>
@@ -195,7 +207,9 @@ export default function PaymentSuccess(): JSX.Element {
               <div className="grid gap-3">
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Mail className={`h-5 w-5 ${emailSent ? "text-success-foreground" : "text-muted-foreground"}`} />
+                    <Mail
+                      className={`h-5 w-5 ${emailSent ? "text-success-foreground" : "text-muted-foreground"}`}
+                    />
                     <div>
                       <p className="font-medium">Confirmation Email</p>
                       <p className="text-sm text-muted-foreground">
@@ -203,7 +217,9 @@ export default function PaymentSuccess(): JSX.Element {
                       </p>
                     </div>
                   </div>
-                  {emailSent && <CheckCircle className="h-5 w-5 text-success-foreground" />}
+                  {emailSent && (
+                    <CheckCircle className="h-5 w-5 text-success-foreground" />
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -274,7 +290,7 @@ export default function PaymentSuccess(): JSX.Element {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-        <Star className="h-5 w-5 text-warning" />
+                <Star className="h-5 w-5 text-warning" />
                 Features Unlocked
               </CardTitle>
             </CardHeader>
@@ -283,17 +299,17 @@ export default function PaymentSuccess(): JSX.Element {
                 {plan === "starter" && (
                   <>
                     <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-success-foreground" />
+                      <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">
                         10 Link Analyses per month
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-success-foreground" />
+                      <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Basic SERP Analysis</span>
                     </div>
                     <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-success-foreground" />
+                      <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Email Support</span>
                     </div>
                   </>
@@ -301,21 +317,21 @@ export default function PaymentSuccess(): JSX.Element {
                 {plan === "agency" && (
                   <>
                     <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-success-foreground" />
+                      <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">
                         100 Link Analyses per month
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-success-foreground" />
+                      <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Advanced SERP Analysis</span>
                     </div>
                     <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-success-foreground" />
+                      <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Priority Support</span>
                     </div>
                     <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-success-foreground" />
+                      <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">API Access</span>
                     </div>
                   </>
@@ -323,19 +339,19 @@ export default function PaymentSuccess(): JSX.Element {
                 {plan === "enterprise" && (
                   <>
                     <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-success-foreground" />
+                      <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Unlimited Link Analyses</span>
                     </div>
                     <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-success-foreground" />
+                      <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Enterprise SERP Analysis</span>
                     </div>
                     <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-success-foreground" />
+                      <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">24/7 Phone Support</span>
                     </div>
                     <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-success-foreground" />
+                      <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Custom Integrations</span>
                     </div>
                   </>

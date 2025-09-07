@@ -1,14 +1,22 @@
+// QUARANTINE: Modifies env and package.json. Only run via scripts/agents CLI.
 // 🤖 RankPilot Build System Agent
 // Implementation Date: July 30, 2025
 // Priority: HIGH - Foundation Stabilization Phase 1.2
 
-import { exec as execCb } from 'child_process';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { promisify } from 'util';
-import type { AgentCapability, RankPilotAgent, SafetyConstraint } from '../core/AgentFramework';
+import { exec as execCb } from "child_process";
+import * as fs from "fs/promises";
+import * as path from "path";
+import { promisify } from "util";
+import type {
+  AgentCapability,
+  RankPilotAgent,
+  SafetyConstraint,
+} from "../core/AgentFramework";
 
-const execAsync = promisify(execCb) as (command: string, options?: { timeout?: number } & Record<string, unknown>) => Promise<{ stdout: string; stderr: string }>;
+const execAsync = promisify(execCb) as (
+  command: string,
+  options?: { timeout?: number } & Record<string, unknown>
+) => Promise<{ stdout: string; stderr: string }>;
 
 /**
  * Build System Agent - Autonomous build optimization and error resolution
@@ -20,194 +28,205 @@ const execAsync = promisify(execCb) as (command: string, options?: { timeout?: n
  * 4. ESLint progressive enhancement
  */
 export class BuildSystemAgent implements RankPilotAgent {
-    name = 'Build System Agent';
-    version = '1.0.0';
+  name = "Build System Agent";
+  version = "1.0.0";
 
-    capabilities: AgentCapability[] = [
-        {
-            name: 'Firebase Configuration Validation',
-            description: 'Validate and fix Firebase service account configuration',
-            canAutoFix: true,
-            riskLevel: 'medium'
-        },
-        {
-            name: 'Build Memory Optimization',
-            description: 'Dynamic memory allocation based on build operation',
-            canAutoFix: true,
-            riskLevel: 'low'
-        },
-        {
-            name: 'Emergency Build Fallbacks',
-            description: 'Implement fallback build strategies for production',
-            canAutoFix: true,
-            riskLevel: 'low'
-        },
-        {
-            name: 'ESLint Progressive Enhancement',
-            description: 'Gradually introduce ESLint rules without breaking builds',
-            canAutoFix: true,
-            riskLevel: 'medium'
-        }
-    ];
+  capabilities: AgentCapability[] = [
+    {
+      name: "Firebase Configuration Validation",
+      description: "Validate and fix Firebase service account configuration",
+      canAutoFix: true,
+      riskLevel: "medium",
+    },
+    {
+      name: "Build Memory Optimization",
+      description: "Dynamic memory allocation based on build operation",
+      canAutoFix: true,
+      riskLevel: "low",
+    },
+    {
+      name: "Emergency Build Fallbacks",
+      description: "Implement fallback build strategies for production",
+      canAutoFix: true,
+      riskLevel: "low",
+    },
+    {
+      name: "ESLint Progressive Enhancement",
+      description: "Gradually introduce ESLint rules without breaking builds",
+      canAutoFix: true,
+      riskLevel: "medium",
+    },
+  ];
 
-    safetyConstraints: SafetyConstraint = {
-        requiresBackup: true,
-        requiresHumanApproval: false,
-        rollbackAvailable: true,
-        maxConcurrentFixes: 2
-    };
+  safetyConstraints: SafetyConstraint = {
+    requiresBackup: true,
+    requiresHumanApproval: false,
+    rollbackAvailable: true,
+    maxConcurrentFixes: 2,
+  };
 
-    private backupPath = './.build-system-backups';
-    private fixedFiles: string[] = [];
+  private backupPath = "./.build-system-backups";
+  private fixedFiles: string[] = [];
 
-    /**
-     * Main execution method
-     */
-    async execute(): Promise<boolean> {
-        console.log('🤖 Build System Agent - Starting execution...');
+  /**
+   * Main execution method
+   */
+  async execute(): Promise<boolean> {
+    if (process.env.RANKPILOT_AGENTS_ENABLED !== "true") {
+      console.log(
+        "🛡️ Build System Agent: Disabled (set RANKPILOT_AGENTS_ENABLED=true to enable)"
+      );
+      return false;
+    }
+    console.log("🤖 Build System Agent - Starting execution...");
 
-        try {
-            // Step 1: Validate current build status
-            const buildIssues = await this.analyzeBuildIssues();
-            console.log(`📊 Found ${buildIssues.length} build issues to resolve`);
+    try {
+      // Step 1: Validate current build status
+      const buildIssues = await this.analyzeBuildIssues();
+      console.log(`📊 Found ${buildIssues.length} build issues to resolve`);
 
-            // Step 2: Create backup
-            await this.createBackup();
+      // Step 2: Create backup
+      await this.createBackup();
 
-            // Step 3: Apply fixes systematically
-            let fixCount = 0;
+      // Step 3: Apply fixes systematically
+      let fixCount = 0;
 
-            // Fix Firebase configuration issues
-            if (await this.fixFirebaseConfiguration()) {
-                fixCount++;
-                console.log('✅ Fixed: Firebase configuration');
-            }
+      // Fix Firebase configuration issues
+      if (await this.fixFirebaseConfiguration()) {
+        fixCount++;
+        console.log("✅ Fixed: Firebase configuration");
+      }
 
-            // Optimize build memory allocation
-            if (await this.optimizeBuildMemory()) {
-                fixCount++;
-                console.log('✅ Fixed: Build memory optimization');
-            }
+      // Optimize build memory allocation
+      if (await this.optimizeBuildMemory()) {
+        fixCount++;
+        console.log("✅ Fixed: Build memory optimization");
+      }
 
-            // Implement emergency build fallback
-            if (await this.setupEmergencyBuildFallback()) {
-                fixCount++;
-                console.log('✅ Fixed: Emergency build fallback');
-            }
+      // Implement emergency build fallback
+      if (await this.setupEmergencyBuildFallback()) {
+        fixCount++;
+        console.log("✅ Fixed: Emergency build fallback");
+      }
 
-            // Step 4: Validate fixes
-            const buildResult = await this.validateBuild();
+      // Step 4: Validate fixes
+      const buildResult = await this.validateBuild();
 
-            if (buildResult.success) {
-                console.log(`✅ Build System Agent completed successfully! Applied ${fixCount} optimizations.`);
-                return true;
-            } else {
-                console.warn('⚠️  Build validation failed, but infrastructure improvements applied');
-                return true; // Still consider successful if infrastructure is improved
-            }
+      if (buildResult.success) {
+        console.log(
+          `✅ Build System Agent completed successfully! Applied ${fixCount} optimizations.`
+        );
+        return true;
+      } else {
+        console.warn(
+          "⚠️  Build validation failed, but infrastructure improvements applied"
+        );
+        return true; // Still consider successful if infrastructure is improved
+      }
+    } catch (error) {
+      console.error("🚨 Build System Agent execution failed:", error);
+      await this.rollback();
+      return false;
+    }
+  }
 
-        } catch (error) {
-            console.error('🚨 Build System Agent execution failed:', error);
-            await this.rollback();
-            return false;
-        }
+  /**
+   * Analyze current build issues
+   */
+  private async analyzeBuildIssues(): Promise<
+    Array<{ type: string; severity: string; description: string }>
+  > {
+    const issues = [];
+
+    // Check Firebase configuration
+    try {
+      const envContent = await fs.readFile(".env.local", "utf8");
+      if (!envContent.includes("FIREBASE_PROJECT_ID")) {
+        issues.push({
+          type: "firebase-config",
+          severity: "high",
+          description: "Missing Firebase project ID configuration",
+        });
+      }
+    } catch {
+      issues.push({
+        type: "env-missing",
+        severity: "high",
+        description: "Environment configuration file missing",
+      });
     }
 
-    /**
-     * Analyze current build issues
-     */
-    private async analyzeBuildIssues(): Promise<Array<{ type: string, severity: string, description: string; }>> {
-        const issues = [];
-
-        // Check Firebase configuration
-        try {
-            const envContent = await fs.readFile('.env.local', 'utf8');
-            if (!envContent.includes('FIREBASE_PROJECT_ID')) {
-                issues.push({
-                    type: 'firebase-config',
-                    severity: 'high',
-                    description: 'Missing Firebase project ID configuration'
-                });
-            }
-        } catch {
-            issues.push({
-                type: 'env-missing',
-                severity: 'high',
-                description: 'Environment configuration file missing'
-            });
-        }
-
-        // Check build scripts
-        try {
-            const packageJson = JSON.parse(await fs.readFile('package.json', 'utf8'));
-            if (!packageJson.scripts['build:emergency']) {
-                issues.push({
-                    type: 'missing-emergency-build',
-                    severity: 'medium',
-                    description: 'No emergency build fallback configured'
-                });
-            }
-        } catch {
-            issues.push({
-                type: 'package-json-error',
-                severity: 'high',
-                description: 'Cannot read package.json'
-            });
-        }
-
-        return issues;
+    // Check build scripts
+    try {
+      const packageJson = JSON.parse(await fs.readFile("package.json", "utf8"));
+      if (!packageJson.scripts["build:emergency"]) {
+        issues.push({
+          type: "missing-emergency-build",
+          severity: "medium",
+          description: "No emergency build fallback configured",
+        });
+      }
+    } catch {
+      issues.push({
+        type: "package-json-error",
+        severity: "high",
+        description: "Cannot read package.json",
+      });
     }
 
-    /**
-     * Fix Firebase configuration issues
-     */
-    private async fixFirebaseConfiguration(): Promise<boolean> {
-        try {
-            // Check if we have the required environment variables
-            const envLocalPath = '.env.local';
-            let envContent = '';
+    return issues;
+  }
 
-            try {
-                envContent = await fs.readFile(envLocalPath, 'utf8');
-            } catch {
-                // Create new .env.local if it doesn't exist
-                envContent = '# Firebase Configuration\n';
-            }
+  /**
+   * Fix Firebase configuration issues
+   */
+  private async fixFirebaseConfiguration(): Promise<boolean> {
+    try {
+      // Check if we have the required environment variables
+      const envLocalPath = ".env.local";
+      let envContent = "";
 
-            // Add missing Firebase configuration with safe defaults
-            const firebaseEnvVars = [
-                'FIREBASE_PROJECT_ID=rankpilot-h3jpc',
-                'NEXT_PUBLIC_FIREBASE_PROJECT_ID=rankpilot-h3jpc',
-                'NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id',
-                'FIREBASE_DATABASE_URL=https://rankpilot-h3jpc-default-rtdb.asia-southeast1.firebasedatabase.app/',
-                'NEXT_PUBLIC_FIREBASE_DATABASE_URL=https://rankpilot-h3jpc-default-rtdb.asia-southeast1.firebasedatabase.app/'
-            ];
+      try {
+        envContent = await fs.readFile(envLocalPath, "utf8");
+      } catch {
+        // Create new .env.local if it doesn't exist
+        envContent = "# Firebase Configuration\n";
+      }
 
-            let modified = false;
-            for (const envVar of firebaseEnvVars) {
-                const [key] = envVar.split('=');
-                if (!envContent.includes(key)) {
-                    envContent += `${envVar}\n`;
-                    modified = true;
-                }
-            }
+      // Add missing Firebase configuration with safe defaults
+      const firebaseEnvVars = [
+        "FIREBASE_PROJECT_ID=rankpilot-h3jpc",
+        "NEXT_PUBLIC_FIREBASE_PROJECT_ID=rankpilot-h3jpc",
+        "NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id",
+        "FIREBASE_DATABASE_URL=https://rankpilot-h3jpc-default-rtdb.asia-southeast1.firebasedatabase.app/",
+        "NEXT_PUBLIC_FIREBASE_DATABASE_URL=https://rankpilot-h3jpc-default-rtdb.asia-southeast1.firebasedatabase.app/",
+      ];
 
-            if (modified) {
-                await fs.writeFile(envLocalPath, envContent);
-                this.fixedFiles.push(envLocalPath);
-                console.log('✅ Updated Firebase environment configuration');
-            }
+      let modified = false;
+      for (const envVar of firebaseEnvVars) {
+        const [key] = envVar.split("=");
+        if (!envContent.includes(key)) {
+          envContent += `${envVar}\n`;
+          modified = true;
+        }
+      }
 
-            // Also fix the visualizations API route that's causing the build error
-            const visualizationsRoute = 'src/app/api/visualizations/route.ts';
-            try {
-                let routeContent = await fs.readFile(visualizationsRoute, 'utf8');
+      if (modified) {
+        await fs.writeFile(envLocalPath, envContent);
+        this.fixedFiles.push(envLocalPath);
+        console.log("✅ Updated Firebase environment configuration");
+      }
 
-                // Add proper error handling for Firebase configuration
-                if (routeContent.includes('Service account object must contain')) {
-                    routeContent = routeContent.replace(
-                        /const app = admin\.apps\.length \? admin\.app\(\) : admin\.initializeApp\([^)]+\);/,
-                        `let app;
+      // Also fix the visualizations API route that's causing the build error
+      const visualizationsRoute = "src/app/api/visualizations/route.ts";
+      try {
+        let routeContent = await fs.readFile(visualizationsRoute, "utf8");
+
+        // Add proper error handling for Firebase configuration
+        if (routeContent.includes("Service account object must contain")) {
+          routeContent = routeContent.replace(
+            /const app = admin\.apps\.length \? admin\.app\(\) : admin\.initializeApp\([^)]+\);/,
+            `let app;
 try {
     app = admin.apps.length ? admin.app() : admin.initializeApp({
         credential: admin.credential.applicationDefault(),
@@ -222,63 +241,63 @@ try {
         data: []
     });
 }`
-                    );
+          );
 
-                    await fs.writeFile(visualizationsRoute, routeContent);
-                    this.fixedFiles.push(visualizationsRoute);
-                }
-            } catch (error) {
-                console.warn('Could not fix visualizations route:', error);
-            }
-
-            return true;
-        } catch (error) {
-            console.error('Failed to fix Firebase configuration:', error);
-            return false;
+          await fs.writeFile(visualizationsRoute, routeContent);
+          this.fixedFiles.push(visualizationsRoute);
         }
+      } catch (error) {
+        console.warn("Could not fix visualizations route:", error);
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Failed to fix Firebase configuration:", error);
+      return false;
     }
+  }
 
-    /**
-     * Optimize build memory allocation
-     */
-    private async optimizeBuildMemory(): Promise<boolean> {
-        try {
-            const packageJsonPath = 'package.json';
-            const packageContent = await fs.readFile(packageJsonPath, 'utf8');
-            const packageJson = JSON.parse(packageContent);
+  /**
+   * Optimize build memory allocation
+   */
+  private async optimizeBuildMemory(): Promise<boolean> {
+    try {
+      const packageJsonPath = "package.json";
+      const packageContent = await fs.readFile(packageJsonPath, "utf8");
+      const packageJson = JSON.parse(packageContent);
 
-            // Optimize build script with dynamic memory allocation
-            const buildScript = packageJson.scripts.build || 'next build';
-            const optimizedBuildScript = buildScript.includes('NODE_OPTIONS')
-                ? buildScript
-                : `cross-env NODE_OPTIONS='--max-old-space-size=4096' ${buildScript}`;
+      // Optimize build script with dynamic memory allocation
+      const buildScript = packageJson.scripts.build || "next build";
+      const optimizedBuildScript = buildScript.includes("NODE_OPTIONS")
+        ? buildScript
+        : `cross-env NODE_OPTIONS='--max-old-space-size=4096' ${buildScript}`;
 
-            // Add memory-optimized build variants
-            packageJson.scripts = {
-                ...packageJson.scripts,
-                'build': optimizedBuildScript,
-                'build:memory-safe': `cross-env NODE_OPTIONS='--max-old-space-size=2048' next build`,
-                'build:high-memory': `cross-env NODE_OPTIONS='--max-old-space-size=6144' next build`,
-                'build:emergency': `cross-env ESLINT_NO_DEV_ERRORS=true NODE_OPTIONS='--max-old-space-size=2048' next build`
-            };
+      // Add memory-optimized build variants
+      packageJson.scripts = {
+        ...packageJson.scripts,
+        build: optimizedBuildScript,
+        "build:memory-safe": `cross-env NODE_OPTIONS='--max-old-space-size=2048' next build`,
+        "build:high-memory": `cross-env NODE_OPTIONS='--max-old-space-size=6144' next build`,
+        "build:emergency": `cross-env ESLINT_NO_DEV_ERRORS=true NODE_OPTIONS='--max-old-space-size=2048' next build`,
+      };
 
-            await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
-            this.fixedFiles.push(packageJsonPath);
+      await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+      this.fixedFiles.push(packageJsonPath);
 
-            return true;
-        } catch (error) {
-            console.error('Failed to optimize build memory:', error);
-            return false;
-        }
+      return true;
+    } catch (error) {
+      console.error("Failed to optimize build memory:", error);
+      return false;
     }
+  }
 
-    /**
-     * Setup emergency build fallback
-     */
-    private async setupEmergencyBuildFallback(): Promise<boolean> {
-        try {
-            // Create emergency build script
-            const emergencyBuildScript = `#!/bin/bash
+  /**
+   * Setup emergency build fallback
+   */
+  private async setupEmergencyBuildFallback(): Promise<boolean> {
+    try {
+      // Create emergency build script
+      const emergencyBuildScript = `#!/bin/bash
 # Emergency Build Fallback Script
 # Auto-generated by Build System Agent
 
@@ -311,104 +330,111 @@ echo "📋 Logs saved to build-emergency.log"
 exit 1
 `;
 
-            await fs.mkdir('scripts', { recursive: true });
-            await fs.writeFile('scripts/emergency-build.sh', emergencyBuildScript);
+      await fs.mkdir("scripts", { recursive: true });
+      await fs.writeFile("scripts/emergency-build.sh", emergencyBuildScript);
 
-            // Make script executable
-            try {
-                await execAsync('chmod +x scripts/emergency-build.sh');
-            } catch {
-                // Windows doesn't need chmod
-            }
+      // Make script executable
+      try {
+        await execAsync("chmod +x scripts/emergency-build.sh");
+      } catch {
+        // Windows doesn't need chmod
+      }
 
-            return true;
-        } catch (error) {
-            console.error('Failed to setup emergency build fallback:', error);
-            return false;
-        }
+      return true;
+    } catch (error) {
+      console.error("Failed to setup emergency build fallback:", error);
+      return false;
     }
+  }
 
-    /**
-     * Create backup before making changes
-     */
-    private async createBackup(): Promise<void> {
+  /**
+   * Create backup before making changes
+   */
+  private async createBackup(): Promise<void> {
+    try {
+      await fs.mkdir(this.backupPath, { recursive: true });
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+      const filesToBackup = [
+        ".env.local",
+        "package.json",
+        "src/app/api/visualizations/route.ts",
+      ];
+
+      for (const file of filesToBackup) {
         try {
-            await fs.mkdir(this.backupPath, { recursive: true });
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-
-            const filesToBackup = [
-                '.env.local',
-                'package.json',
-                'src/app/api/visualizations/route.ts'
-            ];
-
-            for (const file of filesToBackup) {
-                try {
-                    const content = await fs.readFile(file, 'utf8');
-                    const backupFile = path.join(this.backupPath, `${timestamp}-${path.basename(file)}`);
-                    await fs.writeFile(backupFile, content);
-                } catch {
-                    // File might not exist, continue
-                }
-            }
-        } catch (error) {
-            console.error('Failed to create backup:', error);
-            throw error;
+          const content = await fs.readFile(file, "utf8");
+          const backupFile = path.join(
+            this.backupPath,
+            `${timestamp}-${path.basename(file)}`
+          );
+          await fs.writeFile(backupFile, content);
+        } catch {
+          // File might not exist, continue
         }
+      }
+    } catch (error) {
+      console.error("Failed to create backup:", error);
+      throw error;
     }
+  }
 
-    /**
-     * Validate build improvements
-     */
-    private async validateBuild(): Promise<{ success: boolean, output: string; }> {
-        try {
-            // Try the emergency build script first (safer)
-            const { stdout, stderr } = await execAsync('npm run build:memory-safe', { timeout: 300000 });
-            return { success: true, output: stdout + stderr };
-        } catch (error: unknown) {
-            // Build might fail due to Firebase, but that's expected
-            const stdout = (error && typeof error === 'object' && 'stdout' in error)
-                ? String((error as { stdout?: unknown }).stdout ?? '')
-                : '';
-            const stderr = (error && typeof error === 'object' && 'stderr' in error)
-                ? String((error as { stderr?: unknown }).stderr ?? '')
-                : '';
-            const output = stdout + stderr;
-            if (output.includes('✓ Compiled successfully')) {
-                return { success: true, output };
-            }
-            return { success: false, output };
-        }
+  /**
+   * Validate build improvements
+   */
+  private async validateBuild(): Promise<{ success: boolean; output: string }> {
+    try {
+      // Try the emergency build script first (safer)
+      const { stdout, stderr } = await execAsync("npm run build:memory-safe", {
+        timeout: 300000,
+      });
+      return { success: true, output: stdout + stderr };
+    } catch (error: unknown) {
+      // Build might fail due to Firebase, but that's expected
+      const stdout =
+        error && typeof error === "object" && "stdout" in error
+          ? String((error as { stdout?: unknown }).stdout ?? "")
+          : "";
+      const stderr =
+        error && typeof error === "object" && "stderr" in error
+          ? String((error as { stderr?: unknown }).stderr ?? "")
+          : "";
+      const output = stdout + stderr;
+      if (output.includes("✓ Compiled successfully")) {
+        return { success: true, output };
+      }
+      return { success: false, output };
     }
+  }
 
-    /**
-     * Validate fix
-     */
-    async validateFix(): Promise<boolean> {
-        const result = await this.validateBuild();
-        return result.success;
+  /**
+   * Validate fix
+   */
+  async validateFix(): Promise<boolean> {
+    const result = await this.validateBuild();
+    return result.success;
+  }
+
+  /**
+   * Rollback changes
+   */
+  async rollback(): Promise<boolean> {
+    console.log("🔄 Rolling back Build System Agent changes...");
+
+    try {
+      // Restore from git
+      const filesToRestore = this.fixedFiles.join(" ");
+      if (filesToRestore) {
+        await execAsync(`git checkout HEAD -- ${filesToRestore}`);
+      }
+      console.log("✅ Rollback completed");
+      return true;
+    } catch (error) {
+      console.error("❌ Rollback failed:", error);
+      return false;
     }
-
-    /**
-     * Rollback changes
-     */
-    async rollback(): Promise<boolean> {
-        console.log('🔄 Rolling back Build System Agent changes...');
-
-        try {
-            // Restore from git
-            const filesToRestore = this.fixedFiles.join(' ');
-            if (filesToRestore) {
-                await execAsync(`git checkout HEAD -- ${filesToRestore}`);
-            }
-            console.log('✅ Rollback completed');
-            return true;
-        } catch (error) {
-            console.error('❌ Rollback failed:', error);
-            return false;
-        }
-    }
+  }
 }
 
- // Export singleton instance
+// Export singleton instance
 export const buildSystemAgent: BuildSystemAgent = new BuildSystemAgent();

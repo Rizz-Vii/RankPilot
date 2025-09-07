@@ -9,7 +9,11 @@ interface ToolPageHeaderProps {
   description?: string;
   children?: React.ReactNode;
   className?: string;
-  badges?: { label: string; variant?: "outline" | "secondary" | "default"; className?: string }[];
+  badges?: {
+    label: string;
+    variant?: "outline" | "secondary" | "default";
+    className?: string;
+  }[];
   showBreadcrumb?: boolean;
 }
 
@@ -24,7 +28,9 @@ export function ToolPageHeader({
   return (
     <header className={cn("mb-8", className)}>
       {showBreadcrumb && (
-        <div className="mb-4"><Breadcrumb /></div>
+        <div className="mb-4">
+          <Breadcrumb />
+        </div>
       )}
       <div className="flex flex-col gap-3 text-center md:text-left md:flex-row md:items-end md:justify-between">
         <div>
@@ -39,7 +45,11 @@ export function ToolPageHeader({
           {badges && badges.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
               {badges.map((b, i) => (
-                <Badge key={i} variant={b.variant || "secondary"} className={cn("font-body", b.className)}>
+                <Badge
+                  key={i}
+                  variant={b.variant || "secondary"}
+                  className={cn("font-body", b.className)}
+                >
                   {b.label}
                 </Badge>
               ))}

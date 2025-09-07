@@ -1,1 +1,1 @@
-export { default } from './mrr-trend';
+export { default } from "./mrr-trend";

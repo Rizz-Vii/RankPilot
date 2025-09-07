@@ -9,12 +9,7 @@ import {
 } from "@/components/ui/card";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query } from "firebase/firestore";
-import {
-  Activity,
-  FileText,
-  Search,
-  Users,
-} from "lucide-react";
+import { Activity, FileText, Search, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Bar,
@@ -31,9 +26,21 @@ import {
   YAxis,
 } from "recharts";
 
-interface MonthlyActivity { name: string; users: number; activities: number }
-interface ToolUsage { name: string; value: number; color: string }
-interface UserGrowth { name: string; newUsers: number; totalUsers: number }
+interface MonthlyActivity {
+  name: string;
+  users: number;
+  activities: number;
+}
+interface ToolUsage {
+  name: string;
+  value: number;
+  color: string;
+}
+interface UserGrowth {
+  name: string;
+  newUsers: number;
+  totalUsers: number;
+}
 
 interface AnalyticsData {
   totalUsers: number;
@@ -59,7 +66,9 @@ export default function AdminAnalytics() {
       // Minimal counts (best-effort) – safe fallbacks
       const usersSnap = await getDocs(query(collection(db, "users")));
       const auditsSnap = await getDocs(query(collection(db, "seoAudits")));
-      const keywordSnap = await getDocs(query(collection(db, "keywordSearches")));
+      const keywordSnap = await getDocs(
+        query(collection(db, "keywordSearches"))
+      );
 
       const totalUsers = usersSnap.size;
       const totalAudits = auditsSnap.size;
@@ -67,25 +76,40 @@ export default function AdminAnalytics() {
 
       // Derive dummy activity timeline (last 6 months) using counts spread
       const now = new Date();
-      const monthlyActivity: MonthlyActivity[] = Array.from({ length: 6 }).map((_, i) => {
-        const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
-        const name = d.toLocaleString(undefined, { month: 'short' });
-        return {
-          name,
-          users: Math.max(0, totalUsers - (5 - i) * 2),
-          activities: Math.max(0, totalAudits + totalKeywordSearches - (5 - i) * 3)
-        };
-      });
+      const monthlyActivity: MonthlyActivity[] = Array.from({ length: 6 }).map(
+        (_, i) => {
+          const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+          const name = d.toLocaleString(undefined, { month: "short" });
+          return {
+            name,
+            users: Math.max(0, totalUsers - (5 - i) * 2),
+            activities: Math.max(
+              0,
+              totalAudits + totalKeywordSearches - (5 - i) * 3
+            ),
+          };
+        }
+      );
 
       const toolUsage: ToolUsage[] = [
-        { name: 'Audits', value: totalAudits || 1, color: 'hsl(243,52%,68%)' },
-        { name: 'Keyword', value: totalKeywordSearches || 1, color: 'hsl(143,40%,65%)' },
+        { name: "Audits", value: totalAudits || 1, color: "hsl(243,52%,68%)" },
+        {
+          name: "Keyword",
+          value: totalKeywordSearches || 1,
+          color: "hsl(143,40%,65%)",
+        },
       ];
 
       const userGrowth: UserGrowth[] = monthlyActivity.map((m, idx) => ({
         name: m.name,
-        newUsers: idx === 0 ? Math.min(10, totalUsers) : Math.max(0, monthlyActivity[idx].users - monthlyActivity[idx-1].users),
-        totalUsers: m.users
+        newUsers:
+          idx === 0
+            ? Math.min(10, totalUsers)
+            : Math.max(
+                0,
+                monthlyActivity[idx].users - monthlyActivity[idx - 1].users
+              ),
+        totalUsers: m.users,
       }));
 
       const activeUsers = Math.min(totalUsers, Math.round(totalUsers * 0.6));
@@ -97,7 +121,7 @@ export default function AdminAnalytics() {
         totalKeywordSearches,
         monthlyActivity,
         toolUsage,
-        userGrowth
+        userGrowth,
       });
     } catch {
       // Silent fallback – keep deterministic for admin view
@@ -108,7 +132,7 @@ export default function AdminAnalytics() {
         totalKeywordSearches: 0,
         monthlyActivity: [],
         toolUsage: [],
-        userGrowth: []
+        userGrowth: [],
       });
     } finally {
       setLoading(false);
@@ -285,7 +309,11 @@ export default function AdminAnalytics() {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="users" fill="hsl(243,52%,68%)" name="Active Users" />
+              <Bar
+                dataKey="users"
+                fill="hsl(243,52%,68%)"
+                name="Active Users"
+              />
               <Bar
                 dataKey="activities"
                 fill="hsl(143,40%,65%)"

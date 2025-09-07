@@ -11,7 +11,14 @@ export default function NeuroSEOPage() {
       <ToolPageHeader
         title="NeuroSEO™ Dashboard"
         description="Advanced AI-powered SEO analysis with 6 intelligent engines for comprehensive optimization."
-        badges={[{ label: "Suite", variant: "secondary" }, { label: "AI", variant: "outline", className: "text-primary border-primary/40" }]}
+        badges={[
+          { label: "Suite", variant: "secondary" },
+          {
+            label: "AI",
+            variant: "outline",
+            className: "text-primary border-primary/40",
+          },
+        ]}
         showBreadcrumb
       >
         <TutorialAccess

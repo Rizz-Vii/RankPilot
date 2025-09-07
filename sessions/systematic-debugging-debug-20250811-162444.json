@@ -3,8 +3,6 @@
   "problem": "Your problem description",
   "startTime": "Mon Aug 11 16:24:44 UTC 2025",
   "endTime": "Mon Aug 11 16:25:01 UTC 2025",
-  "completedSteps": [
-    ""
-  ],
+  "completedSteps": [""],
   "autoValidate": false
 }

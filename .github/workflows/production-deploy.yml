@@ -28,7 +28,6 @@ env:
   LEAN_URL: 'https://rankpilot-h3jpc--lean-branch-testing-o2qips67.web.app'
   PERFORMANCE_URL: 'https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app'
   PRODUCTION_URL: 'https://rankpilot-h3jpc.web.app'
-  FIREBASE_PROJECT_ID: "rankpilot-h3jpc"
   FIREBASE_TOOLS_VERSION: "13.31.2"
 
 jobs:

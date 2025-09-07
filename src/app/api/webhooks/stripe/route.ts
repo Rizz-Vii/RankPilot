@@ -1,13 +1,17 @@
-import { enforceProvenance } from '@/lib/middleware/provenance';
+import { enforceProvenance } from "@/lib/middleware/provenance";
 import { NextResponse } from "next/server";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // Deprecated duplicate. Use /api/stripe/webhook
+// Reserved path: generators will not create/modify this file.
 export async function POST(): Promise<NextResponse> {
   return NextResponse.json(
-    enforceProvenance({ error: 'gone', use: '/api/stripe/webhook' }, { path: 'webhooks/stripe', note: 'deprecated' }),
+    enforceProvenance(
+      { error: "gone", use: "/api/stripe/webhook" },
+      { path: "webhooks/stripe", note: "deprecated" }
+    ),
     { status: 410 }
   );
 }

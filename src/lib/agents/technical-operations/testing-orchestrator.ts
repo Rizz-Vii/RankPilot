@@ -1,14 +1,22 @@
+// QUARANTINE: Generates configs/reports. Only run via scripts/agents CLI.
 // 🤖 RankPilot Testing Orchestrator Agent
 // Implementation Date: July 30, 2025
 // Priority: CRITICAL - Phase 2 Testing & Quality Assurance
 
-import { exec } from 'child_process';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { promisify } from 'util';
-import type { AgentCapability, RankPilotAgent, SafetyConstraint } from '../core/AgentFramework';
+import { exec } from "child_process";
+import * as fs from "fs/promises";
+import * as path from "path";
+import { promisify } from "util";
+import type {
+  AgentCapability,
+  RankPilotAgent,
+  SafetyConstraint,
+} from "../core/AgentFramework";
 
-const execAsync = promisify(exec) as unknown as (command: string, opts?: { timeout?: number }) => Promise<{ stdout: string; stderr: string }>;
+const execAsync = promisify(exec) as unknown as (
+  command: string,
+  opts?: { timeout?: number }
+) => Promise<{ stdout: string; stderr: string }>;
 
 /**
  * Testing Orchestrator Agent - Autonomous testing validation and optimization
@@ -21,300 +29,317 @@ const execAsync = promisify(exec) as unknown as (command: string, opts?: { timeo
  * 5. Accessibility compliance testing
  */
 export class TestingOrchestratorAgent implements RankPilotAgent {
-    name = 'Testing Orchestrator Agent';
-    version = '2.0.0';
+  name = "Testing Orchestrator Agent";
+  version = "2.0.0";
 
-    capabilities: AgentCapability[] = [
-        {
-            name: 'Role-Based Authentication Testing',
-            description: 'Validate authentication across 5 subscription tiers',
-            canAutoFix: true,
-            riskLevel: 'low'
-        },
-        {
-            name: 'Performance Testing Optimization',
-            description: 'Core Web Vitals validation and optimization',
-            canAutoFix: true,
-            riskLevel: 'medium'
-        },
-        {
-            name: 'Test Infrastructure Enhancement',
-            description: 'Optimize 153 Playwright tests for reliability',
-            canAutoFix: true,
-            riskLevel: 'low'
-        },
-        {
-            name: 'Mobile Testing Validation',
-            description: 'Responsive design and touch target validation',
-            canAutoFix: true,
-            riskLevel: 'low'
-        },
-        {
-            name: 'Accessibility Compliance',
-            description: 'WCAG compliance validation and fixes',
-            canAutoFix: true,
-            riskLevel: 'medium'
-        }
+  capabilities: AgentCapability[] = [
+    {
+      name: "Role-Based Authentication Testing",
+      description: "Validate authentication across 5 subscription tiers",
+      canAutoFix: true,
+      riskLevel: "low",
+    },
+    {
+      name: "Performance Testing Optimization",
+      description: "Core Web Vitals validation and optimization",
+      canAutoFix: true,
+      riskLevel: "medium",
+    },
+    {
+      name: "Test Infrastructure Enhancement",
+      description: "Optimize 153 Playwright tests for reliability",
+      canAutoFix: true,
+      riskLevel: "low",
+    },
+    {
+      name: "Mobile Testing Validation",
+      description: "Responsive design and touch target validation",
+      canAutoFix: true,
+      riskLevel: "low",
+    },
+    {
+      name: "Accessibility Compliance",
+      description: "WCAG compliance validation and fixes",
+      canAutoFix: true,
+      riskLevel: "medium",
+    },
+  ];
+
+  safetyConstraints: SafetyConstraint = {
+    requiresBackup: true,
+    requiresHumanApproval: false,
+    rollbackAvailable: true,
+    maxConcurrentFixes: 3,
+  };
+
+  private backupPath = "./.testing-orchestrator-backups";
+  private testResults: Array<{
+    name: string;
+    passed: boolean;
+    duration: number;
+  }> = [];
+
+  /**
+   * Main execution method - Phase 2 implementation
+   */
+  async execute(): Promise<boolean> {
+    if (process.env.RANKPILOT_AGENTS_ENABLED !== "true") {
+      console.log(
+        "🛡️ Testing Orchestrator Agent: Disabled (set RANKPILOT_AGENTS_ENABLED=true to enable)"
+      );
+      return false;
+    }
+    console.log(
+      "🎯 Testing Orchestrator Agent - Phase 2 Execution Starting..."
+    );
+
+    try {
+      // Step 1: Validate current testing infrastructure
+      await this.validateTestingInfrastructure();
+
+      // Step 2: Execute role-based authentication tests
+      await this.executeRoleBasedTests();
+
+      // Step 3: Run performance tests with Core Web Vitals
+      await this.executePerformanceTests();
+
+      // Step 4: Validate mobile optimization
+      await this.executeMobileTests();
+
+      // Step 5: Run accessibility compliance tests
+      await this.executeAccessibilityTests();
+
+      // Step 6: Generate comprehensive test report
+      await this.generateTestReport();
+
+      console.log("✅ Testing Orchestrator Agent - Phase 2 Complete!");
+      return true;
+    } catch (error) {
+      console.error("🚨 Testing Orchestrator Agent execution failed:", error);
+      await this.rollback();
+      return false;
+    }
+  }
+
+  /**
+   * Validate current testing infrastructure
+   */
+  private async validateTestingInfrastructure(): Promise<void> {
+    console.log("🔧 Validating testing infrastructure...");
+
+    // Check Playwright configuration files
+    const playwrightConfigs = [
+      "playwright.config.ts",
+      "playwright.config.role-based.ts",
+      "playwright.config.performance.ts",
+      "playwright.config.mobile.ts",
+      "playwright.config.high-memory.ts",
     ];
 
-    safetyConstraints: SafetyConstraint = {
-        requiresBackup: true,
-        requiresHumanApproval: false,
-        rollbackAvailable: true,
-        maxConcurrentFixes: 3
-    };
-
-    private backupPath = './.testing-orchestrator-backups';
-    private testResults: Array<{ name: string; passed: boolean; duration: number }> = [];
-
-    /**
-     * Main execution method - Phase 2 implementation
-     */
-    async execute(): Promise<boolean> {
-        console.log('🎯 Testing Orchestrator Agent - Phase 2 Execution Starting...');
-
-        try {
-            // Step 1: Validate current testing infrastructure
-            await this.validateTestingInfrastructure();
-
-            // Step 2: Execute role-based authentication tests
-            await this.executeRoleBasedTests();
-
-            // Step 3: Run performance tests with Core Web Vitals
-            await this.executePerformanceTests();
-
-            // Step 4: Validate mobile optimization
-            await this.executeMobileTests();
-
-            // Step 5: Run accessibility compliance tests
-            await this.executeAccessibilityTests();
-
-            // Step 6: Generate comprehensive test report
-            await this.generateTestReport();
-
-            console.log('✅ Testing Orchestrator Agent - Phase 2 Complete!');
-            return true;
-
-        } catch (error) {
-            console.error('🚨 Testing Orchestrator Agent execution failed:', error);
-            await this.rollback();
-            return false;
-        }
+    for (const config of playwrightConfigs) {
+      try {
+        await fs.access(config);
+        console.log(`✅ Found: ${config}`);
+      } catch {
+        console.log(`⚠️  Missing: ${config} - Will create optimized version`);
+        await this.createOptimizedPlaywrightConfig(config);
+      }
     }
 
-    /**
-     * Validate current testing infrastructure
-     */
-    private async validateTestingInfrastructure(): Promise<void> {
-        console.log('🔧 Validating testing infrastructure...');
+    // Validate test user accounts
+    await this.validateTestUsers();
 
-        // Check Playwright configuration files
-        const playwrightConfigs = [
-            'playwright.config.ts',
-            'playwright.config.role-based.ts',
-            'playwright.config.performance.ts',
-            'playwright.config.mobile.ts',
-            'playwright.config.high-memory.ts'
-        ];
+    // Check testing utilities
+    await this.validateTestingUtilities();
+  }
 
-        for (const config of playwrightConfigs) {
-            try {
-                await fs.access(config);
-                console.log(`✅ Found: ${config}`);
-            } catch {
-                console.log(`⚠️  Missing: ${config} - Will create optimized version`);
-                await this.createOptimizedPlaywrightConfig(config);
-            }
+  /**
+   * Execute role-based authentication tests across 5 tiers
+   */
+  private async executeRoleBasedTests(): Promise<void> {
+    console.log("🔧 Executing role-based authentication tests...");
+
+    const tiers = ["free", "starter", "agency", "enterprise", "admin"];
+
+    for (const tier of tiers) {
+      try {
+        const startTime = Date.now();
+
+        console.log(`Testing ${tier} tier authentication...`);
+
+        const { stdout: _stdout, stderr: _stderr } = await execAsync(
+          `npx playwright test --config=playwright.config.role-based.ts --grep="${tier}"`,
+          { timeout: 120000 }
+        );
+
+        const duration = Date.now() - startTime;
+
+        if (
+          (_stdout || "").includes("passed") ||
+          !(_stderr || "").includes("failed")
+        ) {
+          this.testResults.push({
+            name: `Role-based test: ${tier}`,
+            passed: true,
+            duration,
+          });
+          console.log(`✅ ${tier} tier tests passed (${duration}ms)`);
+        } else {
+          console.log(`⚠️  ${tier} tier tests had issues, but continuing...`);
+          this.testResults.push({
+            name: `Role-based test: ${tier}`,
+            passed: false,
+            duration,
+          });
         }
-
-        // Validate test user accounts
-        await this.validateTestUsers();
-
-        // Check testing utilities
-        await this.validateTestingUtilities();
+      } catch {
+        console.log(
+          `⚠️  ${tier} tier test execution failed, continuing with next tier...`
+        );
+        this.testResults.push({
+          name: `Role-based test: ${tier}`,
+          passed: false,
+          duration: 0,
+        });
+      }
     }
+  }
 
-    /**
-     * Execute role-based authentication tests across 5 tiers
-     */
-    private async executeRoleBasedTests(): Promise<void> {
-        console.log('🔧 Executing role-based authentication tests...');
+  /**
+   * Execute performance tests with Core Web Vitals
+   */
+  private async executePerformanceTests(): Promise<void> {
+    console.log("🔧 Executing performance tests with Core Web Vitals...");
 
-        const tiers = ['free', 'starter', 'agency', 'enterprise', 'admin'];
+    try {
+      const startTime = Date.now();
 
-        for (const tier of tiers) {
-            try {
-                const startTime = Date.now();
+      // Run Lighthouse performance tests
+      // Lighthouse performance tests (output not directly used)
+      await execAsync(
+        'npx lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless"',
+        { timeout: 180000 }
+      );
 
-                console.log(`Testing ${tier} tier authentication...`);
+      // Run Playwright performance tests
+      await execAsync(
+        "npx playwright test --config=playwright.config.performance.ts",
+        { timeout: 120000 }
+      );
 
-                const { stdout: _stdout, stderr: _stderr } = await execAsync(
-                    `npx playwright test --config=playwright.config.role-based.ts --grep="${tier}"`,
-                    { timeout: 120000 }
-                );
+      const duration = Date.now() - startTime;
 
-                const duration = Date.now() - startTime;
+      this.testResults.push({
+        name: "Performance Tests (Core Web Vitals)",
+        passed: true,
+        duration,
+      });
 
-                if ((_stdout || '').includes('passed') || !(_stderr || '').includes('failed')) {
-                    this.testResults.push({
-                        name: `Role-based test: ${tier}`,
-                        passed: true,
-                        duration
-                    });
-                    console.log(`✅ ${tier} tier tests passed (${duration}ms)`);
-                } else {
-                    console.log(`⚠️  ${tier} tier tests had issues, but continuing...`);
-                    this.testResults.push({
-                        name: `Role-based test: ${tier}`,
-                        passed: false,
-                        duration
-                    });
-                }
-
-            } catch {
-                console.log(`⚠️  ${tier} tier test execution failed, continuing with next tier...`);
-                this.testResults.push({
-                    name: `Role-based test: ${tier}`,
-                    passed: false,
-                    duration: 0
-                });
-            }
-        }
+      console.log(`✅ Performance tests completed (${duration}ms)`);
+    } catch {
+      console.log(
+        "⚠️  Performance tests encountered issues, but infrastructure validated"
+      );
+      this.testResults.push({
+        name: "Performance Tests (Core Web Vitals)",
+        passed: false,
+        duration: 0,
+      });
     }
+  }
 
-    /**
-     * Execute performance tests with Core Web Vitals
-     */
-    private async executePerformanceTests(): Promise<void> {
-        console.log('🔧 Executing performance tests with Core Web Vitals...');
+  /**
+   * Execute mobile optimization tests
+   */
+  private async executeMobileTests(): Promise<void> {
+    console.log("🔧 Executing mobile optimization tests...");
 
-        try {
-            const startTime = Date.now();
+    try {
+      const startTime = Date.now();
 
-            // Run Lighthouse performance tests
-            // Lighthouse performance tests (output not directly used)
-            await execAsync(
-                'npx lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless"',
-                { timeout: 180000 }
-            );
+      await execAsync(
+        "npx playwright test --config=playwright.config.mobile.ts",
+        { timeout: 120000 }
+      );
 
-            // Run Playwright performance tests
-            await execAsync(
-                'npx playwright test --config=playwright.config.performance.ts',
-                { timeout: 120000 }
-            );
+      const duration = Date.now() - startTime;
 
-            const duration = Date.now() - startTime;
+      this.testResults.push({
+        name: "Mobile Optimization Tests",
+        passed: true,
+        duration,
+      });
 
-            this.testResults.push({
-                name: 'Performance Tests (Core Web Vitals)',
-                passed: true,
-                duration
-            });
+      console.log(`✅ Mobile tests completed (${duration}ms)`);
+    } catch {
+      console.log(
+        "⚠️  Mobile tests encountered issues, validating mobile-responsive utilities..."
+      );
 
-            console.log(`✅ Performance tests completed (${duration}ms)`);
+      // Validate mobile utilities exist
+      try {
+        await fs.access("src/lib/mobile-responsive-utils.ts");
+        console.log("✅ Mobile-responsive utilities validated");
+      } catch {
+        await this.createMobileUtilities();
+      }
 
-        } catch {
-            console.log('⚠️  Performance tests encountered issues, but infrastructure validated');
-            this.testResults.push({
-                name: 'Performance Tests (Core Web Vitals)',
-                passed: false,
-                duration: 0
-            });
-        }
+      this.testResults.push({
+        name: "Mobile Optimization Tests",
+        passed: false,
+        duration: 0,
+      });
     }
+  }
 
-    /**
-     * Execute mobile optimization tests
-     */
-    private async executeMobileTests(): Promise<void> {
-        console.log('🔧 Executing mobile optimization tests...');
+  /**
+   * Execute accessibility compliance tests
+   */
+  private async executeAccessibilityTests(): Promise<void> {
+    console.log("🔧 Executing accessibility compliance tests...");
 
-        try {
-            const startTime = Date.now();
+    try {
+      const startTime = Date.now();
 
-            await execAsync(
-                'npx playwright test --config=playwright.config.mobile.ts',
-                { timeout: 120000 }
-            );
+      // Check for axe-core accessibility testing
+      await execAsync('npx playwright test --grep="accessibility|a11y|wcag"', {
+        timeout: 120000,
+      });
 
-            const duration = Date.now() - startTime;
+      const duration = Date.now() - startTime;
 
-            this.testResults.push({
-                name: 'Mobile Optimization Tests',
-                passed: true,
-                duration
-            });
+      this.testResults.push({
+        name: "Accessibility Compliance Tests",
+        passed: true,
+        duration,
+      });
 
-            console.log(`✅ Mobile tests completed (${duration}ms)`);
+      console.log(`✅ Accessibility tests completed (${duration}ms)`);
+    } catch {
+      console.log(
+        "⚠️  Accessibility tests need enhancement, validating touch targets..."
+      );
 
-        } catch {
-            console.log('⚠️  Mobile tests encountered issues, validating mobile-responsive utilities...');
+      // Validate 48px touch targets in CSS
+      await this.validateTouchTargets();
 
-            // Validate mobile utilities exist
-            try {
-                await fs.access('src/lib/mobile-responsive-utils.ts');
-                console.log('✅ Mobile-responsive utilities validated');
-            } catch {
-                await this.createMobileUtilities();
-            }
-
-            this.testResults.push({
-                name: 'Mobile Optimization Tests',
-                passed: false,
-                duration: 0
-            });
-        }
+      this.testResults.push({
+        name: "Accessibility Compliance Tests",
+        passed: false,
+        duration: 0,
+      });
     }
+  }
 
-    /**
-     * Execute accessibility compliance tests
-     */
-    private async executeAccessibilityTests(): Promise<void> {
-        console.log('🔧 Executing accessibility compliance tests...');
+  /**
+   * Generate comprehensive test report
+   */
+  private async generateTestReport(): Promise<void> {
+    const totalTests = this.testResults.length;
+    const passedTests = this.testResults.filter((t) => t.passed).length;
+    const successRate = totalTests > 0 ? (passedTests / totalTests) * 100 : 0;
 
-        try {
-            const startTime = Date.now();
-
-            // Check for axe-core accessibility testing
-            await execAsync(
-                'npx playwright test --grep="accessibility|a11y|wcag"',
-                { timeout: 120000 }
-            );
-
-            const duration = Date.now() - startTime;
-
-            this.testResults.push({
-                name: 'Accessibility Compliance Tests',
-                passed: true,
-                duration
-            });
-
-            console.log(`✅ Accessibility tests completed (${duration}ms)`);
-
-        } catch {
-            console.log('⚠️  Accessibility tests need enhancement, validating touch targets...');
-
-            // Validate 48px touch targets in CSS
-            await this.validateTouchTargets();
-
-            this.testResults.push({
-                name: 'Accessibility Compliance Tests',
-                passed: false,
-                duration: 0
-            });
-        }
-    }
-
-    /**
-     * Generate comprehensive test report
-     */
-    private async generateTestReport(): Promise<void> {
-        const totalTests = this.testResults.length;
-        const passedTests = this.testResults.filter(t => t.passed).length;
-        const successRate = totalTests > 0 ? (passedTests / totalTests) * 100 : 0;
-
-        const report = `# 🧪 Testing Orchestrator Agent Report
+    const report = `# 🧪 Testing Orchestrator Agent Report
 Generated: ${new Date().toISOString()}
 Agent: Testing Orchestrator v2.0.0
 
@@ -322,12 +347,15 @@ Agent: Testing Orchestrator v2.0.0
 - **Total Test Categories**: ${totalTests}
 - **Passed Categories**: ${passedTests}
 - **Success Rate**: ${successRate.toFixed(1)}%
-- **Phase 2 Status**: ${successRate >= 80 ? '✅ COMPLETE' : '⚠️  NEEDS ATTENTION'}
+- **Phase 2 Status**: ${successRate >= 80 ? "✅ COMPLETE" : "⚠️  NEEDS ATTENTION"}
 
 ## 📋 Test Results by Category
-${this.testResults.map(test =>
-            `- **${test.name}**: ${test.passed ? '✅ PASSED' : '❌ FAILED'} (${test.duration}ms)`
-        ).join('\n')}
+${this.testResults
+  .map(
+    (test) =>
+      `- **${test.name}**: ${test.passed ? "✅ PASSED" : "❌ FAILED"} (${test.duration}ms)`
+  )
+  .join("\n")}
 
 ## 🎯 Phase 2 Achievements
 - ✅ Testing infrastructure validated
@@ -347,15 +375,17 @@ ${this.testResults.map(test =>
 **Ready for Phase 3**: API Enhancement implementation.
 `;
 
-        await fs.writeFile('./testing-orchestrator-report.md', report);
-        console.log('📊 Test report generated: testing-orchestrator-report.md');
-    }
+    await fs.writeFile("./testing-orchestrator-report.md", report);
+    console.log("📊 Test report generated: testing-orchestrator-report.md");
+  }
 
-    /**
-     * Create optimized Playwright configuration
-     */
-    private async createOptimizedPlaywrightConfig(configName: string): Promise<void> {
-        const baseConfig = `import { defineConfig, devices } from '@playwright/test';
+  /**
+   * Create optimized Playwright configuration
+   */
+  private async createOptimizedPlaywrightConfig(
+    configName: string
+  ): Promise<void> {
+    const baseConfig = `import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './testing',
@@ -382,52 +412,54 @@ export default defineConfig({
   },
 });`;
 
-        await fs.writeFile(configName, baseConfig);
-        console.log(`✅ Created optimized config: ${configName}`);
+    await fs.writeFile(configName, baseConfig);
+    console.log(`✅ Created optimized config: ${configName}`);
+  }
+
+  /**
+   * Validate test users for role-based testing
+   */
+  private async validateTestUsers(): Promise<void> {
+    const testUsers = [
+      "abbas_ali_rizvi@hotmail.com", // Free tier
+      "starter@rankpilot.com", // Starter tier
+      "agency@rankpilot.com", // Agency tier
+      "enterprise@rankpilot.com", // Enterprise tier
+      "admin@rankpilot.com", // Admin tier
+    ];
+
+    // In a real implementation, verify these users exist in auth provider
+    console.log(
+      `✅ Test users validated for 5-tier authentication testing: ${testUsers.length}`
+    );
+  }
+
+  /**
+   * Validate testing utilities
+   */
+  private async validateTestingUtilities(): Promise<void> {
+    const utilities = [
+      "testing/utils/enhanced-auth.ts",
+      "testing/utils/graceful-test-utils.ts",
+      "testing/utils/test-orchestrator.ts",
+    ];
+
+    for (const utility of utilities) {
+      try {
+        await fs.access(utility);
+        console.log(`✅ Testing utility validated: ${utility}`);
+      } catch {
+        console.log(`⚠️  Creating missing utility: ${utility}`);
+        await this.createTestingUtility(utility);
+      }
     }
+  }
 
-    /**
-     * Validate test users for role-based testing
-     */
-    private async validateTestUsers(): Promise<void> {
-        const testUsers = [
-            'abbas_ali_rizvi@hotmail.com', // Free tier
-            'starter@rankpilot.com',        // Starter tier
-            'agency@rankpilot.com',         // Agency tier
-            'enterprise@rankpilot.com',     // Enterprise tier
-            'admin@rankpilot.com'           // Admin tier
-        ];
-
-        // In a real implementation, verify these users exist in auth provider
-        console.log(`✅ Test users validated for 5-tier authentication testing: ${testUsers.length}`);
-    }
-
-    /**
-     * Validate testing utilities
-     */
-    private async validateTestingUtilities(): Promise<void> {
-        const utilities = [
-            'testing/utils/enhanced-auth.ts',
-            'testing/utils/graceful-test-utils.ts',
-            'testing/utils/test-orchestrator.ts'
-        ];
-
-        for (const utility of utilities) {
-            try {
-                await fs.access(utility);
-                console.log(`✅ Testing utility validated: ${utility}`);
-            } catch {
-                console.log(`⚠️  Creating missing utility: ${utility}`);
-                await this.createTestingUtility(utility);
-            }
-        }
-    }
-
-    /**
-     * Create missing testing utilities
-     */
-    private async createTestingUtility(utilityPath: string): Promise<void> {
-        const utilityContent = `// Auto-generated testing utility
+  /**
+   * Create missing testing utilities
+   */
+  private async createTestingUtility(utilityPath: string): Promise<void> {
+    const utilityContent = `// Auto-generated testing utility
 // Generated by Testing Orchestrator Agent
 
 export class TestingUtility {
@@ -442,16 +474,16 @@ export class TestingUtility {
 
 export default TestingUtility;`;
 
-        await fs.mkdir(path.dirname(utilityPath), { recursive: true });
-        await fs.writeFile(utilityPath, utilityContent);
-        console.log(`✅ Created testing utility: ${utilityPath}`);
-    }
+    await fs.mkdir(path.dirname(utilityPath), { recursive: true });
+    await fs.writeFile(utilityPath, utilityContent);
+    console.log(`✅ Created testing utility: ${utilityPath}`);
+  }
 
-    /**
-     * Create mobile utilities if missing
-     */
-    private async createMobileUtilities(): Promise<void> {
-        const mobileUtilities = `// Mobile Responsive Utilities - Auto-generated
+  /**
+   * Create mobile utilities if missing
+   */
+  private async createMobileUtilities(): Promise<void> {
+    const mobileUtilities = `// Mobile Responsive Utilities - Auto-generated
 // Generated by Testing Orchestrator Agent
 
 export const useMobileDetection = () => {
@@ -474,15 +506,15 @@ export default {
     useTouch
 };`;
 
-        await fs.writeFile('src/lib/mobile-responsive-utils.ts', mobileUtilities);
-        console.log('✅ Created mobile-responsive utilities');
-    }
+    await fs.writeFile("src/lib/mobile-responsive-utils.ts", mobileUtilities);
+    console.log("✅ Created mobile-responsive utilities");
+  }
 
-    /**
-     * Validate touch targets for accessibility
-     */
-    private async validateTouchTargets(): Promise<void> {
-        const touchTargetCSS = `/* Mobile Touch Targets - Auto-generated */
+  /**
+   * Validate touch targets for accessibility
+   */
+  private async validateTouchTargets(): Promise<void> {
+    const touchTargetCSS = `/* Mobile Touch Targets - Auto-generated */
 /* Generated by Testing Orchestrator Agent */
 
 .touch-target {
@@ -497,36 +529,37 @@ export default {
     }
 }`;
 
-        await fs.writeFile('src/styles/mobile-touch-targets.css', touchTargetCSS);
-        console.log('✅ Validated touch targets (48px minimum)');
-    }
+    await fs.writeFile("src/styles/mobile-touch-targets.css", touchTargetCSS);
+    console.log("✅ Validated touch targets (48px minimum)");
+  }
 
-    /**
-     * Validate fix implementation
-     */
-    async validateFix(): Promise<boolean> {
-        const total = this.testResults.length;
-        const passed = total > 0 ? this.testResults.filter(t => t.passed).length : 0;
-        const successRate = total > 0 ? (passed / total) : 0;
-        return successRate >= 0.6; // 60% success rate threshold
-    }
+  /**
+   * Validate fix implementation
+   */
+  async validateFix(): Promise<boolean> {
+    const total = this.testResults.length;
+    const passed =
+      total > 0 ? this.testResults.filter((t) => t.passed).length : 0;
+    const successRate = total > 0 ? passed / total : 0;
+    return successRate >= 0.6; // 60% success rate threshold
+  }
 
-    /**
-     * Rollback changes if needed
-     */
-    async rollback(): Promise<boolean> {
-        console.log('🔄 Rolling back Testing Orchestrator changes...');
+  /**
+   * Rollback changes if needed
+   */
+  async rollback(): Promise<boolean> {
+    console.log("🔄 Rolling back Testing Orchestrator changes...");
 
-        try {
-            // No destructive changes made, just validation and report generation
-            console.log('✅ Rollback completed (no destructive changes to rollback)');
-            return true;
-        } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            console.error('❌ Rollback failed:', msg);
-            return false;
-        }
+    try {
+      // No destructive changes made, just validation and report generation
+      console.log("✅ Rollback completed (no destructive changes to rollback)");
+      return true;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("❌ Rollback failed:", msg);
+      return false;
     }
+  }
 }
 
 // Export singleton instance

@@ -6,21 +6,31 @@
  * exiting non-zero if the simulated missing provenance isn't detected).
  */
 
-interface DummyResponse { data: string }
+interface DummyResponse {
+  data: string;
+}
 
 function hasProvenance(obj: unknown): boolean {
-    return !!obj && typeof obj === 'object' && ('__provenance' in obj || 'provenance' in obj);
+  return (
+    !!obj &&
+    typeof obj === "object" &&
+    ("__provenance" in obj || "provenance" in obj)
+  );
 }
 
 // Simulate a handler returning object without provenance
-const simulated: DummyResponse = { data: 'orphan' };
+const simulated: DummyResponse = { data: "orphan" };
 if (hasProvenance(simulated)) {
-    console.error('Negative provenance test invalid: simulated object unexpectedly has provenance');
-    process.exit(1);
+  console.error(
+    "Negative provenance test invalid: simulated object unexpectedly has provenance"
+  );
+  process.exit(1);
 }
 
 // Expectation: object lacks provenance (this is deliberate). We then log success.
-console.log('Negative provenance simulation success: object lacks provenance tag as expected');
+console.log(
+  "Negative provenance simulation success: object lacks provenance tag as expected"
+);
 
 // If future code globally mutates objects or auto-injects provenance in undesired scope, this test would fail.
 process.exit(0);

@@ -18,15 +18,21 @@ export class DashboardPage {
   }
 
   async navigateTo(path?: string) {
-    await this.page.goto(path || "/dashboard", { waitUntil: "domcontentloaded" });
+    await this.page.goto(path || "/dashboard", {
+      waitUntil: "domcontentloaded",
+    });
     await randomDelay();
     // Wait for representative dashboard content
-    await this.keywordStats.waitFor({ state: "visible", timeout: 30000 }).catch(() => { });
+    await this.keywordStats
+      .waitFor({ state: "visible", timeout: 30000 })
+      .catch(() => {});
   }
 
   async extractStats() {
     await this.page.waitForLoadState("domcontentloaded");
-    await this.keywordStats.waitFor({ state: "visible", timeout: 20000 }).catch(() => { });
+    await this.keywordStats
+      .waitFor({ state: "visible", timeout: 20000 })
+      .catch(() => {});
 
     return {
       keywords: await this.keywordStats.innerText(),

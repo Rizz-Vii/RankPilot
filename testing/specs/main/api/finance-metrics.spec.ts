@@ -1,1 +1,1 @@
-import '../../api/finance-metrics.api.spec';
+import "../../api/finance-metrics.api.spec";

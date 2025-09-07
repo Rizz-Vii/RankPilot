@@ -1,11 +1,17 @@
 "use client";
 
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 export interface VirtualMessage {
   id: string | number;
   // Additional properties allowed
-  [key: string]: unknown;  
+  [key: string]: unknown;
 }
 
 interface VirtualizedMessageListProps<T extends VirtualMessage> {
@@ -54,20 +60,28 @@ export function VirtualizedMessageList<T extends VirtualMessage>({
 
   useEffect(() => {
     if (!autoScroll) return;
-    const el = containerRef.current; if(!el) return;
+    const el = containerRef.current;
+    if (!el) return;
     const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 200;
     if (items.length > prevLengthRef.current && nearBottom) {
-      requestAnimationFrame(() => { if(containerRef.current) containerRef.current.scrollTop = containerRef.current.scrollHeight; });
+      requestAnimationFrame(() => {
+        if (containerRef.current)
+          containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      });
     }
     prevLengthRef.current = items.length;
   }, [items, autoScroll]);
 
   const findStartIndex = (scrollTop: number) => {
-    const prefix = prefixRef.current; if (!prefix.length) return 0;
-    let low = 0, high = prefix.length - 1, mid; 
+    const prefix = prefixRef.current;
+    if (!prefix.length) return 0;
+    let low = 0,
+      high = prefix.length - 1,
+      mid;
     while (low < high) {
       mid = (low + high) >>> 1;
-      if (prefix[mid] >= scrollTop) high = mid; else low = mid + 1;
+      if (prefix[mid] >= scrollTop) high = mid;
+      else low = mid + 1;
     }
     return low;
   };
@@ -75,53 +89,64 @@ export function VirtualizedMessageList<T extends VirtualMessage>({
   const [range, setRange] = useState({ start: 0, end: 0 });
 
   const updateRange = useCallback(() => {
-    const el = containerRef.current; if(!el) return;
+    const el = containerRef.current;
+    if (!el) return;
     const scrollTop = el.scrollTop;
     const vh = el.clientHeight;
     const startPx = Math.max(0, scrollTop - overscanPx);
     const endPx = scrollTop + vh + overscanPx;
     const startIndex = findStartIndex(startPx);
-    const prefix = prefixRef.current; let endIndex = startIndex;
+    const prefix = prefixRef.current;
+    let endIndex = startIndex;
     while (endIndex < prefix.length && prefix[endIndex] < endPx) endIndex++;
     setRange({ start: startIndex, end: Math.min(items.length, endIndex + 1) });
   }, [items.length, overscanPx]);
 
-  useEffect(() => { updateRange(); }, [items.length, tick, updateRange]);
+  useEffect(() => {
+    updateRange();
+  }, [items.length, tick, updateRange]);
 
   useEffect(() => {
-    const el = containerRef.current; if(!el) return;
+    const el = containerRef.current;
+    if (!el) return;
     const onScroll = () => updateRange();
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
   }, [updateRange]);
 
-  const setMeasuredRef = (id: string | number) => (node: HTMLDivElement | null) => {
-    if (!node) return;
-    const ro = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        const h = entry.contentRect.height;
-        if (heightsRef.current.get(id) !== h) {
-          heightsRef.current.set(id, h);
-            setTick(t => t + 1);
+  const setMeasuredRef =
+    (id: string | number) => (node: HTMLDivElement | null) => {
+      if (!node) return;
+      const ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const h = entry.contentRect.height;
+          if (heightsRef.current.get(id) !== h) {
+            heightsRef.current.set(id, h);
+            setTick((t) => t + 1);
+          }
         }
-      }
-    });
-    ro.observe(node);
-  };
+      });
+      ro.observe(node);
+    };
 
-  const totalHeight = prefixRef.current.length ? prefixRef.current[prefixRef.current.length - 1] : 0;
+  const totalHeight = prefixRef.current.length
+    ? prefixRef.current[prefixRef.current.length - 1]
+    : 0;
 
   return (
-    <div ref={containerRef} className={"relative overflow-y-auto h-full " + (className || "")}> 
+    <div
+      ref={containerRef}
+      className={"relative overflow-y-auto h-full " + (className || "")}
+    >
       <div style={{ height: totalHeight }} className="relative w-full">
         {items.slice(range.start, range.end).map((item, i) => {
           const index = range.start + i;
-          const top = (prefixRef.current[index - 1] || 0);
+          const top = prefixRef.current[index - 1] || 0;
           return (
             <div
               key={item.id}
               ref={setMeasuredRef(item.id)}
-              style={{ position: 'absolute', top, left: 0, right: 0 }}
+              style={{ position: "absolute", top, left: 0, right: 0 }}
             >
               {renderItem(item, index)}
             </div>

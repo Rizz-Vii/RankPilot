@@ -2,7 +2,7 @@ name: Provenance Audit (Static)
 
 on:
   pull_request:
-    branches: [ master, main, workshop/* ]
+    branches: [master, main, workshop/*]
 
 jobs:
   provenance-audit:

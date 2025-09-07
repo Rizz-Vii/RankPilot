@@ -220,7 +220,9 @@ const AIFeatureBadge = ({ children }: { children: React.ReactNode }) => (
 );
 
 export {
-  AIFeatureBadge, BodyText, ErrorInput,
+  AIFeatureBadge,
+  BodyText,
+  ErrorInput,
   // Error handling
   ErrorMessage,
   // Cards
@@ -235,11 +237,13 @@ export {
   PageLayout,
   // Buttons
   PrimaryAction,
-  SecondaryAction, SectionHeading,
+  SecondaryAction,
+  SectionHeading,
   // Status
-  StatusIndicator, SuccessBadge,
+  StatusIndicator,
+  SuccessBadge,
   // Success states
-  SuccessMessage
+  SuccessMessage,
 };
 
 // ===== USAGE EXAMPLES =====

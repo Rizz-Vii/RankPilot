@@ -1,1 +1,3 @@
-export default function FiveHundred() { return null; }
+export default function FiveHundred() {
+  return null;
+}

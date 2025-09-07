@@ -30,8 +30,15 @@ export interface TimeoutResult<T> {
 }
 
 // Unified overload: if second arg is number returns Promise<T>, if object returns Promise<TimeoutResult<T>>
-export function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage?: string): Promise<T>;
-export function withTimeout<T>(promise: Promise<T>, options: TimeoutOptions): Promise<TimeoutResult<T>>;
+export function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage?: string
+): Promise<T>;
+export function withTimeout<T>(
+  promise: Promise<T>,
+  options: TimeoutOptions
+): Promise<TimeoutResult<T>>;
 export function withTimeout<T>(
   promise: Promise<T>,
   timeoutMsOrOptions: number | TimeoutOptions,
@@ -69,7 +76,7 @@ export function withTimeout<T>(
         reject(
           new TimeoutError(
             message ||
-            `Operation timed out after ${timeoutMs}ms (attempt ${attempts}/${retryCount + 1})`,
+              `Operation timed out after ${timeoutMs}ms (attempt ${attempts}/${retryCount + 1})`,
             elapsedTime,
             timeoutMs
           )
@@ -117,7 +124,9 @@ export function withTimeout<T>(
             `Attempt ${attempts} failed, retrying in ${retryDelay}ms...`,
             error.message
           );
-          setTimeout(() => { void attemptOperation(); }, retryDelay);
+          setTimeout(() => {
+            void attemptOperation();
+          }, retryDelay);
           return;
         }
 

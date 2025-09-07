@@ -2,7 +2,7 @@ name: Table Data Contract
 
 on:
   push:
-    branches: [ master, main, workshop/** ]
+    branches: [master, main, workshop/**]
   pull_request:
 
 permissions:

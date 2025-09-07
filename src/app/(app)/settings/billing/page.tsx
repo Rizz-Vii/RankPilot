@@ -126,9 +126,9 @@ function BillingPage() {
                 </ul>
               </div>
 
-  {subscription?.tier === "free" && (
-    <div className="rounded-lg p-4 border bg-primary/10 border-primary/30">
-      <p className="text-sm text-primary mb-3">
+              {subscription?.tier === "free" && (
+                <div className="rounded-lg p-4 border bg-primary/10 border-primary/30">
+                  <p className="text-sm text-primary mb-3">
                     <strong>Upgrade to unlock more features:</strong> Get more
                     audits, advanced reports, competitor tracking, and priority
                     support.
@@ -136,23 +136,23 @@ function BillingPage() {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-          className="bg-primary hover:bg-primary/80"
+                      className="bg-primary hover:bg-primary/80"
                       onClick={() => handleUpgrade("starter")}
                     >
-          Upgrade to Starter ($19/mo)
+                      Upgrade to Starter ($19/mo)
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleUpgrade("agency")}
                     >
-          View Agency Plan ($49/mo)
+                      View Agency Plan ($49/mo)
                     </Button>
                   </div>
                 </div>
               )}
 
-      {subscription?.tier === "starter" && (
+              {subscription?.tier === "starter" && (
                 <div className="rounded-lg p-4 border bg-warning/10 border-warning/30">
                   <p className="text-sm text-warning-foreground mb-3">
                     <strong>Ready for unlimited access?</strong> Upgrade to
@@ -164,7 +164,7 @@ function BillingPage() {
                     className="bg-warning hover:bg-warning/80"
                     onClick={() => handleUpgrade("agency")}
                   >
-        Upgrade to Agency ($49/mo)
+                    Upgrade to Agency ($49/mo)
                   </Button>
                 </div>
               )}
@@ -280,72 +280,77 @@ function BillingPage() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-4">Available Plans</h2>
         <div className="grid md:grid-cols-3 gap-6">
-          {plans.filter(p => p.tier !== 'free').map((plan) => (
-            <Card
-              key={plan.tier}
-              className={`relative ${plan.tier === subscription?.tier ? "ring-2 ring-primary" : ""}`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-primary">
-                    <Star className="w-3 h-3 mr-1" />
-                    Most Popular
-                  </Badge>
-                </div>
-              )}
-
-              <CardHeader className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  {plan.tier === "agency" && (
-                    <Crown className="w-5 h-5 text-warning-foreground" />
-                  )}
-                  {plan.tier === "enterprise" && (
-                    <Crown className="w-5 h-5 text-accent" />
-                  )}
-                  {plan.tier === "starter" && (
-                    <Zap className="w-5 h-5 text-primary" />
-                  )}
-                  <CardTitle className="capitalize">{plan.name}</CardTitle>
-                </div>
-                <CardDescription>
-                  <span className="text-3xl font-bold">${plan.price}</span>
-                  <span className="text-muted-foreground">/month</span>
-                </CardDescription>
-                {plan.tier === subscription?.tier && (
-                  <Badge variant="default" className="mt-2">
-                    Current Plan
-                  </Badge>
+          {plans
+            .filter((p) => p.tier !== "free")
+            .map((plan) => (
+              <Card
+                key={plan.tier}
+                className={`relative ${plan.tier === subscription?.tier ? "ring-2 ring-primary" : ""}`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-primary">
+                      <Star className="w-3 h-3 mr-1" />
+                      Most Popular
+                    </Badge>
+                  </div>
                 )}
-              </CardHeader>
 
-              <CardContent>
-                <ul className="space-y-2 mb-6">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="w-4 h-4 text-success-foreground" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                <CardHeader className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    {plan.tier === "agency" && (
+                      <Crown className="w-5 h-5 text-warning-foreground" />
+                    )}
+                    {plan.tier === "enterprise" && (
+                      <Crown className="w-5 h-5 text-accent" />
+                    )}
+                    {plan.tier === "starter" && (
+                      <Zap className="w-5 h-5 text-primary" />
+                    )}
+                    <CardTitle className="capitalize">{plan.name}</CardTitle>
+                  </div>
+                  <CardDescription>
+                    <span className="text-3xl font-bold">${plan.price}</span>
+                    <span className="text-muted-foreground">/month</span>
+                  </CardDescription>
+                  {plan.tier === subscription?.tier && (
+                    <Badge variant="default" className="mt-2">
+                      Current Plan
+                    </Badge>
+                  )}
+                </CardHeader>
 
-                {plan.tier === subscription?.tier ? (
-                  <Button disabled className="w-full">
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Current Plan
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full"
-                    variant={plan.popular ? "default" : "outline"}
-                    onClick={() => handleUpgrade(plan.tier)}
-                  >
-                    {subscription?.tier === "free" ? "Upgrade" : "Switch"} to{" "}
-                    {plan.name}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                <CardContent>
+                  <ul className="space-y-2 mb-6">
+                    {plan.features.map((feature, index) => (
+                      <li
+                        key={index}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <CheckCircle className="w-4 h-4 text-success-foreground" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {plan.tier === subscription?.tier ? (
+                    <Button disabled className="w-full">
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Current Plan
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      variant={plan.popular ? "default" : "outline"}
+                      onClick={() => handleUpgrade(plan.tier)}
+                    >
+                      {subscription?.tier === "free" ? "Upgrade" : "Switch"} to{" "}
+                      {plan.name}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
         </div>
       </div>
 
@@ -426,4 +431,3 @@ function BillingPage() {
 }
 
 export default BillingPage;
-

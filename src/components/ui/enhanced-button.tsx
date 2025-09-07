@@ -24,8 +24,10 @@ const enhancedButtonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         gradient:
           "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 active:scale-95",
-  success: "bg-success text-success-foreground hover:bg-success/90 active:scale-95",
-  warning: "bg-warning text-warning-foreground hover:bg-warning/90 active:scale-95",
+        success:
+          "bg-success text-success-foreground hover:bg-success/90 active:scale-95",
+        warning:
+          "bg-warning text-warning-foreground hover:bg-warning/90 active:scale-95",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -50,7 +52,7 @@ const enhancedButtonVariants = cva(
 
 export interface EnhancedButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-  VariantProps<typeof enhancedButtonVariants> {
+    VariantProps<typeof enhancedButtonVariants> {
   asChild?: boolean;
   loading?: boolean;
   loadingText?: string;
@@ -65,7 +67,7 @@ export interface EnhancedButtonProps
   hapticConfig?: {
     enabled: boolean;
     pattern?: number | number[];
-    platform?: 'ios' | 'android' | 'web';
+    platform?: "ios" | "android" | "web";
   };
   /**
    * Accessibility enhancements
@@ -98,19 +100,20 @@ const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
     },
     ref
   ) => {
-  // Only use Slot when a single, non-Fragment React element is provided
-  const childCount = React.Children.count(children);
-  const isValidChildEl = React.isValidElement(children) && (children as React.ReactElement).type !== React.Fragment;
-  const useSlot = !!asChild && childCount === 1 && isValidChildEl;
-  const Comp: React.ElementType = useSlot ? Slot : motion.button;
+    // Only use Slot when a single, non-Fragment React element is provided
+    const childCount = React.Children.count(children);
+    const isValidChildEl =
+      React.isValidElement(children) &&
+      (children as React.ReactElement).type !== React.Fragment;
+    const useSlot = !!asChild && childCount === 1 && isValidChildEl;
+    const Comp: React.ElementType = useSlot ? Slot : motion.button;
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       // Haptic feedback for mobile devices (guard for client-only navigator API)
-      if (
-        hapticFeedback &&
-        typeof navigator !== "undefined"
-      ) {
-        const nav = navigator as Navigator & { vibrate?: (pattern: number | number[]) => void };
+      if (hapticFeedback && typeof navigator !== "undefined") {
+        const nav = navigator as Navigator & {
+          vibrate?: (pattern: number | number[]) => void;
+        };
         if ("vibrate" in nav && typeof nav.vibrate === "function") {
           nav.vibrate(10);
         }
@@ -136,7 +139,7 @@ const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
       </>
     );
 
-  const motionProps = {
+    const motionProps = {
       whileHover: loading ? {} : { scale: 1.02 },
       whileTap: loading ? {} : { scale: 0.98 },
       transition: { type: "spring" as const, stiffness: 400, damping: 10 },
@@ -162,8 +165,10 @@ const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
 
     if (asChild && !useSlot) {
       // In dev, surface a hint if asChild is misused (e.g., Fragment or multiple children)
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn('[EnhancedButton] asChild requires a single, non-Fragment React element child. Falling back to button.');
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(
+          "[EnhancedButton] asChild requires a single, non-Fragment React element child. Falling back to button."
+        );
       }
     }
 

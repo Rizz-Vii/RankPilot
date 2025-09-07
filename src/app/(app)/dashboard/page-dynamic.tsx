@@ -22,7 +22,7 @@ import type { ChartConfig } from "@/components/ui/chart";
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent
+  ChartTooltipContent,
 } from "@/components/ui/chart";
 import {
   LineChart,
@@ -136,7 +136,11 @@ const DashboardMetricCard: React.FC<{
   </Card>
 );
 
-const SeoScoreTrendChart = ({ data }: { data: Array<{ date: string; score: number }> }) => (
+const SeoScoreTrendChart = ({
+  data,
+}: {
+  data: Array<{ date: string; score: number }>;
+}) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Overall SEO Score</CardTitle>
@@ -148,43 +152,45 @@ const SeoScoreTrendChart = ({ data }: { data: Array<{ date: string; score: numbe
       {data && data.length > 0 ? (
         <ChartContainer config={lineChartConfig} className="h-[200px] w-full">
           <LineChart
-              data={data}
-              margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
-            >
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(val) =>
-                  new Date(val).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })
-                }
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis domain={[0, 100]} tickLine={false} axisLine={false} />
-              <ChartTooltip
-                cursor={false}
-                content={(props) => (
-                  <ChartTooltipContent {...props} indicator="line" />
-                )}
-              />
-              <Line
-                type="monotone"
-                dataKey="score"
-                stroke="var(--color-score)"
-                strokeWidth={2}
-                dot={true}
-              />
-            </LineChart>
+            data={data}
+            margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+          >
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="date"
+              tickFormatter={(val) =>
+                new Date(val).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })
+              }
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis domain={[0, 100]} tickLine={false} axisLine={false} />
+            <ChartTooltip
+              cursor={false}
+              content={(props) => (
+                <ChartTooltipContent {...props} indicator="line" />
+              )}
+            />
+            <Line
+              type="monotone"
+              dataKey="score"
+              stroke="var(--color-score)"
+              strokeWidth={2}
+              dot={true}
+            />
+          </LineChart>
         </ChartContainer>
       ) : (
         <div className="h-[200px] flex items-center justify-center text-muted-foreground">
           <div className="text-center">
             <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No SEO analysis data yet</p>
-            <p className="text-sm">Run your first NeuroSEO™ analysis to see trends</p>
+            <p className="text-sm">
+              Run your first NeuroSEO™ analysis to see trends
+            </p>
           </div>
         </div>
       )}
@@ -192,7 +198,11 @@ const SeoScoreTrendChart = ({ data }: { data: Array<{ date: string; score: numbe
   </Card>
 );
 
-const KeywordVisibilityChart = ({ visibility }: { visibility?: { score?: number; top10?: number } }) => {
+const KeywordVisibilityChart = ({
+  visibility,
+}: {
+  visibility?: { score?: number; top10?: number };
+}) => {
   const data = [
     {
       name: "Visibility",
@@ -210,7 +220,8 @@ const KeywordVisibilityChart = ({ visibility }: { visibility?: { score?: number;
         </CardDescription>
       </CardHeader>
       <CardContent className="flex items-center justify-center">
-        {visibility && ((visibility.top10 || 0) > 0 || (visibility.score || 0) > 0) ? (
+        {visibility &&
+        ((visibility.top10 || 0) > 0 || (visibility.score || 0) > 0) ? (
           <ChartContainer config={lineChartConfig} className="h-[200px] w-full">
             <RadialBarChart
               data={data}
@@ -239,7 +250,9 @@ const KeywordVisibilityChart = ({ visibility }: { visibility?: { score?: number;
             <div className="text-center">
               <KeyRound className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>No keyword data yet</p>
-              <p className="text-sm">Start tracking keywords to see visibility</p>
+              <p className="text-sm">
+                Start tracking keywords to see visibility
+              </p>
             </div>
           </div>
         )}
@@ -248,7 +261,11 @@ const KeywordVisibilityChart = ({ visibility }: { visibility?: { score?: number;
   );
 };
 
-const DomainAuthorityChart = ({ data }: { data?: { history?: Array<{ date: string; score: number }>; score?: number } }) => (
+const DomainAuthorityChart = ({
+  data,
+}: {
+  data?: { history?: Array<{ date: string; score: number }>; score?: number };
+}) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Domain Authority</CardTitle>
@@ -293,7 +310,9 @@ const DomainAuthorityChart = ({ data }: { data?: { history?: Array<{ date: strin
           <div className="text-center">
             <ShieldCheck className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No domain authority data yet</p>
-            <p className="text-sm">Run an SEO audit to track domain authority</p>
+            <p className="text-sm">
+              Run an SEO audit to track domain authority
+            </p>
           </div>
         </div>
       )}
@@ -301,7 +320,11 @@ const DomainAuthorityChart = ({ data }: { data?: { history?: Array<{ date: strin
   </Card>
 );
 
-const BacklinksChart = ({ data }: { data?: { history?: Array<{ month: string; new: number; lost: number }> } }) => (
+const BacklinksChart = ({
+  data,
+}: {
+  data?: { history?: Array<{ month: string; new: number; lost: number }> };
+}) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Backlink Growth</CardTitle>
@@ -313,28 +336,30 @@ const BacklinksChart = ({ data }: { data?: { history?: Array<{ month: string; ne
       {data && data.history && data.history.length > 0 ? (
         <ChartContainer config={barChartConfig} className="h-[200px] w-full">
           <BarChart
-              data={data.history}
-              margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
-            >
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="month" tickLine={false} axisLine={false} />
-              <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip
-                cursor={false}
-                content={(props) => (
-                  <ChartTooltipContent {...props} indicator="line" />
-                )}
-              />
-              <Bar dataKey="new" fill="var(--color-new)" radius={4} />
-              <Bar dataKey="lost" fill="var(--color-lost)" radius={4} />
-            </BarChart>
+            data={data.history}
+            margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+          >
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="month" tickLine={false} axisLine={false} />
+            <YAxis tickLine={false} axisLine={false} />
+            <ChartTooltip
+              cursor={false}
+              content={(props) => (
+                <ChartTooltipContent {...props} indicator="line" />
+              )}
+            />
+            <Bar dataKey="new" fill="var(--color-new)" radius={4} />
+            <Bar dataKey="lost" fill="var(--color-lost)" radius={4} />
+          </BarChart>
         </ChartContainer>
       ) : (
         <div className="h-[200px] flex items-center justify-center text-muted-foreground">
           <div className="text-center">
             <LinkIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No backlink data yet</p>
-            <p className="text-sm">Run a link analysis to track backlink growth</p>
+            <p className="text-sm">
+              Run a link analysis to track backlink growth
+            </p>
           </div>
         </div>
       )}
@@ -342,7 +367,11 @@ const BacklinksChart = ({ data }: { data?: { history?: Array<{ month: string; ne
   </Card>
 );
 
-const TrafficSourcesChart = ({ data }: { data: Array<{ name: string; value: number; fill: string }> }) => (
+const TrafficSourcesChart = ({
+  data,
+}: {
+  data: Array<{ name: string; value: number; fill: string }>;
+}) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Traffic Sources</CardTitle>
@@ -354,48 +383,50 @@ const TrafficSourcesChart = ({ data }: { data: Array<{ name: string; value: numb
       {data && data.length > 0 ? (
         <ChartContainer config={pieChartConfig} className="h-[200px] w-full">
           <PieChart>
-              <ChartTooltip
-                cursor={false}
-                content={(props) => (
-                  <ChartTooltipContent {...props} indicator="line" />
-                )}
-              />
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={50}
-                strokeWidth={5}
-              >
-                {data.map((entry) => (
-                  <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Legend
-                content={({ payload }) => (
-                  <div className={styles.legendContainer}>
-                    {payload?.map((entry) => (
+            <ChartTooltip
+              cursor={false}
+              content={(props) => (
+                <ChartTooltipContent {...props} indicator="line" />
+              )}
+            />
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={50}
+              strokeWidth={5}
+            >
+              {data.map((entry) => (
+                <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+              ))}
+            </Pie>
+            <Legend
+              content={({ payload }) => (
+                <div className={styles.legendContainer}>
+                  {payload?.map((entry) => (
+                    <div
+                      key={`legend-${entry.value}`}
+                      className={styles.legendItem}
+                    >
                       <div
-                        key={`legend-${entry.value}`}
-                        className={styles.legendItem}
-                      >
-                        <div
-                          className={`${styles.legendDot} ${getChartColorClass(entry.color || "")}`}
-                        />
-                        <span>{entry.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              />
-            </PieChart>
+                        className={`${styles.legendDot} ${getChartColorClass(entry.color || "")}`}
+                      />
+                      <span>{entry.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            />
+          </PieChart>
         </ChartContainer>
       ) : (
         <div className="h-[200px] flex items-center justify-center text-muted-foreground">
           <div className="text-center">
             <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No traffic data available</p>
-            <p className="text-sm">Complete SEO analyses to see estimated traffic sources</p>
+            <p className="text-sm">
+              Complete SEO analyses to see estimated traffic sources
+            </p>
           </div>
         </div>
       )}
@@ -408,13 +439,13 @@ const TrafficSourcesChart = ({ data }: { data: Array<{ name: string; value: numb
 export default function DashboardPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const isMobile = useIsMobile();
-  
+
   // Use dynamic dashboard data
-  const { 
-    data: dashboardData, 
-    loading: dataLoading, 
-    error: dataError, 
-    refresh 
+  const {
+    data: dashboardData,
+    loading: dataLoading,
+    error: dataError,
+    refresh,
   } = useRealTimeDashboardData(user?.uid || null);
 
   if (authLoading || !user) {
@@ -428,9 +459,9 @@ export default function DashboardPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {dataError}
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => void refresh()}
               className="ml-2"
             >
@@ -487,7 +518,9 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants}>
           <DashboardMetricCard
             title="Tracked Keywords"
-            value={(dashboardData?.trackedKeywords.current || 0).toLocaleString()}
+            value={(
+              dashboardData?.trackedKeywords.current || 0
+            ).toLocaleString()}
             change={dashboardData?.trackedKeywords.change}
             icon={KeyRound}
           />
@@ -496,7 +529,11 @@ export default function DashboardPage() {
           <DashboardMetricCard
             title="Domain Authority"
             value={String(dashboardData?.domainAuthority.score || 0)}
-            change={dashboardData?.domainAuthority.score ? dashboardData.domainAuthority.score - 52 : 0}
+            change={
+              dashboardData?.domainAuthority.score
+                ? dashboardData.domainAuthority.score - 52
+                : 0
+            }
             icon={ShieldCheck}
           />
         </motion.div>
@@ -531,7 +568,9 @@ export default function DashboardPage() {
         animate="visible"
       >
         <motion.div variants={itemVariants}>
-          <KeywordVisibilityChart visibility={dashboardData?.keywordVisibility} />
+          <KeywordVisibilityChart
+            visibility={dashboardData?.keywordVisibility}
+          />
         </motion.div>
         <motion.div variants={itemVariants}>
           <BacklinksChart data={dashboardData?.backlinks} />

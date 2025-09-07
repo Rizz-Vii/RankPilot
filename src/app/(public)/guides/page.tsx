@@ -126,7 +126,7 @@ export default function GuidesPage() {
           })}
         </div>
 
-  <div className="mt-12 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-8">
+        <div className="mt-12 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-8">
           <div className="text-center">
             <TrendingUp className="w-12 h-12 text-primary mx-auto mb-4" />
             <h2 className="text-2xl font-semibold mb-4">

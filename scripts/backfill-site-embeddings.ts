@@ -2,66 +2,136 @@
  * Usage:
  *   RANKPILOT_ENABLE_EMBEDDINGS=1 OPENAI_API_KEY=sk-... npx ts-node scripts/backfill-site-embeddings.ts --uid <userId> [--collection default] [--limit 100] [--dry]
  */
-import 'dotenv/config';
-import OpenAI from 'openai';
-import { adminDb } from '../src/lib/firebase-admin';
+import "dotenv/config";
+import OpenAI from "openai";
+import { adminDb } from "../src/lib/firebase-admin";
 
-interface Args { uid?: string; collection?: string; limit?: number; dry?: boolean; }
+interface Args {
+  uid?: string;
+  collection?: string;
+  limit?: number;
+  dry?: boolean;
+}
 function parseArgs(): Args {
-    const a = process.argv.slice(2); const out: Args = {};
-    for (let i = 0; i < a.length; i++) {
-        if (a[i] === '--uid') out.uid = a[++i];
-        else if (a[i] === '--collection') out.collection = a[++i];
-        else if (a[i] === '--limit') out.limit = Number(a[++i]);
-        else if (a[i] === '--dry') out.dry = true;
-    }
-    return out;
+  const a = process.argv.slice(2);
+  const out: Args = {};
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] === "--uid") out.uid = a[++i];
+    else if (a[i] === "--collection") out.collection = a[++i];
+    else if (a[i] === "--limit") out.limit = Number(a[++i]);
+    else if (a[i] === "--dry") out.dry = true;
+  }
+  return out;
 }
 
-async function backfill({ uid, collection = 'default', limit = 250, dry = false }: { uid: string; collection: string; limit: number; dry: boolean; }) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error('OPENAI_API_KEY missing');
-    const client = new OpenAI({ apiKey });
-    const collRef = adminDb.collection('siteContent').doc(uid).collection(collection);
-    const snapshot = await collRef.limit(limit).get();
-    let processed = 0, embedded = 0, skipped = 0, errors = 0;
-    for (const doc of snapshot.docs) {
-        processed++;
-        const data = doc.data() as Record<string, unknown>;
-        const embedding = data.embedding;
-        if (Array.isArray(embedding) && embedding.length > 10) { skipped++; continue; }
-        if (dry) { embedded++; continue; }
-        try {
-            const content = typeof (data.content as unknown as { slice?: (s: number, e?: number) => string } | string | undefined) === 'object'
-                ? (data.content as { slice?: (s: number, e?: number) => string }).slice?.(0, 3000)
-                : (typeof data.content === 'string' ? data.content.slice(0, 3000) : '');
-            const text: string = content || '';
-            if (!text) { skipped++; continue; }
-            const emb = await client.embeddings.create({ model: 'text-embedding-3-small', input: text });
-            const vector = emb.data?.[0]?.embedding;
-            if (Array.isArray(vector)) {
-                await doc.ref.set({ embedding: vector, embeddingModel: 'text-embedding-3-small', embeddingUpdatedAt: new Date() }, { merge: true });
-                embedded++;
-            } else { skipped++; }
-        } catch (e: unknown) {
-            errors++;
-            const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string') ? (e as Error).message : '';
-            if (msg.includes('rate limit')) {
-                await new Promise(r => setTimeout(r, 4000));
-            }
-        }
+async function backfill({
+  uid,
+  collection = "default",
+  limit = 250,
+  dry = false,
+}: {
+  uid: string;
+  collection: string;
+  limit: number;
+  dry: boolean;
+}) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY missing");
+  const client = new OpenAI({ apiKey });
+  const collRef = adminDb
+    .collection("siteContent")
+    .doc(uid)
+    .collection(collection);
+  const snapshot = await collRef.limit(limit).get();
+  let processed = 0,
+    embedded = 0,
+    skipped = 0,
+    errors = 0;
+  for (const doc of snapshot.docs) {
+    processed++;
+    const data = doc.data() as Record<string, unknown>;
+    const embedding = data.embedding;
+    if (Array.isArray(embedding) && embedding.length > 10) {
+      skipped++;
+      continue;
     }
-    return { processed, embedded, skipped, errors };
+    if (dry) {
+      embedded++;
+      continue;
+    }
+    try {
+      const content =
+        typeof (data.content as unknown as
+          | { slice?: (s: number, e?: number) => string }
+          | string
+          | undefined) === "object"
+          ? (
+              data.content as { slice?: (s: number, e?: number) => string }
+            ).slice?.(0, 3000)
+          : typeof data.content === "string"
+            ? data.content.slice(0, 3000)
+            : "";
+      const text: string = content || "";
+      if (!text) {
+        skipped++;
+        continue;
+      }
+      const emb = await client.embeddings.create({
+        model: "text-embedding-3-small",
+        input: text,
+      });
+      const vector = emb.data?.[0]?.embedding;
+      if (Array.isArray(vector)) {
+        await doc.ref.set(
+          {
+            embedding: vector,
+            embeddingModel: "text-embedding-3-small",
+            embeddingUpdatedAt: new Date(),
+          },
+          { merge: true }
+        );
+        embedded++;
+      } else {
+        skipped++;
+      }
+    } catch (e: unknown) {
+      errors++;
+      const msg =
+        e &&
+        typeof e === "object" &&
+        "message" in e &&
+        typeof (e as { message?: unknown }).message === "string"
+          ? (e as Error).message
+          : "";
+      if (msg.includes("rate limit")) {
+        await new Promise((r) => setTimeout(r, 4000));
+      }
+    }
+  }
+  return { processed, embedded, skipped, errors };
 }
 
 async function run() {
-    const { uid, collection, limit, dry } = parseArgs();
-    if (!uid) { console.error('Missing --uid'); process.exit(1); }
-    if (process.env.RANKPILOT_ENABLE_EMBEDDINGS !== '1') {
-        console.warn('RANKPILOT_ENABLE_EMBEDDINGS not set to 1; proceeding anyway (override)');
-    }
-    const res = await backfill({ uid, collection: collection || 'default', limit: limit || 250, dry: !!dry });
-    console.log('Backfill summary:', res);
+  const { uid, collection, limit, dry } = parseArgs();
+  if (!uid) {
+    console.error("Missing --uid");
+    process.exit(1);
+  }
+  if (process.env.RANKPILOT_ENABLE_EMBEDDINGS !== "1") {
+    console.warn(
+      "RANKPILOT_ENABLE_EMBEDDINGS not set to 1; proceeding anyway (override)"
+    );
+  }
+  const res = await backfill({
+    uid,
+    collection: collection || "default",
+    limit: limit || 250,
+    dry: !!dry,
+  });
+  console.log("Backfill summary:", res);
 }
 
-run().catch(e => { console.error(e); process.exit(1); });
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

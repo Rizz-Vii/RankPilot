@@ -110,7 +110,7 @@ export function EnhancedForm({
       if (cfg?.transform) {
         // keep transformed value synced
         if (transformed !== val) {
-          setValues(prev => ({ ...prev, [name]: transformed }));
+          setValues((prev) => ({ ...prev, [name]: transformed }));
         }
       }
       const err = cfg?.validate?.(transformed);
@@ -141,7 +141,8 @@ export function EnhancedForm({
     }
 
     // Check if there are any errors
-    const currentErrors = Object.keys(validationErrors).length > 0 ? validationErrors : errors;
+    const currentErrors =
+      Object.keys(validationErrors).length > 0 ? validationErrors : errors;
     if (Object.keys(currentErrors).length > 0) {
       // Focus on first error field
       const firstErrorField = formRef.current?.querySelector(
@@ -174,35 +175,43 @@ export function EnhancedForm({
     }
   };
 
-  const submitWithErrorBoundary: EnhancedFormContextType['submitWithErrorBoundary'] = async (handler) => {
-    try {
-      setIsSubmitting(true);
-      const validationErrors = runValidation();
-      if (Object.keys(validationErrors).length > 0) {
-        setErrors(validationErrors);
-        // focus first error
-        const first = Object.keys(validationErrors)[0];
-        const firstEl = formRef.current?.querySelector(`[name="${first}"]`) as HTMLElement | null;
-        firstEl?.focus();
-        return;
+  const submitWithErrorBoundary: EnhancedFormContextType["submitWithErrorBoundary"] =
+    async (handler) => {
+      try {
+        setIsSubmitting(true);
+        const validationErrors = runValidation();
+        if (Object.keys(validationErrors).length > 0) {
+          setErrors(validationErrors);
+          // focus first error
+          const first = Object.keys(validationErrors)[0];
+          const firstEl = formRef.current?.querySelector(
+            `[name="${first}"]`
+          ) as HTMLElement | null;
+          firstEl?.focus();
+          return;
+        }
+        await handler();
+      } catch (err) {
+        console.error("submitWithErrorBoundary error", err);
+      } finally {
+        setIsSubmitting(false);
       }
-      await handler();
-    } catch (err) {
-      console.error('submitWithErrorBoundary error', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    };
 
-  const registerField: EnhancedFormContextType['registerField'] = (name, config) => {
+  const registerField: EnhancedFormContextType["registerField"] = (
+    name,
+    config
+  ) => {
     fieldRegistryRef.current.set(name, config || {});
     // initialize defaultValue
     if (config?.defaultValue !== undefined && values[name] === undefined) {
-      setValues(prev => ({ ...prev, [name]: config.defaultValue }));
+      setValues((prev) => ({ ...prev, [name]: config.defaultValue }));
     }
   };
 
-  const unregisterField: EnhancedFormContextType['unregisterField'] = (name) => {
+  const unregisterField: EnhancedFormContextType["unregisterField"] = (
+    name
+  ) => {
     fieldRegistryRef.current.delete(name);
     // do not delete value by default; only clear errors
     clearFieldError(name);
@@ -227,7 +236,9 @@ export function EnhancedForm({
       <form
         ref={formRef}
         // Wrap async submit to satisfy @typescript-eslint/no-misused-promises
-        onSubmit={(e) => { void handleSubmit(e); }}
+        onSubmit={(e) => {
+          void handleSubmit(e);
+        }}
         onKeyDown={handleKeyDown}
         className={cn("space-y-6", className)}
         autoComplete={autoComplete}
@@ -388,8 +399,8 @@ export function EnhancedField({
         className={cn(
           "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
           fieldError &&
-          fieldTouched &&
-          "border-destructive focus-visible:ring-destructive"
+            fieldTouched &&
+            "border-destructive focus-visible:ring-destructive"
         )}
         aria-invalid={fieldError && fieldTouched ? "true" : "false"}
         aria-describedby={cn(

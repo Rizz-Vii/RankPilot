@@ -1,14 +1,17 @@
 // src/app/(app)/seo-audit/page.tsx
 "use client";
 
-import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { FeatureGate } from "@/components/subscription/FeatureGate";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { useEffect, useRef, useState } from "react";
 
 import { SeoAuditForm } from "@/components/forms/seo-forms";
 import LoadingState from "@/components/loading-state";
-import { MobileResultsCard, MobileToolCard } from "@/components/mobile-tool-layout";
+import {
+  MobileResultsCard,
+  MobileToolCard,
+} from "@/components/mobile-tool-layout";
 import {
   Card,
   CardContent,
@@ -28,40 +31,35 @@ import {
   PieChart,
   Progress,
   XAxis,
-  YAxis
+  YAxis,
 } from "@/components/ui/chart-components";
 import { useAuth } from "@/context/AuthContext";
 import { useProvenance } from "@/hooks/useProvenance";
-import { adaptSEOAuditResponse, type SEOAuditUnifiedResponse } from "@/lib/adapters/seo-audit-adapter";
+import {
+  adaptSEOAuditResponse,
+  type SEOAuditUnifiedResponse,
+} from "@/lib/adapters/seo-audit-adapter";
 import { getDemoData } from "@/lib/demo-data";
 import { db } from "@/lib/firebase";
 import { runSEOAudit } from "@/lib/services/ai-service";
 import { TimeoutError, withTimeout } from "@/lib/timeout";
 import { cn } from "@/lib/utils";
-import type {
-  AuditUrlInput,
-  AuditUrlOutput
-} from "@/types";
+import type { AuditUrlInput, AuditUrlOutput } from "@/types";
 import {
   containerVariants,
   imageChartConfig,
   itemVariants,
   scoreChartConfig,
   statusColors,
-  statusIcons
+  statusIcons,
 } from "@/types/charts";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  AlertCircle,
-  AlertTriangle,
-  ListChecks
-} from "lucide-react";
+import { AlertCircle, AlertTriangle, ListChecks } from "lucide-react";
 
 // Enhanced SEO Audit with NeuroSEO™ Integration
 
-
-const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
+const AuditCharts = ({ items }: { items: AuditUrlOutput["items"] }) => {
   const chartData = items.map((item) => ({
     name: item.name,
     score: item.score,
@@ -119,7 +117,9 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
               <XAxis dataKey="score" type="number" hide />
               <ChartTooltip
                 content={(props: unknown) => (
-                  <ChartTooltipContent {...(props as Record<string, unknown>)} />
+                  <ChartTooltipContent
+                    {...(props as Record<string, unknown>)}
+                  />
                 )}
               />
               <Bar dataKey="score" radius={5} />
@@ -141,7 +141,9 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
               <PieChart>
                 <ChartTooltip
                   content={(props: unknown) => (
-                    <ChartTooltipContent {...(props as Record<string, unknown>)} />
+                    <ChartTooltipContent
+                      {...(props as Record<string, unknown>)}
+                    />
                   )}
                 />
                 <Pie data={imageData} dataKey="value">
@@ -159,7 +161,12 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
 
 // Loading skeleton components
 const AuditLoadingSkeleton = () => (
-  <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+  <motion.div
+    key="loading"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    className="space-y-6"
+  >
     <LoadingState
       isLoading={true}
       title="Running SEO Audit"
@@ -227,42 +234,58 @@ const AuditLoadingSkeleton = () => (
 );
 
 // Map unified adapter output back into legacy AuditUrlOutput shape for existing UI until full refactor.
-interface UnifiedItemLike { id?: string; name?: string; details?: string; status?: string; score?: number; impact?: string; }
+interface UnifiedItemLike {
+  id?: string;
+  name?: string;
+  details?: string;
+  status?: string;
+  score?: number;
+  impact?: string;
+}
 function mapUnifiedToLegacy(r: SEOAuditUnifiedResponse): AuditUrlOutput {
   return {
-    url: r.url || '',
+    url: r.url || "",
     overallScore: r.overallScore,
     summary: r.summary,
-    items: r.items.map(raw => {
+    items: r.items.map((raw) => {
       const it: UnifiedItemLike = raw as UnifiedItemLike;
-      const status = it.status === 'good' ? 'pass' : it.status === 'error' ? 'fail' : 'warning';
-      type Impact = 'high' | 'medium' | 'low';
+      const status =
+        it.status === "good"
+          ? "pass"
+          : it.status === "error"
+            ? "fail"
+            : "warning";
+      type Impact = "high" | "medium" | "low";
       const impact: Impact = ((): Impact => {
-        if (typeof it.impact === 'string') {
+        if (typeof it.impact === "string") {
           const val = it.impact.toLowerCase();
-          if (val === 'high' || val === 'medium' || val === 'low') return val;
+          if (val === "high" || val === "medium" || val === "low") return val;
         }
-        return status === 'fail' ? 'high' : status === 'warning' ? 'medium' : 'low';
+        return status === "fail"
+          ? "high"
+          : status === "warning"
+            ? "medium"
+            : "low";
       })();
       return {
-        id: it.id || it.name || 'issue',
-        name: it.name || 'Unnamed Issue',
-        title: it.name || 'Unnamed Issue',
-        description: it.details || '',
-        details: it.details || '',
+        id: it.id || it.name || "issue",
+        name: it.name || "Unnamed Issue",
+        title: it.name || "Unnamed Issue",
+        description: it.details || "",
+        details: it.details || "",
         status,
-        score: typeof it.score === 'number' ? it.score : 0,
+        score: typeof it.score === "number" ? it.score : 0,
         impact,
-        recommendation: ''
+        recommendation: "",
       };
     }),
     performance: { lcp: 0, fid: 0, cls: 0, ttfb: 0 },
     accessibility: { score: 0, issues: 0 },
-    seo: { score: 0, metaTitle: true, metaDescription: true, headings: true }
+    seo: { score: 0, metaTitle: true, metaDescription: true, headings: true },
   };
 }
 
-const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
+const AuditResults = ({ results }: { results: AuditUrlOutput }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -277,43 +300,60 @@ const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
       >
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <span className="text-4xl font-bold text-primary">{results.overallScore}</span>
+            <span className="text-4xl font-bold text-primary">
+              {results.overallScore}
+            </span>
             <div className="flex-1">
               <p className="text-sm font-semibold">Overall Score</p>
               <Progress value={results.overallScore} className="mt-1" />
             </div>
           </div>
-          <p className="text-sm text-muted-foreground leading-relaxed">{results.summary}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {results.summary}
+          </p>
         </div>
       </MobileResultsCard>
       {/* High Impact Issues (mobile) */}
-      {results.items.some(i => i.status === 'fail' || i.impact === 'high') && (
+      {results.items.some(
+        (i) => i.status === "fail" || i.impact === "high"
+      ) && (
         <Card className="border-destructive/40">
           <CardHeader className="pb-2">
-            <CardTitle className="font-headline text-base text-destructive">High Impact Issues</CardTitle>
+            <CardTitle className="font-headline text-base text-destructive">
+              High Impact Issues
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-0">
-            {results.items.filter(i => i.status === 'fail' || i.impact === 'high').map(item => {
-              const iconKey = item.status === 'fail' ? 'fail' : item.status; // statusIcons keys: pass | fail | warning
-              const Icon = statusIcons[iconKey] || AlertCircle;
-              const color = item.status === 'fail' ? 'text-destructive' : 'text-warning';
-              return (
-                <div key={item.id} className="flex items-start gap-3">
-                  <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">{item.details}</p>
+            {results.items
+              .filter((i) => i.status === "fail" || i.impact === "high")
+              .map((item) => {
+                const iconKey = item.status === "fail" ? "fail" : item.status; // statusIcons keys: pass | fail | warning
+                const Icon = statusIcons[iconKey] || AlertCircle;
+                const color =
+                  item.status === "fail" ? "text-destructive" : "text-warning";
+                return (
+                  <div key={item.id} className="flex items-start gap-3">
+                    <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.details}
+                      </p>
+                    </div>
+                    <span className={`text-xs font-semibold ${color}`}>
+                      {item.score}
+                    </span>
                   </div>
-                  <span className={`text-xs font-semibold ${color}`}>{item.score}</span>
-                </div>
-              );
-            })}
+                );
+              })}
           </CardContent>
         </Card>
       )}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="font-headline text-base">Key Findings</CardTitle>
+          <CardTitle className="font-headline text-base">
+            Key Findings
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-0">
           {results.items.map((item) => {
@@ -324,9 +364,13 @@ const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
                 <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
                 <div className="flex-1">
                   <p className="text-sm font-medium">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">{item.details}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {item.details}
+                  </p>
                 </div>
-                <span className={`text-xs font-semibold ${color}`}>{item.score}</span>
+                <span className={`text-xs font-semibold ${color}`}>
+                  {item.score}
+                </span>
               </div>
             );
           })}
@@ -347,7 +391,9 @@ const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
         <CardHeader>
           <CardTitle className="font-headline">Audit Results</CardTitle>
           <div className="flex items-center gap-4 pt-2">
-            <span className="text-4xl font-bold text-primary">{results.overallScore}</span>
+            <span className="text-4xl font-bold text-primary">
+              {results.overallScore}
+            </span>
             <div className="w-full">
               <p className="font-semibold">Overall Score</p>
               <Progress value={results.overallScore} className="mt-1" />
@@ -363,29 +409,49 @@ const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
               initial="hidden"
               animate="visible"
             >
-              {results.items.some(i => i.status === 'fail' || i.impact === 'high') && (
+              {results.items.some(
+                (i) => i.status === "fail" || i.impact === "high"
+              ) && (
                 <div className="rounded-md border border-destructive/40 p-3 bg-destructive/5">
-                  <p className="font-semibold text-destructive mb-2">High Impact Issues</p>
-                  {results.items.filter(i => i.status === 'fail' || i.impact === 'high').map(item => {
-                    const iconKey = item.status === 'fail' ? 'fail' : item.status;
-                    const Icon = statusIcons[iconKey] || AlertCircle;
-                    const color = item.status === 'fail' ? 'text-destructive' : 'text-warning';
-                    return (
-                      <div key={item.id} className="flex items-start gap-3 mb-2 last:mb-0">
-                        <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">{item.details}</p>
+                  <p className="font-semibold text-destructive mb-2">
+                    High Impact Issues
+                  </p>
+                  {results.items
+                    .filter((i) => i.status === "fail" || i.impact === "high")
+                    .map((item) => {
+                      const iconKey =
+                        item.status === "fail" ? "fail" : item.status;
+                      const Icon = statusIcons[iconKey] || AlertCircle;
+                      const color =
+                        item.status === "fail"
+                          ? "text-destructive"
+                          : "text-warning";
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex items-start gap-3 mb-2 last:mb-0"
+                        >
+                          <Icon
+                            className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`}
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {item.details}
+                            </p>
+                          </div>
+                          <span className={`text-xs font-semibold ${color}`}>
+                            {item.score}
+                          </span>
                         </div>
-                        <span className={`text-xs font-semibold ${color}`}>{item.score}</span>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               )}
               {results.items.map((item) => {
                 const Icon = statusIcons[item.status] || AlertCircle;
-                const color = statusColors[item.status] || "text-muted-foreground";
+                const color =
+                  statusColors[item.status] || "text-muted-foreground";
                 return (
                   <motion.div
                     key={item.id}
@@ -395,9 +461,13 @@ const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
                     <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
                     <div className="flex-1">
                       <p className="font-semibold">{item.name}</p>
-                      <p className="text-sm text-muted-foreground">{item.details}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.details}
+                      </p>
                     </div>
-                    <span className={`font-semibold text-sm ${color}`}>{item.score}/100</span>
+                    <span className={`font-semibold text-sm ${color}`}>
+                      {item.score}/100
+                    </span>
                   </motion.div>
                 );
               })}
@@ -416,8 +486,12 @@ export default function SeoAuditPage() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AuditUrlOutput | null>(null);
-  const [quota, setQuota] = useState<{limit:number;used:number;remaining:number}|null>(null);
-  const [timing, setTiming] = useState<number| null>(null);
+  const [quota, setQuota] = useState<{
+    limit: number;
+    used: number;
+    remaining: number;
+  } | null>(null);
+  const [timing, setTiming] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const { provenance, setProvenance, ProvenanceLegend } = useProvenance();
@@ -470,23 +544,25 @@ export default function SeoAuditPage() {
             overallScore: unified.overallScore,
             provenance: unified.source,
             cacheHit: unified.cacheHit,
-            totalProcessingTime: unified.totalProcessingTime
+            totalProcessingTime: unified.totalProcessingTime,
           },
           resultsSummary: `Audited ${values.url}. Overall Score: ${unified.overallScore}/100 (${unified.source}).`,
         });
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      const shouldDemo = e instanceof TimeoutError || /(internal|cors|network|failed)/i.test(msg);
+      const shouldDemo =
+        e instanceof TimeoutError ||
+        /(internal|cors|network|failed)/i.test(msg);
       if (shouldDemo) {
         console.warn("SEO audit using demo fallback due to:", msg);
-          const demoData = getDemoData("seo-audit");
-          if (demoData) {
-            setResults(demoData as AuditUrlOutput);
-            setProvenance('fallback');
-          } else {
-            setError("Audit failed and no demo data available.");
-          }
+        const demoData = getDemoData("seo-audit");
+        if (demoData) {
+          setResults(demoData as AuditUrlOutput);
+          setProvenance("fallback");
+        } else {
+          setError("Audit failed and no demo data available.");
+        }
       } else {
         setError(msg || "An unexpected error occurred during the audit.");
       }
@@ -497,81 +573,84 @@ export default function SeoAuditPage() {
 
   return (
     <FeatureGate feature="seo_audit" requiredTier="starter" showUpgrade>
-    <main className="container mx-auto py-6">
-      <ToolPageHeader
-        title="SEO Audit"
-        description="Comprehensive SEO analysis and optimization recommendations for any website."
-        badges={composeToolHeaderBadges("seo-audit", provenance)}
-        showBreadcrumb
-      >
-        {provenance && (
-          <ProvenanceLegend />
-        )}
-      </ToolPageHeader>
-      <div
-        className={cn(
-          "mx-auto transition-all duration-500",
-          submitted ? "max-w-7xl" : "max-w-xl"
-        )}
-      >
-      <div
-        className={cn(
-          "grid gap-8 transition-all duration-500",
-          submitted ? "lg:grid-cols-3" : "lg:grid-cols-1"
-        )}
-      >
-        <motion.div layout className="lg:col-span-1">
-          <MobileToolCard
-            title="SEO Audit"
-            description="Run a technical & on-page SEO analysis for your target URL."
-            icon={<ListChecks className="h-5 w-5" />}
+      <main className="container mx-auto py-6">
+        <ToolPageHeader
+          title="SEO Audit"
+          description="Comprehensive SEO analysis and optimization recommendations for any website."
+          badges={composeToolHeaderBadges("seo-audit", provenance)}
+          showBreadcrumb
+        >
+          {provenance && <ProvenanceLegend />}
+        </ToolPageHeader>
+        <div
+          className={cn(
+            "mx-auto transition-all duration-500",
+            submitted ? "max-w-7xl" : "max-w-xl"
+          )}
+        >
+          <div
+            className={cn(
+              "grid gap-8 transition-all duration-500",
+              submitted ? "lg:grid-cols-3" : "lg:grid-cols-1"
+            )}
           >
-            <SeoAuditForm onSubmit={handleSubmit} isLoading={isLoading} />
-          </MobileToolCard>
-        </motion.div>
-
-        <div className="lg:col-span-2" ref={resultsRef}>
-          <AnimatePresence>
-            {isLoading && <AuditLoadingSkeleton />}
-            {error && (
-              <motion.div
-                key="error"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+            <motion.div layout className="lg:col-span-1">
+              <MobileToolCard
+                title="SEO Audit"
+                description="Run a technical & on-page SEO analysis for your target URL."
+                icon={<ListChecks className="h-5 w-5" />}
               >
-                <Card className="border-destructive">
-                  <CardHeader>
-                    <CardTitle className="text-destructive font-headline flex items-center gap-2">
-                      <AlertTriangle /> Audit Failed
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>{error}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-            {results && (
-              <motion.div key="results" className="space-y-4">
-                {(quota || timing) && (
-                  <div className="text-xs text-muted-foreground flex flex-wrap gap-4">
-                    {quota && quota.limit > -1 && (
-                      <span>Quota: {quota.used}/{quota.limit} (remaining {quota.remaining})</span>
-                    )}
-                    {typeof timing === 'number' && (
-                      <span>Processed in {(timing/1000).toFixed(2)}s</span>
-                    )}
-                  </div>
+                <SeoAuditForm onSubmit={handleSubmit} isLoading={isLoading} />
+              </MobileToolCard>
+            </motion.div>
+
+            <div className="lg:col-span-2" ref={resultsRef}>
+              <AnimatePresence>
+                {isLoading && <AuditLoadingSkeleton />}
+                {error && (
+                  <motion.div
+                    key="error"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <Card className="border-destructive">
+                      <CardHeader>
+                        <CardTitle className="text-destructive font-headline flex items-center gap-2">
+                          <AlertTriangle /> Audit Failed
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p>{error}</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 )}
-                <AuditResults results={results} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+                {results && (
+                  <motion.div key="results" className="space-y-4">
+                    {(quota || timing) && (
+                      <div className="text-xs text-muted-foreground flex flex-wrap gap-4">
+                        {quota && quota.limit > -1 && (
+                          <span>
+                            Quota: {quota.used}/{quota.limit} (remaining{" "}
+                            {quota.remaining})
+                          </span>
+                        )}
+                        {typeof timing === "number" && (
+                          <span>
+                            Processed in {(timing / 1000).toFixed(2)}s
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <AuditResults results={results} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
-      </div>
-      </div>
-  </main>
-  </FeatureGate>
+      </main>
+    </FeatureGate>
   );
 }

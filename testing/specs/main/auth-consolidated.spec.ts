@@ -10,27 +10,30 @@ async function removeRecaptchaIframes(page: Page) {
         const iframeSelectors = [
           'iframe[src*="recaptcha"]',
           'iframe[src*="google.com/recaptcha"]',
-          'iframe[src*="/recaptcha/"]'
+          'iframe[src*="/recaptcha/"]',
         ];
-        iframeSelectors.forEach((sel) => document.querySelectorAll(sel).forEach(e => e.remove()));
+        iframeSelectors.forEach((sel) =>
+          document.querySelectorAll(sel).forEach((e) => e.remove())
+        );
 
         // Neutralize common overlay/backdrop elements that may intercept pointer events
         const overlaySelectors = [
-          '.modal-backdrop',
-          '.overlay',
-          '.loading-overlay',
-          '.cookie-consent',
-          '.consent-banner',
-          '.grecaptcha-badge',
+          ".modal-backdrop",
+          ".overlay",
+          ".loading-overlay",
+          ".cookie-consent",
+          ".consent-banner",
+          ".grecaptcha-badge",
           '[data-testid="overlay"]',
-          '[role="presentation"]'
+          '[role="presentation"]',
         ];
         overlaySelectors.forEach((sel) => {
           document.querySelectorAll(sel).forEach((el) => {
             try {
               // make non-interactive but keep visible for debugging
-              (el as HTMLElement).style.pointerEvents = 'none';
-              (el as HTMLElement).style.opacity = (el as HTMLElement).style.opacity || '0.99';
+              (el as HTMLElement).style.pointerEvents = "none";
+              (el as HTMLElement).style.opacity =
+                (el as HTMLElement).style.opacity || "0.99";
             } catch (err) {
               // ignore
             }
@@ -54,23 +57,35 @@ async function ensureClickable(page: Page, locator: any) {
 
     // Temporarily mark the target element so we can detect if the elementAtPoint is the same
     try {
-      await locator.evaluate((el: HTMLElement) => el.setAttribute('data-temp-click-target', '1'));
-      await page.evaluate(({ cx, cy }) => {
-        try {
-          const elAt = document.elementFromPoint(cx, cy) as HTMLElement | null;
-          const target = document.querySelector('[data-temp-click-target="1"]') as HTMLElement | null;
-          if (elAt && target && !target.contains(elAt)) {
-            // Neutralize the obstructing element
-            elAt.style.pointerEvents = 'none';
-            elAt.style.opacity = elAt.style.opacity || '0.99';
+      await locator.evaluate((el: HTMLElement) =>
+        el.setAttribute("data-temp-click-target", "1")
+      );
+      await page.evaluate(
+        ({ cx, cy }) => {
+          try {
+            const elAt = document.elementFromPoint(
+              cx,
+              cy
+            ) as HTMLElement | null;
+            const target = document.querySelector(
+              '[data-temp-click-target="1"]'
+            ) as HTMLElement | null;
+            if (elAt && target && !target.contains(elAt)) {
+              // Neutralize the obstructing element
+              elAt.style.pointerEvents = "none";
+              elAt.style.opacity = elAt.style.opacity || "0.99";
+            }
+          } catch (e) {
+            // ignore
           }
-        } catch (e) {
-          // ignore
-        }
-      }, { cx, cy });
+        },
+        { cx, cy }
+      );
     } finally {
       // Clean up marker
-      await locator.evaluate((el: HTMLElement) => el.removeAttribute('data-temp-click-target'));
+      await locator.evaluate((el: HTMLElement) =>
+        el.removeAttribute("data-temp-click-target")
+      );
     }
   } catch (e) {
     // ignore
@@ -89,14 +104,24 @@ test.describe("Authentication - Comprehensive Suite", () => {
 
       await page.goto("/login", { waitUntil: "domcontentloaded" });
       // Ensure form rendered and interactive (networkidle is flaky in dev)
-      await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 });
+      await page
+        .locator("form")
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 });
 
       // Check form elements exist and are accessible - Use specific selectors to avoid strict mode violations
-      const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-      const passwordField = page.locator('form').getByLabel(/password/i).first();
-      const submitButton = page.locator('form')
+      const emailField = page
+        .locator("form")
+        .getByRole("textbox", { name: /email/i })
+        .first();
+      const passwordField = page
+        .locator("form")
+        .getByLabel(/password/i)
+        .first();
+      const submitButton = page
+        .locator("form")
         .getByRole("button", { name: /^login$/i })
-        .or(page.locator('form').getByRole("button", { name: /^sign in$/i }));
+        .or(page.locator("form").getByRole("button", { name: /^sign in$/i }));
 
       await expect(emailField).toBeVisible();
       await expect(passwordField).toBeVisible();
@@ -113,13 +138,23 @@ test.describe("Authentication - Comprehensive Suite", () => {
       console.log("📝 Testing login form validation...");
 
       await page.goto("/login", { waitUntil: "domcontentloaded" });
-      await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 });
+      await page
+        .locator("form")
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 });
 
-      const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-      const passwordField = page.locator('form').getByLabel(/password/i).first();
-      const submitButton = page.locator('form')
+      const emailField = page
+        .locator("form")
+        .getByRole("textbox", { name: /email/i })
+        .first();
+      const passwordField = page
+        .locator("form")
+        .getByLabel(/password/i)
+        .first();
+      const submitButton = page
+        .locator("form")
         .getByRole("button", { name: /^login$/i })
-        .or(page.locator('form').getByRole("button", { name: /^sign in$/i }));
+        .or(page.locator("form").getByRole("button", { name: /^sign in$/i }));
 
       // Test empty form submission
       await submitButton.click();
@@ -151,7 +186,10 @@ test.describe("Authentication - Comprehensive Suite", () => {
       console.log("👁️ Testing password visibility toggle...");
 
       await page.goto("/login", { waitUntil: "domcontentloaded" });
-      await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 });
+      await page
+        .locator("form")
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 });
 
       const passwordField = page.getByLabel(/password/i);
       const toggleButton = page
@@ -180,13 +218,25 @@ test.describe("Authentication - Comprehensive Suite", () => {
       console.log("📝 Testing registration page...");
 
       await page.goto("/register", { waitUntil: "domcontentloaded" });
-      await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 });
+      await page
+        .locator("form")
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 });
 
       // Check basic form elements - Use specific selectors to avoid strict mode violations
-      const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-      const passwordField = page.locator('form').getByLabel(/password/i).first();
+      const emailField = page
+        .locator("form")
+        .getByRole("textbox", { name: /email/i })
+        .first();
+      const passwordField = page
+        .locator("form")
+        .getByLabel(/password/i)
+        .first();
       // Narrow to the form that contains the email input to avoid global CTAs
-      const submitButton = emailField.locator('xpath=ancestor::form').locator('button[type="submit"]').first();
+      const submitButton = emailField
+        .locator("xpath=ancestor::form")
+        .locator('button[type="submit"]')
+        .first();
 
       await expect(emailField).toBeVisible();
       await expect(passwordField).toBeVisible();
@@ -199,29 +249,39 @@ test.describe("Authentication - Comprehensive Suite", () => {
       console.log("📝 Testing registration form validation...");
 
       await page.goto("/register", { waitUntil: "domcontentloaded" });
-      await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 });
+      await page
+        .locator("form")
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 });
 
       // Prefer the auth form (one that contains an email input). This avoids newsletter
       // or CTA forms that may appear elsewhere on the page.
-      const authForm = page.locator('form').filter({ has: page.getByRole('textbox', { name: /email/i }) }).first();
+      const authForm = page
+        .locator("form")
+        .filter({ has: page.getByRole("textbox", { name: /email/i }) })
+        .first();
       let submitButton = authForm.locator('button[type="submit"]').first();
       if ((await submitButton.count()) === 0) {
-        submitButton = authForm.locator('button').first();
+        submitButton = authForm.locator("button").first();
       }
 
       // Defensive: remove recaptcha/overlays before attempting to submit
       await removeRecaptchaIframes(page);
 
       // If the found submit is disabled (some pages disable submit until input), use requestSubmit()
-      const isDisabled = await submitButton.evaluate((el: HTMLElement) => el.hasAttribute('disabled')).catch(() => false);
+      const isDisabled = await submitButton
+        .evaluate((el: HTMLElement) => el.hasAttribute("disabled"))
+        .catch(() => false);
       if (isDisabled) {
         // Trigger form submit programmatically
         await authForm.evaluate((f: HTMLFormElement) => {
           try {
-            if (typeof f.requestSubmit === 'function') {
+            if (typeof f.requestSubmit === "function") {
               f.requestSubmit();
             } else {
-              f.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+              f.dispatchEvent(
+                new Event("submit", { bubbles: true, cancelable: true })
+              );
             }
           } catch (e) {
             // ignore
@@ -248,20 +308,28 @@ test.describe("Authentication - Comprehensive Suite", () => {
       console.log("🧭 Testing navigation between auth pages...");
 
       await page.goto("/login", { waitUntil: "domcontentloaded" });
-      await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 });
+      await page
+        .locator("form")
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 });
 
       // Look for a unique register anchor (avoid strict mode multiple matches by narrowing to the plain link)
       let registerLink = page.locator('a[href="/register"]').first();
 
       if ((await registerLink.count()) === 0) {
         // Fallback: pick the first matching link text (exclude button styled anchor by role filtering to link only)
-        registerLink = page.getByRole("link", { name: /create an account|register|sign up/i }).first();
+        registerLink = page
+          .getByRole("link", { name: /create an account|register|sign up/i })
+          .first();
       }
 
       if ((await registerLink.count()) === 1) {
         await registerLink.first().click();
         await page.waitForLoadState("domcontentloaded");
-        await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 });
+        await page
+          .locator("form")
+          .first()
+          .waitFor({ state: "visible", timeout: 15000 });
         await expect(page).toHaveURL(/register/);
 
         // Navigate back to login - Use more specific selector to avoid Terms & Conditions link
@@ -270,7 +338,11 @@ test.describe("Authentication - Comprehensive Suite", () => {
         if ((await loginLink.count()) > 0) {
           await loginLink.click();
           await page.waitForLoadState("domcontentloaded");
-          await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+          await page
+            .locator("form")
+            .first()
+            .waitFor({ state: "visible", timeout: 15000 })
+            .catch(() => {});
           await expect(page).toHaveURL(/login/);
           console.log("✅ Auth page navigation works");
         }
@@ -283,7 +355,10 @@ test.describe("Authentication - Comprehensive Suite", () => {
       console.log("🔍 Checking for Google sign-in integration...");
 
       await page.goto("/login", { waitUntil: "domcontentloaded" });
-      await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 });
+      await page
+        .locator("form")
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 });
 
       const googleButton = page
         .getByRole("button", { name: /google|continue with google/i })
@@ -306,11 +381,22 @@ test.describe("Authentication - Comprehensive Suite", () => {
       // Test on mobile viewport
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto("/login", { waitUntil: "domcontentloaded" });
-      await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 });
+      await page
+        .locator("form")
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 });
 
-      const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-      const passwordField = page.locator('form').getByLabel(/password/i).first();
-      const submitButton = page.locator('form').getByRole("button", { name: /login|sign in/i });
+      const emailField = page
+        .locator("form")
+        .getByRole("textbox", { name: /email/i })
+        .first();
+      const passwordField = page
+        .locator("form")
+        .getByLabel(/password/i)
+        .first();
+      const submitButton = page
+        .locator("form")
+        .getByRole("button", { name: /login|sign in/i });
 
       // Check elements are still accessible on mobile
       await expect(emailField).toBeVisible();
@@ -332,8 +418,14 @@ test.describe("Authentication - Comprehensive Suite", () => {
       await page.goto("/login", { waitUntil: "domcontentloaded" });
 
       // Check for proper labels - Use specific selectors to avoid strict mode violations
-      const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-      const passwordField = page.locator('form').getByLabel(/password/i).first();
+      const emailField = page
+        .locator("form")
+        .getByRole("textbox", { name: /email/i })
+        .first();
+      const passwordField = page
+        .locator("form")
+        .getByLabel(/password/i)
+        .first();
 
       await expect(emailField).toBeVisible();
       await expect(passwordField).toBeVisible();
@@ -363,12 +455,22 @@ test.describe("Authentication - Integration Tests", () => {
 
     await page.goto("/login", { waitUntil: "domcontentloaded" });
     // Wait explicitly for the auth form to be visible (more reliable than networkidle in dev)
-    await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 });
+    await page
+      .locator("form")
+      .first()
+      .waitFor({ state: "visible", timeout: 15000 });
 
     // Verify form elements are present and functional
-    const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-    const passwordField = page.locator('form').getByLabel(/password/i).first();
-    const loginButton = page.locator('[data-testid="login-button"]')
+    const emailField = page
+      .locator("form")
+      .getByRole("textbox", { name: /email/i })
+      .first();
+    const passwordField = page
+      .locator("form")
+      .getByLabel(/password/i)
+      .first();
+    const loginButton = page
+      .locator('[data-testid="login-button"]')
       .or(page.locator('form button[type="submit"]:has-text("Login")'));
 
     // Test form interaction
@@ -400,10 +502,14 @@ test.describe("Authentication - Integration Tests", () => {
     await auth.loginAndGoToDashboard(testUser);
 
     const currentUrl = page.url();
-    console.log(`✅ Successfully logged in using enhanced-auth, redirected to: ${currentUrl}`);
+    console.log(
+      `✅ Successfully logged in using enhanced-auth, redirected to: ${currentUrl}`
+    );
 
     // Verify we're in an authenticated area - look for specific dashboard content
-    await expect(page.locator('[data-testid="dashboard-content"]')).toBeVisible({ timeout: 30000 });
+    await expect(page.locator('[data-testid="dashboard-content"]')).toBeVisible(
+      { timeout: 30000 }
+    );
 
     console.log("✅ Authentication test completed successfully");
   });
@@ -412,11 +518,21 @@ test.describe("Authentication - Integration Tests", () => {
     console.log("🚫 Testing login with invalid credentials...");
 
     await page.goto("/login", { waitUntil: "domcontentloaded" });
-    await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 });
+    await page
+      .locator("form")
+      .first()
+      .waitFor({ state: "visible", timeout: 15000 });
 
-    const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-    const passwordField = page.locator('form').getByLabel(/password/i).first();
-    const loginButton = page.locator('[data-testid="login-button"]')
+    const emailField = page
+      .locator("form")
+      .getByRole("textbox", { name: /email/i })
+      .first();
+    const passwordField = page
+      .locator("form")
+      .getByLabel(/password/i)
+      .first();
+    const loginButton = page
+      .locator('[data-testid="login-button"]')
       .or(page.locator('form button[type="submit"]:has-text("Login")'));
 
     await emailField.fill("invalid@example.com");
@@ -450,7 +566,11 @@ test.describe("Authentication - Integration Tests", () => {
     // Test unauthenticated access to protected route
     await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
     // If redirected to login, wait for the form to be visible
-    await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+    await page
+      .locator("form")
+      .first()
+      .waitFor({ state: "visible", timeout: 15000 })
+      .catch(() => {});
 
     // Check if redirected to login (expected for unauthenticated user)
     const currentUrl = page.url();
@@ -461,7 +581,10 @@ test.describe("Authentication - Integration Tests", () => {
     }
 
     // Verify login page is functional after redirect
-    const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
+    const emailField = page
+      .locator("form")
+      .getByRole("textbox", { name: /email/i })
+      .first();
     if (await emailField.isVisible({ timeout: 5000 })) {
       console.log("✅ Login page loaded correctly after redirect");
     }
@@ -472,11 +595,22 @@ test.describe("Authentication - Integration Tests", () => {
 
     // Ensure we start fresh
     await page.goto("/login", { waitUntil: "domcontentloaded" });
-    await page.locator('form').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+    await page
+      .locator("form")
+      .first()
+      .waitFor({ state: "visible", timeout: 15000 })
+      .catch(() => {});
 
-    const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-    const passwordField = page.locator('form').getByLabel(/password/i).first();
-    const loginButton = page.locator('[data-testid="login-button"]')
+    const emailField = page
+      .locator("form")
+      .getByRole("textbox", { name: /email/i })
+      .first();
+    const passwordField = page
+      .locator("form")
+      .getByLabel(/password/i)
+      .first();
+    const loginButton = page
+      .locator('[data-testid="login-button"]')
       .or(page.locator('form button[type="submit"]:has-text("Login")'));
 
     // Use working test credentials for login before logout test
@@ -497,14 +631,17 @@ test.describe("Authentication - Integration Tests", () => {
       console.log("✅ Successfully logged in for logout test");
 
       // Now test logout - use specific selector to avoid strict mode violation
-      const logoutButton = page.locator('[data-testid="logout"]')
+      const logoutButton = page
+        .locator('[data-testid="logout"]')
         .or(page.locator('[data-testid="user-menu-logout"]'))
         .or(page.locator('button:has-text("Logout")').first())
         .or(page.locator('button:has-text("Sign Out")').first());
 
       const buttonCount = await logoutButton.count();
       if (buttonCount > 0) {
-        console.log(`✅ Logout button found (${buttonCount} elements), clicking...`);
+        console.log(
+          `✅ Logout button found (${buttonCount} elements), clicking...`
+        );
         await logoutButton.first().click();
 
         // Verify logout - should redirect to login or home
@@ -514,33 +651,45 @@ test.describe("Authentication - Integration Tests", () => {
         // Clear any remaining session data with error handling
         try {
           await page.evaluate(() => {
-            if (typeof localStorage !== 'undefined') {
+            if (typeof localStorage !== "undefined") {
               localStorage.clear();
             }
-            if (typeof sessionStorage !== 'undefined') {
+            if (typeof sessionStorage !== "undefined") {
               sessionStorage.clear();
             }
           });
-  } catch {
+        } catch {
           console.log("⚠️ Storage clearing skipped during logout");
         }
       } else {
         console.log("⚠️ Logout button not found");
       }
-  } catch (error) {
+    } catch (error) {
       // Enhanced error handling - same pattern as successful role-based tests
-      const hasFirebaseError = await page.locator('text=/Firebase.*network-request-failed/i').count() > 0;
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const hasFirebaseError =
+        (await page
+          .locator("text=/Firebase.*network-request-failed/i")
+          .count()) > 0;
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
 
-      if (hasFirebaseError || errorMessage.includes('Timeout') || errorMessage.includes('network-request-failed')) {
-        console.log(`⚠️ Logout test skipped due to login issues: ${errorMessage}`);
-        console.log("⚠️ This is expected in test environment with Firebase network issues");
+      if (
+        hasFirebaseError ||
+        errorMessage.includes("Timeout") ||
+        errorMessage.includes("network-request-failed")
+      ) {
+        console.log(
+          `⚠️ Logout test skipped due to login issues: ${errorMessage}`
+        );
+        console.log(
+          "⚠️ This is expected in test environment with Firebase network issues"
+        );
         return; // Graceful exit - no test failure
       }
 
       // Only fail for unexpected errors
       console.log(`❌ Unexpected error in logout test: ${errorMessage}`);
-    throw error; // rethrow unexpected errors
+      throw error; // rethrow unexpected errors
     }
   });
 });

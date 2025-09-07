@@ -5,7 +5,7 @@ on:
     branches:
       - workshop/performance
   pull_request:
-    branches: 
+    branches:
       - staging
     types: [opened, synchronize, reopened]
   workflow_run:
@@ -16,14 +16,14 @@ on:
       - workshop/performance
 
 env:
-  NODE_VERSION: '20.x'
-  CACHE_KEY: 'rankpilot-performance-deps'
-  NODE_OPTIONS: '--max-old-space-size=6144'
-  FIREBASE_PROJECT_ID: 'rankpilot-h3jpc'
+  NODE_VERSION: "20.x"
+  CACHE_KEY: "rankpilot-performance-deps"
+  NODE_OPTIONS: "--max-old-space-size=6144"
+  FIREBASE_PROJECT_ID: "rankpilot-h3jpc"
   # Centralized Environment URLs
-  LEAN_URL: 'https://rankpilot-h3jpc--lean-branch-testing-o2qips67.web.app'
-  PERFORMANCE_URL: 'https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app'
-  PRODUCTION_URL: 'https://rankpilot-h3jpc.web.app'
+  LEAN_URL: "https://rankpilot-h3jpc--lean-branch-testing-o2qips67.web.app"
+  PERFORMANCE_URL: "https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app"
+  PRODUCTION_URL: "https://rankpilot-h3jpc.web.app"
 
 jobs:
   # ==============================================
@@ -33,7 +33,7 @@ jobs:
     name: 🎯 Performance Feature Validation
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
-    
+
     steps:
       - name: 📥 Checkout Feature Branch
         uses: actions/checkout@v4
@@ -45,7 +45,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: 📦 Install Dependencies (Performance Optimized)
         run: |
@@ -63,7 +63,7 @@ jobs:
           npm run lint
           echo "✅ Performance code quality validated"
 
-      - name: 🔧 Build for Performance Testing  
+      - name: 🔧 Build for Performance Testing
         run: |
           echo "🚀 Starting performance-optimized build..."
           npm run build:firebase
@@ -129,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: performance-validation
     if: success() && github.event_name == 'workflow_run'
-    
+
     steps:
       - name: 📥 Checkout Performance Branch
         uses: actions/checkout@v4
@@ -140,7 +140,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: 📦 Install Dependencies
         run: npm ci --legacy-peer-deps

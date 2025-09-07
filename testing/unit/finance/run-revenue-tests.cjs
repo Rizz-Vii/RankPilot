@@ -1,16 +1,19 @@
 // Register ts-node for TS test files
-require('ts-node').register({ transpileOnly: true, compilerOptions: { module: 'CommonJS', moduleResolution: 'node10' } });
+require("ts-node").register({
+  transpileOnly: true,
+  compilerOptions: { module: "CommonJS", moduleResolution: "node10" },
+});
 
 // Support @/ alias
-const Module = require('module');
-const path = require('path');
+const Module = require("module");
+const path = require("path");
 const origResolve = Module._resolveFilename;
-Module._resolveFilename = function(request, parent, isMain, options){
-  if(request.startsWith('@/')){
-    const p = path.join(process.cwd(), 'src', request.slice(2));
+Module._resolveFilename = function (request, parent, isMain, options) {
+  if (request.startsWith("@/")) {
+    const p = path.join(process.cwd(), "src", request.slice(2));
     return origResolve.call(this, p, parent, isMain, options);
   }
   return origResolve.call(this, request, parent, isMain, options);
 };
 
-require('./revenue-metrics.spec.ts');
+require("./revenue-metrics.spec.ts");

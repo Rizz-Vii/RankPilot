@@ -123,7 +123,9 @@ export default function DocumentationPage() {
                       </div>
                       <CardTitle className="text-xl">{section.title}</CardTitle>
                     </div>
-                    <p className="text-muted-foreground">{section.description}</p>
+                    <p className="text-muted-foreground">
+                      {section.description}
+                    </p>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-3">

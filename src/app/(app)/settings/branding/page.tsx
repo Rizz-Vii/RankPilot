@@ -261,7 +261,9 @@ export default function WhiteLabelPage() {
                         type="file"
                         accept="image/*"
                         // Wrap async handler so returned Promise not passed to React synthetic event system
-                        onChange={(e) => { void handleLogoUpload(e); }}
+                        onChange={(e) => {
+                          void handleLogoUpload(e);
+                        }}
                         className="cursor-pointer"
                       />
                       <p className="text-xs text-muted-foreground">
@@ -381,7 +383,12 @@ export default function WhiteLabelPage() {
                   </p>
                 </div>
 
-                <Button onClick={() => { void saveBrandingSettings(); }} disabled={isSaving}>
+                <Button
+                  onClick={() => {
+                    void saveBrandingSettings();
+                  }}
+                  disabled={isSaving}
+                >
                   {isSaving ? "Saving..." : "Save Branding Settings"}
                 </Button>
               </CardContent>
@@ -481,7 +488,12 @@ export default function WhiteLabelPage() {
                   />
                 </div>
 
-                <Button onClick={() => { void saveReportSettings(); }} disabled={isSaving}>
+                <Button
+                  onClick={() => {
+                    void saveReportSettings();
+                  }}
+                  disabled={isSaving}
+                >
                   {isSaving ? "Saving..." : "Save Report Settings"}
                 </Button>
               </CardContent>

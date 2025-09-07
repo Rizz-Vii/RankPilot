@@ -62,7 +62,10 @@ const values = [
 
 export default function AboutPage() {
   const prefersReducedMotion = useReducedMotion();
-  const isMobile = typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false;
+  const isMobile =
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 640px)").matches
+      : false;
   const duration = prefersReducedMotion || isMobile ? 0.35 : 0.6;
   const step = prefersReducedMotion || isMobile ? 0.08 : 0.15;
   const fadeIn = makeFadeIn(duration, step);
@@ -195,7 +198,9 @@ export default function AboutPage() {
       >
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Our Team</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              Our Team
+            </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               A passionate group of AI researchers, engineers, and SEO experts
               united by a vision to transform search optimization
@@ -221,7 +226,9 @@ export default function AboutPage() {
                     <p className="text-primary font-medium">{member.role}</p>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">{member.description}</p>
+                    <p className="text-muted-foreground">
+                      {member.description}
+                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -254,7 +261,11 @@ export default function AboutPage() {
                 <Button size="lg" className="bg-primary hover:bg-primary/90">
                   Start Free Trial
                 </Button>
-                <Button variant="outline" size="lg" className="border-transparent bg-white text-primary hover:bg-white/90">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-transparent bg-white text-primary hover:bg-white/90"
+                >
                   <Link href="/contact">Get in Touch</Link>
                 </Button>
               </div>

@@ -3,10 +3,10 @@
  * Implements efficient connection management for scalability
  */
 
-import { getApps, initializeApp } from 'firebase/app';
+import { getApps, initializeApp } from "firebase/app";
 // Reuse unified client singleton (default app) to avoid duplicate init/log noise
-import { getClientApp } from '@/lib/firebase/connection-manager';
-import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
+import { getClientApp } from "@/lib/firebase/connection-manager";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 
 interface QueueItem {
   endpoint: string;
@@ -14,7 +14,6 @@ interface QueueItem {
   resolve: (value: unknown) => void;
   reject: (reason?: unknown) => void;
 }
-
 
 interface ConnectionPoolConfig {
   maxConnections: number;
@@ -25,7 +24,7 @@ interface ConnectionPoolConfig {
 }
 
 export const connectionPoolConfig: ConnectionPoolConfig = {
-  maxConnections: process.env.NODE_ENV === 'production' ? 20 : 5,
+  maxConnections: process.env.NODE_ENV === "production" ? 20 : 5,
   connectionTimeout: 30000, // 30 seconds
   idleTimeout: 300000, // 5 minutes
   retryAttempts: 3,
@@ -33,7 +32,9 @@ export const connectionPoolConfig: ConnectionPoolConfig = {
 };
 
 // Local diagnostics for pool acquisition
-const poolDiagnostics: { lastAcquireErrorCategory: 'timeout' | 'generic' | null } = {
+const poolDiagnostics: {
+  lastAcquireErrorCategory: "timeout" | "generic" | null;
+} = {
   lastAcquireErrorCategory: null,
 };
 
@@ -42,7 +43,7 @@ export class ConnectionPoolManager {
   private activeConnections: Map<string, unknown> = new Map();
   private connectionCounts: Map<string, number> = new Map();
 
-  private constructor() { }
+  private constructor() {}
 
   static getInstance(): ConnectionPoolManager {
     if (!ConnectionPoolManager.instance) {
@@ -54,7 +55,7 @@ export class ConnectionPoolManager {
   /**
    * Get optimized Firestore connection with pooling
    */
-  getFirestoreConnection(appName: string = 'default') {
+  getFirestoreConnection(appName: string = "default") {
     const connectionKey = `firestore-${appName}`;
 
     if (this.activeConnections.has(connectionKey)) {
@@ -66,33 +67,45 @@ export class ConnectionPoolManager {
       // Initialize Firebase app if not exists
       let app;
       const existingApps = getApps();
-      const existingApp = existingApps.find(a => a.name === appName);
+      const existingApp = existingApps.find((a) => a.name === appName);
 
       if (existingApp) {
         app = existingApp;
-      } else if (appName === 'default') {
+      } else if (appName === "default") {
         // Ensure we do not create a new default app; leverage connection-manager singleton
         app = getClientApp();
       } else {
         // Rare named app case (keep minimal config) – consider consolidating if unused
-        app = initializeApp({
-          projectId: process.env.FIREBASE_PROJECT_ID || 'rankpilot-h3jpc',
-        }, appName);
+        app = initializeApp(
+          {
+            projectId: process.env.FIREBASE_PROJECT_ID || "rankpilot-h3jpc",
+          },
+          appName
+        );
       }
 
       const db = getFirestore(app);
 
       // Connect to emulator in development
-      if (process.env.NODE_ENV === 'development' && !this.activeConnections.has(connectionKey)) {
+      if (
+        process.env.NODE_ENV === "development" &&
+        !this.activeConnections.has(connectionKey)
+      ) {
         try {
-          connectFirestoreEmulator(db, 'localhost', 8080);
+          connectFirestoreEmulator(db, "localhost", 8080);
         } catch (error) {
           // Emulator already connected or not available; categorize error
-          const msg = typeof error === 'object' && error && 'message' in (error as Record<string, unknown>) && typeof (error as { message?: unknown }).message === 'string'
-            ? (error as { message: string }).message
-            : String(error);
+          const msg =
+            typeof error === "object" &&
+            error &&
+            "message" in (error as Record<string, unknown>) &&
+            typeof (error as { message?: unknown }).message === "string"
+              ? (error as { message: string }).message
+              : String(error);
           const isTimeout = /timeout|deadline exceeded/i.test(msg);
-          poolDiagnostics.lastAcquireErrorCategory = isTimeout ? 'timeout' : 'generic';
+          poolDiagnostics.lastAcquireErrorCategory = isTimeout
+            ? "timeout"
+            : "generic";
         }
       }
 
@@ -104,7 +117,10 @@ export class ConnectionPoolManager {
 
       return db;
     } catch (error) {
-      console.error(`Error creating Firestore connection for ${appName}:`, error);
+      console.error(
+        `Error creating Firestore connection for ${appName}:`,
+        error
+      );
       throw error;
     }
   }
@@ -143,7 +159,10 @@ export class ConnectionPoolManager {
 
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), config.connectionTimeout);
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            config.connectionTimeout
+          );
 
           const response = await fetch(`${baseURL}${endpoint}`, {
             ...options,
@@ -168,7 +187,7 @@ export class ConnectionPoolManager {
         } finally {
           this.activeRequests--;
         }
-      }
+      },
     };
 
     this.activeConnections.set(poolKey, pool);
@@ -229,8 +248,8 @@ export class ConnectionPoolManager {
 export const connectionPool = ConnectionPoolManager.getInstance();
 
 // Cleanup on process exit
-if (typeof process !== 'undefined') {
-  process.on('exit', () => {
+if (typeof process !== "undefined") {
+  process.on("exit", () => {
     connectionPool.cleanupIdleConnections();
   });
 }

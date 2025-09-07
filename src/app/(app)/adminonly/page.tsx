@@ -5,7 +5,13 @@ import { useEffect, useState } from "react";
 import useAdminRoute from "@/hooks/useAdminRoute";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShieldCheck, Users, BarChart3, Settings, Database } from "lucide-react";
+import {
+  ShieldCheck,
+  Users,
+  BarChart3,
+  Settings,
+  Database,
+} from "lucide-react";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import AdminUserManagement from "@/components/admin/admin-user-management";
 import AdminSystemMetrics from "@/components/admin/admin-system-metrics";
@@ -35,7 +41,13 @@ export default function AdminOnlyPage() {
       <ToolPageHeader
         title="Admin Dashboard"
         description="Manage users, monitor system health, and analyze platform metrics."
-        badges={[{ label: "Admin", variant: "outline", className: "border-destructive/40 text-destructive" }]}
+        badges={[
+          {
+            label: "Admin",
+            variant: "outline",
+            className: "border-destructive/40 text-destructive",
+          },
+        ]}
         showBreadcrumb
       />
 
@@ -97,6 +109,6 @@ export default function AdminOnlyPage() {
           <AdminSettings />
         </TabsContent>
       </Tabs>
-  </main>
+    </main>
   );
 }

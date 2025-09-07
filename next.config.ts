@@ -1,13 +1,15 @@
 import type { NextConfig } from "next";
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import type { Compiler, Configuration, ModuleOptions } from 'webpack';
+import * as fs from "node:fs";
+import * as path from "node:path";
+import type { Compiler, Configuration, ModuleOptions } from "webpack";
 // Enable bundle analyzer when ANALYZE=true (ESM import)
-import bundleAnalyzer from '@next/bundle-analyzer';
-const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
+import bundleAnalyzer from "@next/bundle-analyzer";
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 // Check if this is a Firebase deployment build
-const isFirebaseDeployment = process.env.FIREBASE_DEPLOY === 'true';
+const isFirebaseDeployment = process.env.FIREBASE_DEPLOY === "true";
 
 const baseConfig: NextConfig = {
   // Enable React strict mode for better development practices
@@ -50,31 +52,42 @@ const baseConfig: NextConfig = {
     // Plugin to ensure legacy middleware manifest exists for deploy tools expecting it
     class EnsureMiddlewareManifestPlugin {
       apply(compiler: Compiler) {
-        compiler.hooks.afterEmit.tap('EnsureMiddlewareManifestPlugin', () => {
+        compiler.hooks.afterEmit.tap("EnsureMiddlewareManifestPlugin", () => {
           try {
-            const outDir = (compiler && compiler.options && compiler.options.output && compiler.options.output.path) as string | undefined;
+            const outDir = (compiler &&
+              compiler.options &&
+              compiler.options.output &&
+              compiler.options.output.path) as string | undefined;
             if (!outDir) return;
             const serverDir = outDir; // on server build this points to .next/server
             // 1) Ensure legacy middleware-manifest.json
-            const middlewareManifestPath = path.join(serverDir, 'middleware-manifest.json');
+            const middlewareManifestPath = path.join(
+              serverDir,
+              "middleware-manifest.json"
+            );
             if (!fs.existsSync(middlewareManifestPath)) {
               const stub = {
                 version: 1,
                 middleware: {
-                  '/': {
+                  "/": {
                     env: [],
                     files: [],
-                    name: 'middleware',
-                    page: '/',
-                    regexp: '^(?!/_next/|/static/|/favicon\\.ico).*$',
+                    name: "middleware",
+                    page: "/",
+                    regexp: "^(?!/_next/|/static/|/favicon\\.ico).*$",
                   },
                 },
                 functions: {},
-                sortedMiddleware: ['/'],
+                sortedMiddleware: ["/"],
               };
               fs.mkdirSync(serverDir, { recursive: true });
-              fs.writeFileSync(middlewareManifestPath, JSON.stringify(stub, null, 2));
-              console.log('[EnsureMiddlewareManifestPlugin] Wrote minimal middleware-manifest.json');
+              fs.writeFileSync(
+                middlewareManifestPath,
+                JSON.stringify(stub, null, 2)
+              );
+              console.log(
+                "[EnsureMiddlewareManifestPlugin] Wrote minimal middleware-manifest.json"
+              );
             }
 
             // NOTE: Do NOT emit pages-manifest.json for App Router-only apps.
@@ -82,7 +95,7 @@ const baseConfig: NextConfig = {
             // to attempt loading /_document, which doesn't exist in App Router.
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
-            console.warn('[EnsureMiddlewareManifestPlugin] Non-fatal:', msg);
+            console.warn("[EnsureMiddlewareManifestPlugin] Non-fatal:", msg);
           }
         });
       }
@@ -96,7 +109,10 @@ const baseConfig: NextConfig = {
       // Avoid aliasing internal "@firebase/*" packages to prevent export shape mismatches at runtime.
       // Some environments attempt to resolve internal packages. Map them to safe public equivalents.
       // Intentionally do NOT alias internal '@firebase/*' packages; rely on installed packages.
-      'firebase/app-check': path.resolve(__dirname, 'src/lib/firebase/shims/app-check.js'),
+      "firebase/app-check": path.resolve(
+        __dirname,
+        "src/lib/firebase/shims/app-check.js"
+      ),
     };
 
     // Ignore specific Node.js only modules in browser
@@ -116,14 +132,14 @@ const baseConfig: NextConfig = {
       _cfg.watchOptions = {
         ...(_cfg.watchOptions || {}),
         ignored: [
-          '**/.git/**',
-          '**/.next/**',
-          '**/node_modules/**',
-          'backups/**',
-          'cache/**',
-          'sessions/**',
-          'testing/results/**',
-          'testing/reports/**'
+          "**/.git/**",
+          "**/.next/**",
+          "**/node_modules/**",
+          "backups/**",
+          "cache/**",
+          "sessions/**",
+          "testing/results/**",
+          "testing/reports/**",
         ],
       };
     }
@@ -136,7 +152,7 @@ const baseConfig: NextConfig = {
 
     // Add the manifest plugin on server build to aid external builders (e.g., Firebase frameworks)
     if (isServer) {
-      (config as Configuration).plugins = (config.plugins ?? []);
+      (config as Configuration).plugins = config.plugins ?? [];
       config.plugins!.push(new EnsureMiddlewareManifestPlugin());
     }
 
@@ -153,12 +169,20 @@ const baseConfig: NextConfig = {
     // originating from optional OpenTelemetry dynamic requires pulled in by genkit tracing.
     const otelCriticalPredicate = (warning: unknown) => {
       // webpack 5 Warning type shape guard with safe index access
-      const w = warning as { message?: string; module?: { resource?: string }; moduleName?: string } | undefined;
+      const w = warning as
+        | {
+            message?: string;
+            module?: { resource?: string };
+            moduleName?: string;
+          }
+        | undefined;
       const resource = w?.module?.resource ?? w?.moduleName;
       return (
-        typeof w?.message === 'string' &&
-        w.message.includes('Critical dependency: the request of a dependency is an expression') &&
-        /@opentelemetry\/instrumentation/.test(String(resource || ''))
+        typeof w?.message === "string" &&
+        w.message.includes(
+          "Critical dependency: the request of a dependency is an expression"
+        ) &&
+        /@opentelemetry\/instrumentation/.test(String(resource || ""))
       );
     };
     // Merge with existing ignoreWarnings entries
@@ -168,7 +192,7 @@ const baseConfig: NextConfig = {
     ];
 
     return config;
-  },  // Experimental features
+  }, // Experimental features
   experimental: {
     // Configure server actions with proper options
     serverActions: {
@@ -182,10 +206,15 @@ const baseConfig: NextConfig = {
           if (csName && csDomain) list.add(`${csName}-${port}.${csDomain}`);
         } else {
           // Allow Firebase Hosting default domain and custom domain if provided
-          const fbProj = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID && `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.web.app`;
+          const fbProj =
+            process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ||
+            (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
+              `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.web.app`);
           const fbApp = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
           const customDomain = process.env.NEXT_PUBLIC_APP_DOMAIN;
-          [fbProj, fbApp, customDomain].filter(Boolean).forEach((h) => list.add(String(h)));
+          [fbProj, fbApp, customDomain]
+            .filter(Boolean)
+            .forEach((h) => list.add(String(h)));
         }
         return Array.from(list);
       })(),
@@ -220,19 +249,19 @@ const baseConfig: NextConfig = {
 const nextConfig = withBundleAnalyzer({
   ...baseConfig,
   modularizeImports: {
-    'date-fns': {
-      transform: 'date-fns/{{member}}',
+    "date-fns": {
+      transform: "date-fns/{{member}}",
     },
-    'lodash-es': {
-      transform: 'lodash-es/{{member}}',
+    "lodash-es": {
+      transform: "lodash-es/{{member}}",
     },
-    'lucide-react': {
-      transform: 'lucide-react/dist/esm/icons/{{member}}',
+    "lucide-react": {
+      transform: "lucide-react/dist/esm/icons/{{member}}",
       skipDefaultConversion: true,
     },
-    'react-icons/fa': {
+    "react-icons/fa": {
       // Import only the used FontAwesome icons to avoid bundling the whole pack
-      transform: 'react-icons/fa/{{member}}',
+      transform: "react-icons/fa/{{member}}",
     },
   },
 });

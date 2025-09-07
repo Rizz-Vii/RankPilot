@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/lib/mobile-responsive-utils";
-import { asVoidHandler } from '@/lib/react/handlers';
+import { asVoidHandler } from "@/lib/react/handlers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Search, Sparkles } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -76,10 +76,7 @@ export default function KeywordToolForm({
   }
 
   return (
-    <EnhancedCard
-      className="h-full"
-      variant="elevated"
-    >
+    <EnhancedCard className="h-full" variant="elevated">
       <EnhancedCardHeader>
         <EnhancedCardTitle className="font-headline flex items-center gap-2">
           <Search className="h-5 w-5 text-primary" />

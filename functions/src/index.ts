@@ -14,7 +14,13 @@ export { getKeywordSuggestionsEnhanced } from "./api/production-keyword-suggesti
 export { runSeoAudit } from "./api/audit.js";
 
 // Export performance dashboard suite (choose single canonical implementation)
-export { abTestManagement, functionMetrics, healthCheck, performanceDashboard, realtimeMetrics } from "./api/performance-dashboard-functions.js";
+export {
+  abTestManagement,
+  functionMetrics,
+  healthCheck,
+  performanceDashboard,
+  realtimeMetrics,
+} from "./api/performance-dashboard-functions.js";
 // Scheduled maintenance (versioned to create fresh Scheduler jobs in valid region)
 export { cleanupInvites as cleanupInvitesV2 } from "./scheduled/cleanup-invites.js";
 // Voice holds cleanup
@@ -38,7 +44,13 @@ export { stripeWebhook } from "./stripe-webhook.js";
 setGlobalOptions({ region: "australia-southeast1" });
 
 // Export chatbot & utility test function
-export { adminChatHandler, customerChatHandler, exportUserData, requestAccountDeletion, testMinimal };
+export {
+  adminChatHandler,
+  customerChatHandler,
+  exportUserData,
+  requestAccountDeletion,
+  testMinimal,
+};
 
 // Minimal health endpoint to validate cold start and module load
 export { healthCheck as health } from "./api/performance-dashboard-functions.js";

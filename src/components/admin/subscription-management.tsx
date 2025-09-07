@@ -64,7 +64,9 @@ interface SubscriptionUser {
   lastLoginAt?: number;
 }
 
-interface TimestampLike { seconds: number }
+interface TimestampLike {
+  seconds: number;
+}
 const isTimestampLike = (v: unknown): v is TimestampLike =>
   v !== null &&
   typeof v === "object" &&
@@ -97,8 +99,6 @@ export function SubscriptionManagement() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-
-
   const fetchSubscriptionData = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
@@ -124,20 +124,45 @@ export function SubscriptionManagement() {
 
       usersSnapshot.forEach((d) => {
         const data = d.data() as Record<string, unknown>;
-        const rawSub = (data as Record<string, unknown>).subscription as unknown;
-        const safeSub = (rawSub && typeof rawSub === 'object') ? rawSub as Record<string, unknown> : {};
-        const tier = typeof safeSub.tier === 'string' ? safeSub.tier : 'free';
-        const status = typeof safeSub.status === 'string' ? safeSub.status : 'inactive';
-        const current_period_end = typeof safeSub.current_period_end === 'number' ? safeSub.current_period_end : undefined;
-        const customer_id = typeof safeSub.customer_id === 'string' ? safeSub.customer_id : undefined;
-        const subscription_id = typeof safeSub.subscription_id === 'string' ? safeSub.subscription_id : undefined;
+        const rawSub = (data as Record<string, unknown>)
+          .subscription as unknown;
+        const safeSub =
+          rawSub && typeof rawSub === "object"
+            ? (rawSub as Record<string, unknown>)
+            : {};
+        const tier = typeof safeSub.tier === "string" ? safeSub.tier : "free";
+        const status =
+          typeof safeSub.status === "string" ? safeSub.status : "inactive";
+        const current_period_end =
+          typeof safeSub.current_period_end === "number"
+            ? safeSub.current_period_end
+            : undefined;
+        const customer_id =
+          typeof safeSub.customer_id === "string"
+            ? safeSub.customer_id
+            : undefined;
+        const subscription_id =
+          typeof safeSub.subscription_id === "string"
+            ? safeSub.subscription_id
+            : undefined;
         const user: SubscriptionUser = {
           id: d.id,
-          email: typeof data.email === 'string' ? data.email : '',
-          displayName: typeof data.displayName === 'string' ? data.displayName : undefined,
-          subscription: { tier, status, current_period_end, customer_id, subscription_id },
-          createdAt: isTimestampLike(data.createdAt) ? data.createdAt.seconds * 1000 : Date.now(),
-          lastLoginAt: isTimestampLike(data.lastLoginAt) ? data.lastLoginAt.seconds * 1000 : undefined
+          email: typeof data.email === "string" ? data.email : "",
+          displayName:
+            typeof data.displayName === "string" ? data.displayName : undefined,
+          subscription: {
+            tier,
+            status,
+            current_period_end,
+            customer_id,
+            subscription_id,
+          },
+          createdAt: isTimestampLike(data.createdAt)
+            ? data.createdAt.seconds * 1000
+            : Date.now(),
+          lastLoginAt: isTimestampLike(data.lastLoginAt)
+            ? data.lastLoginAt.seconds * 1000
+            : undefined,
         };
 
         usersData.push(user);
@@ -182,10 +207,11 @@ export function SubscriptionManagement() {
 
   const updateUserSubscription = async (
     userId: string,
-    updates: Record<string, string>): Promise<void> => {
+    updates: Record<string, string>
+  ): Promise<void> => {
     try {
       const userRef = doc(db, "users", userId);
-  const updateData: Record<string, string> = {};
+      const updateData: Record<string, string> = {};
       Object.keys(updates).forEach((key) => {
         updateData[`subscription.${key}`] = updates[key];
       });
@@ -390,12 +416,20 @@ export function SubscriptionManagement() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => { void updateUserSubscription(user.id, { status: "active" }); }}
+                                onClick={() => {
+                                  void updateUserSubscription(user.id, {
+                                    status: "active",
+                                  });
+                                }}
                               >
                                 Activate Subscription
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => { void updateUserSubscription(user.id, { status: "canceled" }); }}
+                                onClick={() => {
+                                  void updateUserSubscription(user.id, {
+                                    status: "canceled",
+                                  });
+                                }}
                               >
                                 Cancel Subscription
                               </DropdownMenuItem>
@@ -450,21 +484,33 @@ export function SubscriptionManagement() {
                   <CardContent>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-sm">Starter (${STRIPE_PLANS.starter.price.monthly})</span>
+                        <span className="text-sm">
+                          Starter (${STRIPE_PLANS.starter.price.monthly})
+                        </span>
                         <span className="text-sm font-medium">
-                          ${stats.starterCount * STRIPE_PLANS.starter.price.monthly}
+                          $
+                          {stats.starterCount *
+                            STRIPE_PLANS.starter.price.monthly}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm">Agency (${STRIPE_PLANS.agency.price.monthly})</span>
+                        <span className="text-sm">
+                          Agency (${STRIPE_PLANS.agency.price.monthly})
+                        </span>
                         <span className="text-sm font-medium">
-                          ${stats.agencyCount * STRIPE_PLANS.agency.price.monthly}
+                          $
+                          {stats.agencyCount *
+                            STRIPE_PLANS.agency.price.monthly}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm">Enterprise (${STRIPE_PLANS.enterprise.price.monthly})</span>
+                        <span className="text-sm">
+                          Enterprise (${STRIPE_PLANS.enterprise.price.monthly})
+                        </span>
                         <span className="text-sm font-medium">
-                          ${stats.enterpriseCount * STRIPE_PLANS.enterprise.price.monthly}
+                          $
+                          {stats.enterpriseCount *
+                            STRIPE_PLANS.enterprise.price.monthly}
                         </span>
                       </div>
                     </div>

@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
 // Load client components dynamically (client-only) to keep the shared chunk lean and avoid SSR coupling
@@ -11,7 +17,6 @@ import HomeFeaturesGrid from "@/components/home/HomeFeaturesGrid";
 // Use ISR to refresh at most once per hour, while client islands hydrate as usual
 export const dynamic = "force-static";
 export const revalidate = 3600; // 1 hour
-
 
 export default function HomePage() {
   return (
@@ -32,10 +37,14 @@ export default function HomePage() {
             Unified Growth & Visibility Command Center
           </h2>
           <p className="text-muted-foreground mb-6 max-w-3xl mx-auto">
-            A single operating layer for audit telemetry, semantic expansion, competitive posture,
-            execution velocity and outcome attribution. Remove data silos—align technical, content & strategy.
+            A single operating layer for audit telemetry, semantic expansion,
+            competitive posture, execution velocity and outcome attribution.
+            Remove data silos—align technical, content & strategy.
           </p>
-          <Card className="rounded-xl overflow-hidden" aria-label="Product dashboard screenshot">
+          <Card
+            className="rounded-xl overflow-hidden"
+            aria-label="Product dashboard screenshot"
+          >
             <Image
               src="/images/CaptureDash.png"
               alt="RankPilot SEO analytics dashboard showing performance, keyword, and backlink panels"
@@ -54,41 +63,60 @@ export default function HomePage() {
           id="about"
           className="section-gap w-full max-w-4xl text-center"
         >
-          <h2 className="text-3xl font-bold mb-6">What Makes NeuroSEO™ Different</h2>
+          <h2 className="text-3xl font-bold mb-6">
+            What Makes NeuroSEO™ Different
+          </h2>
           <div className="grid md:grid-cols-2 gap-8 text-left">
             <Card className="p-6">
-              <h3 className="text-xl font-semibold mb-4">Integrated Data Fabric</h3>
+              <h3 className="text-xl font-semibold mb-4">
+                Integrated Data Fabric
+              </h3>
               <p className="text-muted-foreground">
-                Streaming ingestion + adaptive caching unify crawl diagnostics, SERP deltas,
-                link graph signals, content semantics and performance telemetry into one ML-normalized layer.
+                Streaming ingestion + adaptive caching unify crawl diagnostics,
+                SERP deltas, link graph signals, content semantics and
+                performance telemetry into one ML-normalized layer.
               </p>
             </Card>
             <Card className="p-6">
-              <h3 className="text-xl font-semibold mb-4">Coordinated AI Engines</h3>
+              <h3 className="text-xl font-semibold mb-4">
+                Coordinated AI Engines
+              </h3>
               <p className="text-muted-foreground">
-                NeuralCrawler™, SemanticMap™, Visibility Engine, TrustBlock™, RewriteGen™, Forecast Core
-                and the Orchestrator collaborate—ranking actions by marginal impact while preserving deterministic audit traceability.
+                NeuralCrawler™, SemanticMap™, Visibility Engine, TrustBlock™,
+                RewriteGen™, Forecast Core and the Orchestrator
+                collaborate—ranking actions by marginal impact while preserving
+                deterministic audit traceability.
               </p>
             </Card>
           </div>
         </section>
 
         {/* CTA */}
-        <section
-          className="section-gap-lg max-w-4xl w-full bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-10 text-primary-foreground text-center shadow-xl hover:shadow-2xl transition-shadow duration-300 micro-hover-lift"
-        >
-          <h2 className="text-3xl font-bold mb-4">Activate Compounding Organic Growth</h2>
+        <section className="section-gap-lg max-w-4xl w-full bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-10 text-primary-foreground text-center shadow-xl hover:shadow-2xl transition-shadow duration-300 micro-hover-lift">
+          <h2 className="text-3xl font-bold mb-4">
+            Activate Compounding Organic Growth
+          </h2>
           <p className="text-lg mb-6 opacity-90">
-            Teams replace fragmented stacks with RankPilot—faster triage, smarter prioritization,
-            tighter feedback loops and measurable revenue impact.
+            Teams replace fragmented stacks with RankPilot—faster triage,
+            smarter prioritization, tighter feedback loops and measurable
+            revenue impact.
           </p>
           <div className="flex flex-col items-center gap-4">
             <PrimaryCta />
-            <ul className="flex flex-wrap justify-center gap-3 text-[11px] font-medium opacity-90" aria-label="Trust badges">
-              <li className="px-2 py-1 rounded bg-primary/20">SOC 2 in progress</li>
+            <ul
+              className="flex flex-wrap justify-center gap-3 text-[11px] font-medium opacity-90"
+              aria-label="Trust badges"
+            >
+              <li className="px-2 py-1 rounded bg-primary/20">
+                SOC 2 in progress
+              </li>
               <li className="px-2 py-1 rounded bg-primary/20">GDPR-aligned</li>
-              <li className="px-2 py-1 rounded bg-primary/20">99.9% Uptime Target</li>
-              <li className="px-2 py-1 rounded bg-primary/20">No CC required</li>
+              <li className="px-2 py-1 rounded bg-primary/20">
+                99.9% Uptime Target
+              </li>
+              <li className="px-2 py-1 rounded bg-primary/20">
+                No CC required
+              </li>
             </ul>
           </div>
         </section>
@@ -157,11 +185,37 @@ export default function HomePage() {
           id="pricing"
           className="section-gap mb-24 text-center max-w-6xl w-full"
         >
-          <h2 className="text-3xl font-bold mb-6">Transparent, Value-Aligned Pricing</h2>
+          <h2 className="text-3xl font-bold mb-6">
+            Transparent, Value-Aligned Pricing
+          </h2>
           <div className="grid md:grid-cols-3 gap-6">
-            <PricingCard title="Starter" price="$19/mo" features={["Technical & Content Audits", "Keyword & Intent Mapping", "Core Dashboards"]} />
-            <PricingCard title="Agency" price="$49/mo" features={["All Starter", "Automations & RewriteGen™", "Collaboration & Reporting"]} />
-            <PricingCard title="Enterprise" price="Custom" features={["Advanced Data Export", "Dedicated Success Layer", "Security & Compliance Add‑Ons"]} />
+            <PricingCard
+              title="Starter"
+              price="$19/mo"
+              features={[
+                "Technical & Content Audits",
+                "Keyword & Intent Mapping",
+                "Core Dashboards",
+              ]}
+            />
+            <PricingCard
+              title="Agency"
+              price="$49/mo"
+              features={[
+                "All Starter",
+                "Automations & RewriteGen™",
+                "Collaboration & Reporting",
+              ]}
+            />
+            <PricingCard
+              title="Enterprise"
+              price="Custom"
+              features={[
+                "Advanced Data Export",
+                "Dedicated Success Layer",
+                "Security & Compliance Add‑Ons",
+              ]}
+            />
           </div>
         </section>
       </main>
@@ -174,11 +228,12 @@ function PrimaryCta() {
   // Render static CTA server-side; enhance on client via a tiny script to avoid bundling state code in shared chunk
   return (
     <Button size="lg" variant="secondary" asChild className="micro-hover-lift">
-      <Link href="/register" prefetch={false}>Start 7‑Day Free Trial</Link>
+      <Link href="/register" prefetch={false}>
+        Start 7‑Day Free Trial
+      </Link>
     </Button>
   );
 }
-
 
 function PricingCard({
   title,
@@ -205,7 +260,10 @@ function PricingCard({
       </CardContent>
       <CardFooter>
         <Button className="w-full" asChild>
-          <Link href={`/pricing?plan=${planParam}`} aria-label={`Choose ${title} plan`}>
+          <Link
+            href={`/pricing?plan=${planParam}`}
+            aria-label={`Choose ${title} plan`}
+          >
             Choose Plan
           </Link>
         </Button>

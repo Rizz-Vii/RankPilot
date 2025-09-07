@@ -1,6 +1,6 @@
 // Database migration script - Simple approach
-const path = require('path');
-const fs = require('fs');
+const path = require("path");
+const fs = require("fs");
 
 console.log("🚨 Creating migration API endpoint...");
 
@@ -76,12 +76,12 @@ export async function POST() {
 }`;
 
 // Create directory and file
-const apiDir = path.join(process.cwd(), 'src', 'app', 'api', 'migrate-db');
+const apiDir = path.join(process.cwd(), "src", "app", "api", "migrate-db");
 if (!fs.existsSync(apiDir)) {
-    fs.mkdirSync(apiDir, { recursive: true });
+  fs.mkdirSync(apiDir, { recursive: true });
 }
 
-fs.writeFileSync(path.join(apiDir, 'route.ts'), apiContent);
+fs.writeFileSync(path.join(apiDir, "route.ts"), apiContent);
 
 console.log("✅ Migration API created at: /api/migrate-db");
 console.log("📋 Next steps:");

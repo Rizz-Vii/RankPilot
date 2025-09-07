@@ -3,7 +3,9 @@
  * Conditionally suppresses console output during deployment
  */
 
-const isDeployment = process.env.NODE_ENV === "production" || process.env.FIREBASE_DEPLOY === "true";
+const isDeployment =
+  process.env.NODE_ENV === "production" ||
+  process.env.FIREBASE_DEPLOY === "true";
 
 export const logger = {
   log: (...args: unknown[]) => {
@@ -35,7 +37,7 @@ export const logger = {
     if (!isDeployment) {
       console.log("🚀 [DEV]", ...args);
     }
-  }
+  },
 };
 
 export default logger;

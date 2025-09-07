@@ -9,7 +9,7 @@
  */
 
 import { db } from "@/lib/firebase";
-import { managedOnSnapshot } from '@/lib/firebase/write-guard';
+import { managedOnSnapshot } from "@/lib/firebase/write-guard";
 import {
   collection,
   doc,
@@ -19,7 +19,7 @@ import {
   query,
   Timestamp,
   updateDoc,
-  where
+  where,
 } from "firebase/firestore";
 
 // Dashboard data interfaces matching existing component expectations
@@ -76,7 +76,6 @@ export interface DashboardData {
 }
 
 class DashboardDataService {
-
   /**
    * Get comprehensive dashboard data for a specific user
    */
@@ -92,7 +91,7 @@ class DashboardDataService {
         domainAuthorityData,
         backlinkData,
         trafficData,
-        seoSources
+        seoSources,
       ] = await Promise.all([
         this.getSEOScoreTrend(userId),
         this.getKeywordMetrics(userId),
@@ -100,7 +99,7 @@ class DashboardDataService {
         this.getDomainAuthorityData(userId),
         this.getBacklinkData(userId),
         this.getTrafficSources(userId),
-        this.getSeoSources(userId)
+        this.getSeoSources(userId),
       ]);
 
       return {
@@ -112,9 +111,8 @@ class DashboardDataService {
         domainAuthority: domainAuthorityData,
         backlinks: backlinkData,
         trafficSources: trafficData,
-        seoSources
+        seoSources,
       };
-
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       return this.getFallbackData();
@@ -136,13 +134,13 @@ class DashboardDataService {
       );
 
       const snapshot = await getDocs(q);
-      const analyses = snapshot.docs.map(doc => doc.data());
+      const analyses = snapshot.docs.map((doc) => doc.data());
 
       if (analyses.length === 0) {
         return {
           current: 0,
           change: 0,
-          trend: []
+          trend: [],
         };
       }
 
@@ -153,17 +151,21 @@ class DashboardDataService {
 
       // Generate trend data from recent analyses
       const trend = analyses.reverse().map((analysis, index) => ({
-        date: analysis.completedAt?.toDate?.()?.toISOString().split('T')[0] ||
-          new Date(Date.now() - (analyses.length - index) * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        score: analysis.summary?.overallScore || 0
+        date:
+          analysis.completedAt?.toDate?.()?.toISOString().split("T")[0] ||
+          new Date(
+            Date.now() - (analyses.length - index) * 7 * 24 * 60 * 60 * 1000
+          )
+            .toISOString()
+            .split("T")[0],
+        score: analysis.summary?.overallScore || 0,
       }));
 
       return {
         current: Math.round(currentScore),
         change: Math.round(change),
-        trend
+        trend,
       };
-
     } catch (error) {
       console.error("Error fetching SEO score trend:", error);
       return { current: 0, change: 0, trend: [] };
@@ -187,12 +189,21 @@ class DashboardDataService {
       const snapshot = await getDocs(q);
       if (snapshot.empty) return [] as DashboardData["seoSources"];
       const data = snapshot.docs[0].data();
-      const sources = (data?.report?.sources || data?.sources || []) as Array<{ url: string; firstH1?: string; externalAnchors?: Array<{ href: string; text: string }>; missingAltSamples?: string[] }>;
-      return sources.map(s => ({
+      const sources = (data?.report?.sources || data?.sources || []) as Array<{
+        url: string;
+        firstH1?: string;
+        externalAnchors?: Array<{ href: string; text: string }>;
+        missingAltSamples?: string[];
+      }>;
+      return sources.map((s) => ({
         url: s.url,
         firstH1: s.firstH1,
-        externalAnchors: Array.isArray(s.externalAnchors) ? s.externalAnchors : [],
-        missingAltSamples: Array.isArray(s.missingAltSamples) ? s.missingAltSamples : []
+        externalAnchors: Array.isArray(s.externalAnchors)
+          ? s.externalAnchors
+          : [],
+        missingAltSamples: Array.isArray(s.missingAltSamples)
+          ? s.missingAltSamples
+          : [],
       }));
     } catch (error) {
       console.error("Error fetching SEO sources:", error);
@@ -214,27 +225,29 @@ class DashboardDataService {
       );
 
       const snapshot = await getDocs(q);
-      const keywords = snapshot.docs.map(doc => doc.data());
+      const keywords = snapshot.docs.map((doc) => doc.data());
 
       if (keywords.length === 0) {
         return {
           current: 0,
           change: 0,
-          visibility: { score: 0, top3: 0, top10: 0, top100: 0 }
+          visibility: { score: 0, top3: 0, top10: 0, top100: 0 },
         };
       }
 
       // Calculate keyword metrics
       const totalKeywords = keywords.length;
-      const recentKeywords = keywords.filter(k => {
+      const recentKeywords = keywords.filter((k) => {
         const createdAt = k.createdAt?.toDate?.() || new Date(k.createdAt);
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
         return createdAt > thirtyDaysAgo;
       }).length;
 
       // Calculate visibility metrics from rankings
-      let top3 = 0, top10 = 0, top100 = 0;
-      keywords.forEach(keyword => {
+      let top3 = 0,
+        top10 = 0,
+        top100 = 0;
+      keywords.forEach((keyword) => {
         if (keyword.currentRanking) {
           if (keyword.currentRanking <= 3) top3++;
           if (keyword.currentRanking <= 10) top10++;
@@ -242,7 +255,8 @@ class DashboardDataService {
         }
       });
 
-      const visibilityScore = totalKeywords > 0 ? Math.round((top10 / totalKeywords) * 100) : 0;
+      const visibilityScore =
+        totalKeywords > 0 ? Math.round((top10 / totalKeywords) * 100) : 0;
 
       return {
         current: totalKeywords,
@@ -251,16 +265,15 @@ class DashboardDataService {
           score: visibilityScore,
           top3,
           top10,
-          top100
-        }
+          top100,
+        },
       };
-
     } catch (error) {
       console.error("Error fetching keyword metrics:", error);
       return {
         current: 0,
         change: 0,
-        visibility: { score: 0, top3: 0, top10: 0, top100: 0 }
+        visibility: { score: 0, top3: 0, top10: 0, top100: 0 },
       };
     }
   }
@@ -274,10 +287,12 @@ class DashboardDataService {
       const q = query(projectsRef, where("userId", "==", userId));
 
       const snapshot = await getDocs(q);
-      const projects = snapshot.docs.map(doc => doc.data());
+      const projects = snapshot.docs.map((doc) => doc.data());
 
-      const activeProjects = projects.filter(p => p.status === "active").length;
-      const recentProjects = projects.filter(p => {
+      const activeProjects = projects.filter(
+        (p) => p.status === "active"
+      ).length;
+      const recentProjects = projects.filter((p) => {
         const createdAt = p.createdAt?.toDate?.() || new Date(p.createdAt);
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
         return createdAt > thirtyDaysAgo;
@@ -285,9 +300,8 @@ class DashboardDataService {
 
       return {
         current: activeProjects,
-        change: recentProjects
+        change: recentProjects,
       };
-
     } catch (error) {
       console.error("Error fetching projects data:", error);
       return { current: 0, change: 0 };
@@ -308,7 +322,7 @@ class DashboardDataService {
       );
 
       const snapshot = await getDocs(q);
-      const audits = snapshot.docs.map(doc => doc.data());
+      const audits = snapshot.docs.map((doc) => doc.data());
 
       if (audits.length === 0) {
         return { score: 0, history: [] };
@@ -318,16 +332,20 @@ class DashboardDataService {
 
       // Generate history from audits
       const history = audits.reverse().map((audit, index) => ({
-        date: audit.createdAt?.toDate?.()?.toISOString().split('T')[0] ||
-          new Date(Date.now() - (audits.length - index) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        score: audit.domainAuthority || 0
+        date:
+          audit.createdAt?.toDate?.()?.toISOString().split("T")[0] ||
+          new Date(
+            Date.now() - (audits.length - index) * 30 * 24 * 60 * 60 * 1000
+          )
+            .toISOString()
+            .split("T")[0],
+        score: audit.domainAuthority || 0,
       }));
 
       return {
         score: Math.round(currentScore),
-        history
+        history,
       };
-
     } catch (error) {
       console.error("Error fetching domain authority data:", error);
       return { score: 0, history: [] };
@@ -348,13 +366,13 @@ class DashboardDataService {
       );
 
       const snapshot = await getDocs(q);
-      const analyses = snapshot.docs.map(doc => doc.data());
+      const analyses = snapshot.docs.map((doc) => doc.data());
 
       if (analyses.length === 0) {
         return {
           total: 0,
           newLast30Days: 0,
-          history: []
+          history: [],
         };
       }
 
@@ -364,7 +382,7 @@ class DashboardDataService {
 
       // Deterministic monthly history
       const history: Array<{ month: string; new: number; lost: number }> = [];
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
 
       // Simple 32-bit FNV-1a hash for seeding
       const hashSeed = (str: string): number => {
@@ -379,7 +397,7 @@ class DashboardDataService {
       const seededRng = (seed: number) => {
         let s = seed >>> 0;
         return () => {
-          s = (s + 0x6D2B79F5) >>> 0;
+          s = (s + 0x6d2b79f5) >>> 0;
           let t = Math.imul(s ^ (s >>> 15), 1 | s);
           t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
           return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
@@ -392,23 +410,22 @@ class DashboardDataService {
         // If analysis provides values, use them; else derive deterministically from userId + month
         const seed = hashSeed(`${userId}|${monthLabel}|backlinks`);
         const rng = seededRng(seed);
-        const newVal = analysis?.newBacklinks ?? (20 + Math.round(rng() * 50));
-        const lostVal = analysis?.lostBacklinks ?? (5 + Math.round(rng() * 20));
+        const newVal = analysis?.newBacklinks ?? 20 + Math.round(rng() * 50);
+        const lostVal = analysis?.lostBacklinks ?? 5 + Math.round(rng() * 20);
         history.unshift({ month: monthLabel, new: newVal, lost: lostVal });
       }
 
       return {
         total: totalBacklinks,
         newLast30Days: newBacklinks,
-        history
+        history,
       };
-
     } catch (error) {
       console.error("Error fetching backlink data:", error);
       return {
         total: 0,
         newLast30Days: 0,
-        history: []
+        history: [],
       };
     }
   }
@@ -430,33 +447,53 @@ class DashboardDataService {
       );
 
       const snapshot = await getDocs(q);
-      const analyses = snapshot.docs.map(doc => doc.data());
+      const analyses = snapshot.docs.map((doc) => doc.data());
 
       // Calculate traffic distribution based on SEO performance
-      const avgScore = analyses.length > 0
-        ? analyses.reduce((sum, a) => sum + (a.summary?.overallScore || 0), 0) / analyses.length
-        : 50;
+      const avgScore =
+        analyses.length > 0
+          ? analyses.reduce(
+              (sum, a) => sum + (a.summary?.overallScore || 0),
+              0
+            ) / analyses.length
+          : 50;
 
       // Adjust organic percentage based on SEO performance
       const organicPercent = Math.min(85, Math.max(30, avgScore));
       const directPercent = Math.max(10, 40 - organicPercent * 0.3);
       const referralPercent = Math.max(5, 20 - organicPercent * 0.15);
-      const socialPercent = 100 - organicPercent - directPercent - referralPercent;
+      const socialPercent =
+        100 - organicPercent - directPercent - referralPercent;
 
       return [
-        { name: "Organic Search", value: Math.round(organicPercent), fill: "hsl(var(--chart-1))" },
-        { name: "Direct", value: Math.round(directPercent), fill: "hsl(var(--chart-2))" },
-        { name: "Referral", value: Math.round(referralPercent), fill: "hsl(var(--chart-3))" },
-        { name: "Social", value: Math.round(socialPercent), fill: "hsl(var(--chart-4))" }
+        {
+          name: "Organic Search",
+          value: Math.round(organicPercent),
+          fill: "hsl(var(--chart-1))",
+        },
+        {
+          name: "Direct",
+          value: Math.round(directPercent),
+          fill: "hsl(var(--chart-2))",
+        },
+        {
+          name: "Referral",
+          value: Math.round(referralPercent),
+          fill: "hsl(var(--chart-3))",
+        },
+        {
+          name: "Social",
+          value: Math.round(socialPercent),
+          fill: "hsl(var(--chart-4))",
+        },
       ];
-
     } catch (error) {
       console.error("Error fetching traffic sources:", error);
       return [
         { name: "Organic Search", value: 45, fill: "hsl(var(--chart-1))" },
         { name: "Direct", value: 30, fill: "hsl(var(--chart-2))" },
         { name: "Referral", value: 15, fill: "hsl(var(--chart-3))" },
-        { name: "Social", value: 10, fill: "hsl(var(--chart-4))" }
+        { name: "Social", value: 10, fill: "hsl(var(--chart-4))" },
       ];
     }
   }
@@ -468,7 +505,9 @@ class DashboardDataService {
     userId: string,
     callback: (data: DashboardData) => void
   ): () => void {
-    console.log(`📡 Setting up real-time dashboard subscription for user: ${userId}`);
+    console.log(
+      `📡 Setting up real-time dashboard subscription for user: ${userId}`
+    );
 
     // Subscribe to NeuroSEO analyses for real-time updates
     const analysesRef = collection(db, "neuroSeoAnalyses");
@@ -485,17 +524,19 @@ class DashboardDataService {
         void (async () => {
           const data = await this.getUserDashboardData(userId);
           callback(data);
-  })().catch(error => {
+        })().catch((error) => {
           console.error("Error in dashboard subscription:", error);
         });
       },
       (err) => {
         const e = err as { code?: string };
-        if (e.code === 'permission-denied') {
-          console.warn('[DashboardData] permission-denied for neuroSeoAnalyses subscription; providing fallback data');
+        if (e.code === "permission-denied") {
+          console.warn(
+            "[DashboardData] permission-denied for neuroSeoAnalyses subscription; providing fallback data"
+          );
           callback(this.getFallbackData());
         } else {
-          console.error('[DashboardData] onSnapshot error', err);
+          console.error("[DashboardData] onSnapshot error", err);
         }
       },
       { debounceMs: 150 }
@@ -517,9 +558,9 @@ class DashboardDataService {
       domainAuthority: { score: 0, history: [] },
       backlinks: { total: 0, newLast30Days: 0, history: [] },
       trafficSources: [
-        { name: "No Data", value: 100, fill: "var(--color-chart-1)" }
+        { name: "No Data", value: 100, fill: "var(--color-chart-1)" },
       ],
-      seoSources: []
+      seoSources: [],
     };
   }
 
@@ -536,8 +577,8 @@ class DashboardDataService {
         dashboardCache: {
           data,
           lastUpdated: Timestamp.now(),
-          version: "1.0"
-        }
+          version: "1.0",
+        },
       });
 
       console.log(`✅ Dashboard cache updated for user: ${userId}`);

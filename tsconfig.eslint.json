@@ -1,13 +1,5 @@
 {
-    "extends": "./tsconfig.json",
-    "include": [
-        "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/app/.well-known/**/*.ts"
-    ],
-    "exclude": [
-        "node_modules",
-        "dist",
-        "build"
-    ]
+  "extends": "./tsconfig.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/app/.well-known/**/*.ts"],
+  "exclude": ["node_modules", "dist", "build"]
 }

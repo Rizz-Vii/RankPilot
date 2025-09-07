@@ -3,14 +3,18 @@
 // Scans limited directories and emits a lightweight JSON index for AI agents.
 // Keeps size small by only recording path + byte size + last modified epoch.
 
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
-const ROOTS = ['src/lib', 'src/app', 'docs'];
+const ROOTS = ["src/lib", "src/app", "docs"];
 const MAX_FILES = 500; // safety cap
-const OUT_FILE = 'generated/dev/context-index.json';
+const OUT_FILE = "generated/dev/context-index.json";
 
-interface Entry { p: string; b: number; m: number; }
+interface Entry {
+  p: string;
+  b: number;
+  m: number;
+}
 
 function walk(dir: string, acc: Entry[]) {
   if (acc.length >= MAX_FILES) return;
@@ -18,11 +22,12 @@ function walk(dir: string, acc: Entry[]) {
     const full = path.join(dir, item);
     const stat = fs.statSync(full);
     if (stat.isDirectory()) {
-      if (item.startsWith('.') || item === 'node_modules' || item === '.next') continue;
+      if (item.startsWith(".") || item === "node_modules" || item === ".next")
+        continue;
       walk(full, acc);
     } else {
       const ext = path.extname(item);
-      if (!['.ts', '.tsx', '.md', '.js', '.mjs'].includes(ext)) continue;
+      if (![".ts", ".tsx", ".md", ".js", ".mjs"].includes(ext)) continue;
       acc.push({ p: full, b: stat.size, m: stat.mtimeMs });
       if (acc.length >= MAX_FILES) return;
     }
@@ -37,7 +42,10 @@ function main() {
   entries.sort((a, b) => a.p.localeCompare(b.p));
   const outDir = path.dirname(OUT_FILE);
   fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(OUT_FILE, JSON.stringify({ generatedAt: Date.now(), entries }, null, 2));
+  fs.writeFileSync(
+    OUT_FILE,
+    JSON.stringify({ generatedAt: Date.now(), entries }, null, 2)
+  );
   console.log(`Context index written: ${OUT_FILE} (${entries.length} files)`);
 }
 

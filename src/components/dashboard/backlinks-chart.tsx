@@ -1,7 +1,17 @@
 "use client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { ChartConfig } from "@/components/ui/chart";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { Link as LinkIcon } from "lucide-react";
 import { BarChart, CartesianGrid, XAxis, YAxis, Bar } from "recharts";
 
@@ -10,23 +20,40 @@ const barChartConfig = {
   lost: { label: "Lost", color: "hsl(var(--chart-2))" },
 } satisfies ChartConfig;
 
-export interface BacklinksChartProps { data: { history: Array<{ month: string; new: number; lost: number }>; } | undefined }
+export interface BacklinksChartProps {
+  data:
+    | { history: Array<{ month: string; new: number; lost: number }> }
+    | undefined;
+}
 
 export function BacklinksChart({ data }: BacklinksChartProps) {
   return (
     <Card data-testid="chart-backlinks">
       <CardHeader>
         <CardTitle className="font-headline">Backlink Growth</CardTitle>
-        <CardDescription>New vs. lost backlinks. <span className="text-muted-foreground/70">Links = reputation fuel.</span></CardDescription>
+        <CardDescription>
+          New vs. lost backlinks.{" "}
+          <span className="text-muted-foreground/70">
+            Links = reputation fuel.
+          </span>
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {data && data.history && data.history.length > 0 ? (
           <ChartContainer config={barChartConfig} className="h-[200px] w-full">
-            <BarChart data={data.history} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+            <BarChart
+              data={data.history}
+              margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+            >
               <CartesianGrid vertical={false} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} />
               <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip cursor={false} content={(props) => <ChartTooltipContent {...props} indicator="line" />} />
+              <ChartTooltip
+                cursor={false}
+                content={(props) => (
+                  <ChartTooltipContent {...props} indicator="line" />
+                )}
+              />
               <Bar dataKey="new" fill="var(--color-new)" radius={4} />
               <Bar dataKey="lost" fill="var(--color-lost)" radius={4} />
             </BarChart>

@@ -150,7 +150,7 @@ export const UXEnhancedComponent: React.FC<UXEnhancedComponentProps> = ({
         )}
 
         {/* Gamification status */}
-  <div className="bg-success/10 p-3 rounded-lg flex items-center justify-between">
+        <div className="bg-success/10 p-3 rounded-lg flex items-center justify-between">
           <div>
             <span className="text-sm font-medium text-success">
               Level {gamification.stats.level} • {streakInfo.message}
@@ -281,7 +281,7 @@ export const UXEnhancedComponent: React.FC<UXEnhancedComponentProps> = ({
 
       {/* Debug information (development only) */}
       {process.env.NODE_ENV === "development" && (
-  <details className="mt-4 p-3 bg-muted rounded text-xs">
+        <details className="mt-4 p-3 bg-muted rounded text-xs">
           <summary className="cursor-pointer font-medium">
             UX Enhancement Debug Info
           </summary>
@@ -330,7 +330,7 @@ export const EnhancedNeuroSEODashboard: React.FC<{
       currentStage="analysis"
     >
       <div className="space-y-4">
-  <h2 className="text-2xl font-bold text-foreground">
+        <h2 className="text-2xl font-bold text-foreground">
           NeuroSEO™ Analysis Dashboard
         </h2>
 

@@ -255,7 +255,10 @@ export class EmotionalUXMapper {
     userId: string,
     stage: string
   ): EmotionalState[] {
-    const data = this.getStoredEmotionalData(userId) as Array<{ stage?: string; emotion?: EmotionalState }>;
+    const data = this.getStoredEmotionalData(userId) as Array<{
+      stage?: string;
+      emotion?: EmotionalState;
+    }>;
     return data
       .filter((entry) => entry.stage === stage)
       .map((entry) => entry.emotion as EmotionalState)
@@ -263,8 +266,12 @@ export class EmotionalUXMapper {
   }
 
   static getLastEmotionalState(userId: string): EmotionalState | null {
-    const data = this.getStoredEmotionalData(userId) as Array<{ emotion?: EmotionalState }>;
-    return data.length > 0 ? ((data[data.length - 1].emotion as EmotionalState | undefined) ?? null) : null;
+    const data = this.getStoredEmotionalData(userId) as Array<{
+      emotion?: EmotionalState;
+    }>;
+    return data.length > 0
+      ? ((data[data.length - 1].emotion as EmotionalState | undefined) ?? null)
+      : null;
   }
 
   static getOptimizationSuggestions(

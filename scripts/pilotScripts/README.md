@@ -9,7 +9,7 @@ pilotScripts/
 ├── documentation/          # Documentation-related scripts
 │   └── cleanup-consolidated-docs.ps1
 ├── testing/               # Testing automation scripts
-├── deployment/            # Deployment and build scripts  
+├── deployment/            # Deployment and build scripts
 ├── optimization/          # Performance and optimization scripts
 ├── utilities/             # General utility scripts
 └── automation/            # Automated recurring tasks
@@ -62,7 +62,7 @@ All scripts should be executed from the project root directory:
 
 - **Purpose**: Rapid cloud development environment deployment for performance-constrained machines
 - **Features**: 4-core VM, pre-configured Node.js, VS Code integration, port forwarding
-- **Commands**: 
+- **Commands**:
 
   ```powershell
   gh codespace create --repo Rizz-Vii/studio --branch feature/performance-optimization-mobile-enhancement --machine standardLinux32gb

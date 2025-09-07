@@ -1,18 +1,21 @@
 // src/hooks/useAdminRoute.ts
- "use client";
+"use client";
 
- import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-interface E2EWindowFlag { __E2E__?: string; }
+interface E2EWindowFlag {
+  __E2E__?: string;
+}
 
-
-
-export default function useAdminRoute(): { user: ReturnType<typeof useAuth>["user"]; loading: boolean; role: string | null } {
+export default function useAdminRoute(): {
+  user: ReturnType<typeof useAuth>["user"];
+  loading: boolean;
+  role: string | null;
+} {
   const { user, loading, role } = useAuth();
   const router = useRouter();
-
 
   useEffect(() => {
     // Redirect if not loading and user is not authenticated or role is not 'admin'
@@ -24,15 +27,21 @@ export default function useAdminRoute(): { user: ReturnType<typeof useAuth>["use
 
   // Tightened test override: requires both localStorage flag AND E2E runtime/build flag.
   // Moved below hook calls to keep hooks usage unconditional (fixes react-hooks/rules-of-hooks).
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     try {
       const w = window as unknown as E2EWindowFlag;
-      const allowE2E = (process.env.NEXT_PUBLIC_E2E === '1') || (w.__E2E__ === '1');
-      if (allowE2E && localStorage.getItem('TEST_FORCE_ADMIN') === '1') {
+      const allowE2E = process.env.NEXT_PUBLIC_E2E === "1" || w.__E2E__ === "1";
+      if (allowE2E && localStorage.getItem("TEST_FORCE_ADMIN") === "1") {
         // Provide deterministic admin override object; keep shape consistent with AdminRouteResult.
-        return { user: (user || { uid: 'test-admin-override' }) as typeof user, loading: false, role: 'admin' };
+        return {
+          user: (user || { uid: "test-admin-override" }) as typeof user,
+          loading: false,
+          role: "admin",
+        };
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   if (loading || (user && role !== "admin")) {

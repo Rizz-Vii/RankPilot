@@ -162,9 +162,18 @@ export async function POST(): Promise<NextResponse> {
           const key = quotaKey as keyof UserQuotas;
           const currentVal = currentQuotas[key];
           const expectedVal = expectedQuotas[key];
-          if (typeof currentVal === 'number' && typeof expectedVal === 'number' && currentVal !== expectedVal) {
+          if (
+            typeof currentVal === "number" &&
+            typeof expectedVal === "number" &&
+            currentVal !== expectedVal
+          ) {
             // Preserve structural typing while updating without any
-            (updatedQuotas as Record<keyof UserQuotas, UserQuotas[keyof UserQuotas]>)[key] = expectedVal as UserQuotas[keyof UserQuotas];
+            (
+              updatedQuotas as Record<
+                keyof UserQuotas,
+                UserQuotas[keyof UserQuotas]
+              >
+            )[key] = expectedVal as UserQuotas[keyof UserQuotas];
             quotasNeedUpdate = true;
           }
         });
@@ -214,7 +223,10 @@ export async function POST(): Promise<NextResponse> {
         updates.cleanupVersion = "2025-07-25-tier-consistency";
         updates.isTestUser = isTestUser;
 
-        batch.update(userRef, updates as FirebaseFirestore.UpdateData<Record<string, unknown>>);
+        batch.update(
+          userRef,
+          updates as FirebaseFirestore.UpdateData<Record<string, unknown>>
+        );
         batchCount++;
 
         // Commit batch every 500 operations to avoid limits

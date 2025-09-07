@@ -55,7 +55,7 @@ const { NeuroSEOSuite } = await import("../../../lib/neuroseo");
 **Issue**: Firestore composite indexes missing for dashboard queries
 
 ```
-Error: The query requires an index. Create it here: 
+Error: The query requires an index. Create it here:
 https://console.firebase.google.com/v1/r/project/rankpilot-h3jpc/firestore/indexes
 ```
 
@@ -125,7 +125,7 @@ current: { node: 'v22.17.0', npm: '9.8.1' }
 #### 🛠️ **Recommendations**
 
 1. **Consolidate button components** into single source of truth
-2. **Remove temporary/stub components** 
+2. **Remove temporary/stub components**
 3. **Audit navigation hierarchy** for consistency
 4. **Add missing focus states** for keyboard navigation
 
@@ -178,7 +178,7 @@ free → starter → agency → enterprise
    ```bash
    # Navigate to Firebase Console
    https://console.firebase.google.com/project/rankpilot-h3jpc/firestore/indexes
-   
+
    # Create composite index for neuroSeoAnalyses:
    # Fields: status, userId, completedAt, __name__
    ```
@@ -425,4 +425,4 @@ firebase deploy --project rankpilot-h3jpc
 
 ---
 
-*This audit report provides a comprehensive analysis of the RankPilot production readiness. Follow the immediate action plan to resolve critical issues and proceed with production deployment.*
+_This audit report provides a comprehensive analysis of the RankPilot production readiness. Follow the immediate action plan to resolve critical issues and proceed with production deployment._

@@ -4,15 +4,18 @@ Authoritative reference for UX flow, feature gating, and success criteria across
 
 ## Canonical flow
 
-1) Homepage → Free trial
+1. Homepage → Free trial
+
 - Marketing page with NeuroSEO suite (NeuralCrawler, SemanticMap, TrustBlock, AI Visibility, RewriteGen).
 - 7‑day trial signup (email/social), plan selection, onboarding wizard, domain connect.
 
-2) Settings hub
+2. Settings hub
+
 - Profile/company details, language & i18n, theme/accessibility, notifications, data‑sharing.
 - Team admins: roles/permissions and invites (Team Settings).
 
-3) NeuroSEO Suite
+3. NeuroSEO Suite
+
 - NeuralCrawler: crawl + render pages; list recent crawls with status and pages scanned.
 - SemanticMap: topic clustering and adoption analysis; gauge for adoption progress.
 - Adoption KPIs: aggregated adoption scores across crawler + semantic analyses.
@@ -20,34 +23,40 @@ Authoritative reference for UX flow, feature gating, and success criteria across
 - AI Visibility Engine: simulate AI‑powered search exposure; input query + audience.
 - RewriteGen: heading/paragraph rewrites based on semantic density + tone.
 
-4) Competitive Intelligence
+4. Competitive Intelligence
+
 - Link View Analyzer: backlink profile and DA distribution for any URL.
 - SERP View: simulated SERP for a given keyword.
 - Competitor Analysis: compare keyword rankings vs multiple competitors; highlight gaps/opportunities.
 
-5) Marketing Automation & Content Generation
+5. Marketing Automation & Content Generation
+
 - Marketing Dashboard: email engagement, leads, social velocity; quick actions (Launch Campaign, Optimize Funnel, Generate Content).
 - Social Presence: connect social accounts; unified metrics and recent campaigns.
 - Email Campaigns: sequence templates, delivery/engagement metrics.
 - Lead Generation: capture, enrichment, qualification.
 - Outbound Outreach: multi‑step sequences, copy optimization, import leads, AI reply analysis.
 
-6) Sales Pipeline & Deals
+6. Sales Pipeline & Deals
+
 - Sales Dashboard: pipeline value, stage velocity, forecast accuracy; add opportunities, stage audits, AI forecasts.
 - Deals: list by stage; reforecast and stalled‑deal analyses.
 - Outreach workbench: launch sequences, optimize copy, import leads, analyze replies.
 
-7) Finance & Billing
+7. Finance & Billing
+
 - Finance Dashboard: MRR trend, invoice aging; record invoices, update runway, generate reports.
 - Invoices: billing history, download CSVs, receipts, aging digests.
 - Revenue Analytics: ARR, churn, LTV; churn cohorts, anomaly detection.
 - Accounting: P&L, balance sheet, reconciliation tasks.
 
-8) Collaboration
+8. Collaboration
+
 - Team Chat: real‑time channels, search, voice/video options.
 - Team Settings/Projects/Reports: manage members and collaborative assets. If unavailable, show a gated EmptyState instead of loading forever.
 
-9) Review & Iterate
+9. Review & Iterate
+
 - Inspect dashboards; export CSV/JSON/PDF via `export_formats`.
 - Automation recipes to repeat audits, rewrites, campaigns.
 

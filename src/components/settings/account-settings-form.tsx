@@ -58,11 +58,13 @@ export default function AccountSettingsForm({
   profile,
 }: AccountSettingsFormProps): JSX.Element {
   const { toast } = useToast();
-  const logger = getLogger('settings.account');
+  const logger = getLogger("settings.account");
   const [isLoading, setIsLoading] = useState(false);
   const [cooldown, setCooldown] = useState(false);
   const prof: UserProfile | undefined = asUserProfile(profile);
-  const isPasswordProvider = Array.isArray(user.providerData) && user.providerData.some((p) => p?.providerId === 'password');
+  const isPasswordProvider =
+    Array.isArray(user.providerData) &&
+    user.providerData.some((p) => p?.providerId === "password");
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(formSchema),
@@ -86,7 +88,7 @@ export default function AccountSettingsForm({
           throw new Error("Email managed by your sign-in provider.");
         }
         await updateEmail(user, values.email);
-        logger.audit('account.email.updated', { userId: user.uid });
+        logger.audit("account.email.updated", { userId: user.uid });
       }
 
       // Update profile in Firestore
@@ -99,7 +101,7 @@ export default function AccountSettingsForm({
         email: values.email,
         updatedAt: serverTimestamp(),
       });
-      logger.audit('account.profile.updated', { userId: user.uid });
+      logger.audit("account.profile.updated", { userId: user.uid });
 
       toast({
         title: "Account Updated",
@@ -107,15 +109,15 @@ export default function AccountSettingsForm({
       });
     } catch (error: unknown) {
       const { message, code } = getErrorInfo(error);
-      const msg = code === 'auth/requires-recent-login'
-        ? 'Please re-authenticate to change your email.'
-        : message;
-      logger.error('account.update.error', { userId: user.uid, error: msg });
+      const msg =
+        code === "auth/requires-recent-login"
+          ? "Please re-authenticate to change your email."
+          : message;
+      logger.error("account.update.error", { userId: user.uid, error: msg });
       toast({
         variant: "destructive",
         title: "Update Failed",
-        description:
-          msg || "Could not update your account. Please try again.",
+        description: msg || "Could not update your account. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -164,9 +166,15 @@ export default function AccountSettingsForm({
                   </FormControl>
                   <FormDescription>
                     {isPasswordProvider ? (
-                      <>This email is used for login and important notifications.</>
+                      <>
+                        This email is used for login and important
+                        notifications.
+                      </>
                     ) : (
-                      <>Your email is managed by your sign-in provider. Update it in your provider settings.</>
+                      <>
+                        Your email is managed by your sign-in provider. Update
+                        it in your provider settings.
+                      </>
                     )}
                   </FormDescription>
                   <FormMessage />

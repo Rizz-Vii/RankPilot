@@ -1,33 +1,54 @@
-import { enforceProvenance } from '@/lib/middleware/provenance';
-import { NextResponse } from 'next/server';
+import { enforceProvenance } from "@/lib/middleware/provenance";
+import { NextResponse } from "next/server";
 
 // API route to persist (dev) agent enable preference via cookie.
 // Only active in development; in production it returns 403 unless env override present.
 export async function POST() {
-    if (process.env.NODE_ENV !== 'development' && !process.env.RANKPILOT_AGENTS_DEV_OVERRIDE) {
-        return NextResponse.json(
-            enforceProvenance({ ok: false, error: 'forbidden' }, { path: 'agents/enable', note: 'forbidden' }),
-            { status: 403 }
-        );
+  if (
+    process.env.NODE_ENV !== "development" &&
+    !process.env.RANKPILOT_AGENTS_DEV_OVERRIDE
+  ) {
+    return NextResponse.json(
+      enforceProvenance(
+        { ok: false, error: "forbidden" },
+        { path: "agents/enable", note: "forbidden" }
+      ),
+      { status: 403 }
+    );
+  }
+  return NextResponse.json(
+    enforceProvenance({ ok: true }, { path: "agents/enable", note: "enabled" }),
+    {
+      headers: {
+        // cookie rp_agents=1 enables client-side detection in adapter (expires quick: 1 day)
+        "Set-Cookie": `rp_agents=1; Path=/; Max-Age=86400; SameSite=Lax`,
+      },
     }
-    return NextResponse.json(enforceProvenance({ ok: true }, { path: 'agents/enable', note: 'enabled' }), {
-        headers: {
-            // cookie rp_agents=1 enables client-side detection in adapter (expires quick: 1 day)
-            'Set-Cookie': `rp_agents=1; Path=/; Max-Age=86400; SameSite=Lax`,
-        }
-    });
+  );
 }
 
 export async function DELETE() {
-    if (process.env.NODE_ENV !== 'development' && !process.env.RANKPILOT_AGENTS_DEV_OVERRIDE) {
-        return NextResponse.json(
-            enforceProvenance({ ok: false, error: 'forbidden' }, { path: 'agents/enable', note: 'forbidden' }),
-            { status: 403 }
-        );
+  if (
+    process.env.NODE_ENV !== "development" &&
+    !process.env.RANKPILOT_AGENTS_DEV_OVERRIDE
+  ) {
+    return NextResponse.json(
+      enforceProvenance(
+        { ok: false, error: "forbidden" },
+        { path: "agents/enable", note: "forbidden" }
+      ),
+      { status: 403 }
+    );
+  }
+  return NextResponse.json(
+    enforceProvenance(
+      { ok: true },
+      { path: "agents/enable", note: "disabled" }
+    ),
+    {
+      headers: {
+        "Set-Cookie": `rp_agents=; Path=/; Max-Age=0; SameSite=Lax`,
+      },
     }
-    return NextResponse.json(enforceProvenance({ ok: true }, { path: 'agents/enable', note: 'disabled' }), {
-        headers: {
-            'Set-Cookie': `rp_agents=; Path=/; Max-Age=0; SameSite=Lax`,
-        }
-    });
+  );
 }

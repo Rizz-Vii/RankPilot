@@ -7,8 +7,8 @@
     "target": "ES2022",
     "lib": ["es2022", "dom"],
     "baseUrl": ".",
-  "outDir": "lib",
-  "sourceMap": true
+    "outDir": "lib",
+    "sourceMap": true
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts"],

@@ -1,1 +1,3 @@
-export function useAuthGuard() { return { shouldRender: true }; }
+export function useAuthGuard() {
+  return { shouldRender: true };
+}

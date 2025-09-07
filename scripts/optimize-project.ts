@@ -16,7 +16,7 @@ import { promises as fs } from "fs";
 import { join, resolve } from "path";
 import { promisify } from "util";
 
- // Ensure these imports are recognized as used by linters
+// Ensure these imports are recognized as used by linters
 // Some imported symbols may be flagged by @typescript-eslint/no-unused-vars in certain configs.
 // Explicitly reference them to satisfy the rule without changing runtime behavior.
 void fs;
@@ -208,7 +208,9 @@ class ProjectOptimizer {
               }
             }
           } catch (error: unknown) {
-            console.log(`⚠ Could not access src/lib directory: ${String(error)}`);
+            console.log(
+              `⚠ Could not access src/lib directory: ${String(error)}`
+            );
           }
         },
       },

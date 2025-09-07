@@ -48,14 +48,17 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     setFeedback((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
-  const addFeedback = useCallback((message: string, type: Feedback["type"]) => {
-    const id = Math.random().toString(36).slice(2, 11);
-    setFeedback((prev) => [...prev, { message, type, id }]);
-    // Auto-remove feedback after 5 seconds (fire-and-forget)
-    window.setTimeout(() => {
-      removeFeedback(id);
-    }, 5000);
-  }, [removeFeedback]);
+  const addFeedback = useCallback(
+    (message: string, type: Feedback["type"]) => {
+      const id = Math.random().toString(36).slice(2, 11);
+      setFeedback((prev) => [...prev, { message, type, id }]);
+      // Auto-remove feedback after 5 seconds (fire-and-forget)
+      window.setTimeout(() => {
+        removeFeedback(id);
+      }, 5000);
+    },
+    [removeFeedback]
+  );
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({

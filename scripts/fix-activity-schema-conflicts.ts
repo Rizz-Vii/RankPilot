@@ -4,12 +4,7 @@
  * and analytics/profile queries
  */
 
-import {
-  collection,
-  getDocs,
-  doc,
-  writeBatch,
-} from "firebase/firestore";
+import { collection, getDocs, doc, writeBatch } from "firebase/firestore";
 import { db } from "../src/lib/firebase";
 
 // Activity Type Mapping: Current Storage → Standard Analytics Names

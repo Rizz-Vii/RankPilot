@@ -39,7 +39,7 @@ test.describe("Visual Regression Tests", () => {
           .animate-pulse {
             visibility: hidden !important;
           }
-        `
+        `,
       });
 
       await expect(page).toHaveScreenshot("login-page.png", {
@@ -69,7 +69,7 @@ test.describe("Visual Regression Tests", () => {
           .animate-pulse {
             visibility: hidden !important;
           }
-        `
+        `,
       });
 
       await expect(page).toHaveScreenshot("mobile-homepage.png", {
@@ -99,14 +99,18 @@ test.describe("Visual Regression Tests", () => {
       // Test mobile navigation
       await page.setViewportSize({ width: 375, height: 667 });
 
-      const mobileNav = page.locator('[data-testid="mobile-menu"]')
+      const mobileNav = page
+        .locator('[data-testid="mobile-menu"]')
         .or(page.locator('button[aria-label*="menu"]'))
         .first();
 
       if (await mobileNav.isVisible()) {
-        await expect(mobileNav).toHaveScreenshot("mobile-navigation-button.png", {
-          animations: "disabled",
-        });
+        await expect(mobileNav).toHaveScreenshot(
+          "mobile-navigation-button.png",
+          {
+            animations: "disabled",
+          }
+        );
       }
 
       console.log("✅ Navigation visual tests completed");
@@ -125,7 +129,10 @@ test.describe("Visual Regression Tests", () => {
       ];
 
       for (const viewport of viewports) {
-        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        await page.setViewportSize({
+          width: viewport.width,
+          height: viewport.height,
+        });
         await page.goto("/", { waitUntil: "domcontentloaded" });
         await page.waitForTimeout(800);
 
@@ -137,7 +144,7 @@ test.describe("Visual Regression Tests", () => {
             .animate-pulse {
               visibility: hidden !important;
             }
-          `
+          `,
         });
 
         await expect(page).toHaveScreenshot(`homepage-${viewport.name}.png`, {
@@ -145,7 +152,9 @@ test.describe("Visual Regression Tests", () => {
           animations: "disabled",
         });
 
-        console.log(`✅ ${viewport.name} (${viewport.width}x${viewport.height}) visual test completed`);
+        console.log(
+          `✅ ${viewport.name} (${viewport.width}x${viewport.height}) visual test completed`
+        );
       }
     });
   });

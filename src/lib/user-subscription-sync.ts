@@ -113,9 +113,9 @@ async function createUserSubscription(
     displayName: extractDisplayName(setup.email),
     ...(setup.testMode &&
       !isFreeTier && {
-      stripeCustomerId: `cus_test_${userId.slice(0, 8)}`,
-      stripeSubscriptionId: `sub_test_${userId.slice(0, 8)}`,
-    }),
+        stripeCustomerId: `cus_test_${userId.slice(0, 8)}`,
+        stripeSubscriptionId: `sub_test_${userId.slice(0, 8)}`,
+      }),
     ...(setup.monthsPrepaid > 0 && {
       nextBillingDate: nextBillingDate,
       currentPeriodEnd: nextBillingDate,

@@ -2,7 +2,7 @@ name: Validation Gate (Central)
 
 on:
   push:
-    branches: [ master, main, workshop/** ]
+    branches: [master, main, workshop/**]
   pull_request:
 
 concurrency:

@@ -33,7 +33,7 @@ export interface FeatureConfig {
   description: string;
 }
 
-import { DEFAULT_ENTITLEMENTS } from './access/entitlements';
+import { DEFAULT_ENTITLEMENTS } from "./access/entitlements";
 
 // =============================================================================
 // TIER HIERARCHY & LIMITS
@@ -185,7 +185,8 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
   // audit:ignore-orphan category=export rationale="Capability-level gate consumed indirectly; replaces export_pdf & export_csv aliases"
   export_formats: {
     requiredTier: "starter",
-    description: "Unified export formats capability (PDF/CSV/Excel based on tier)",
+    description:
+      "Unified export formats capability (PDF/CSV/Excel based on tier)",
   },
 
   // Integration Hub (admin-only demo)
@@ -194,7 +195,6 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
     requiredTier: "enterprise",
     description: "Enterprise Integration Hub (demo)",
   },
-
 
   // audit:ignore-orphan category=roadmap rationale="To be merged into analytics surfaces"
   ai_insights: {
@@ -347,7 +347,6 @@ export const FEATURE_ALIASES: Record<string, string> = {
   ai_insights: "advanced_analytics",
 };
 
-
 // =============================================================================
 // ACCESS CONTROL FUNCTIONS
 // =============================================================================
@@ -456,7 +455,9 @@ export function getRemainingUsage(
 export function getAccessibleFeatures(userAccess: UserAccess): string[] {
   const entitlements = DEFAULT_ENTITLEMENTS as Record<string, unknown>;
   return Object.keys(FEATURE_ACCESS)
-    .filter((feature) => !Object.prototype.hasOwnProperty.call(entitlements, feature))
+    .filter(
+      (feature) => !Object.prototype.hasOwnProperty.call(entitlements, feature)
+    )
     .filter((feature) => canAccessFeature(userAccess, feature));
 }
 
@@ -468,7 +469,8 @@ export function getFeaturesForTier(tier: SubscriptionTier): string[] {
   return Object.entries(FEATURE_ACCESS)
     .filter(([feature, config]) => {
       // Exclude entitlement keys from feature-tier listing to avoid legacy warnings
-      if (Object.prototype.hasOwnProperty.call(entitlements, feature)) return false;
+      if (Object.prototype.hasOwnProperty.call(entitlements, feature))
+        return false;
       if (config.requiresAdmin) return false;
       if (!config.requiredTier) return true;
       return canAccessTier(tier, config.requiredTier);
@@ -507,13 +509,18 @@ export function getUpgradeMessage(
 /**
  * Validate user access object
  */
-export function validateUserAccess(userAccess: unknown): userAccess is UserAccess {
-  if (!userAccess || typeof userAccess !== 'object') return false;
+export function validateUserAccess(
+  userAccess: unknown
+): userAccess is UserAccess {
+  if (!userAccess || typeof userAccess !== "object") return false;
   const ua = userAccess as Partial<UserAccess>;
   return (
-    typeof ua.role === 'string' && ["admin", "user"].includes(ua.role) &&
-    typeof ua.tier === 'string' && (TIER_HIERARCHY as string[]).includes(ua.tier) &&
-    typeof ua.status === 'string' && ["active", "canceled", "past_due", "free"].includes(ua.status)
+    typeof ua.role === "string" &&
+    ["admin", "user"].includes(ua.role) &&
+    typeof ua.tier === "string" &&
+    (TIER_HIERARCHY as string[]).includes(ua.tier) &&
+    typeof ua.status === "string" &&
+    ["active", "canceled", "past_due", "free"].includes(ua.status)
   );
 }
 
@@ -528,7 +535,8 @@ interface PartialDbUser {
 }
 
 export function normalizeUserAccess(dbUser: unknown): UserAccess {
-  const u = (dbUser && typeof dbUser === 'object') ? dbUser as PartialDbUser : {};
+  const u =
+    dbUser && typeof dbUser === "object" ? (dbUser as PartialDbUser) : {};
   // Handle admin tier mapping - admin tier gets enterprise features with admin role
   let mappedTier: SubscriptionTier;
   let mappedRole: UserRole;
@@ -538,16 +546,33 @@ export function normalizeUserAccess(dbUser: unknown): UserAccess {
     mappedRole = "admin"; // But with admin role for special permissions
   } else {
     // Determine if role is mistakenly holding a tier value
-    const roleLooksLikeTier = typeof u.role === 'string' && (TIER_HIERARCHY as string[]).includes(u.role);
+    const roleLooksLikeTier =
+      typeof u.role === "string" &&
+      (TIER_HIERARCHY as string[]).includes(u.role);
     // Enforce role domain; auto-correct invalid values (but don't warn if it's a known tier alias)
-    if (u.role !== undefined && u.role !== "admin" && u.role !== "user" && !roleLooksLikeTier) {
-      console.warn(`normalizeUserAccess: invalid role '${u.role}', coercing to 'user'`);
+    if (
+      u.role !== undefined &&
+      u.role !== "admin" &&
+      u.role !== "user" &&
+      !roleLooksLikeTier
+    ) {
+      console.warn(
+        `normalizeUserAccess: invalid role '${u.role}', coercing to 'user'`
+      );
     }
     mappedRole = (u.role === "admin" ? "admin" : "user") as UserRole;
     // Resolve tier from subscriptionTier -> tier -> role (if tier-like) -> free
     const rawTier = ((): string | undefined => {
-      if (typeof u.subscriptionTier === 'string' && (TIER_HIERARCHY as string[]).includes(u.subscriptionTier)) return u.subscriptionTier;
-      if (typeof u.tier === 'string' && (TIER_HIERARCHY as string[]).includes(u.tier)) return u.tier;
+      if (
+        typeof u.subscriptionTier === "string" &&
+        (TIER_HIERARCHY as string[]).includes(u.subscriptionTier)
+      )
+        return u.subscriptionTier;
+      if (
+        typeof u.tier === "string" &&
+        (TIER_HIERARCHY as string[]).includes(u.tier)
+      )
+        return u.tier;
       if (roleLooksLikeTier) return u.role as string;
       return undefined;
     })();
@@ -561,18 +586,27 @@ export function normalizeUserAccess(dbUser: unknown): UserAccess {
   return {
     role: mappedRole,
     tier: mappedTier,
-    status: (u.subscriptionStatus === 'active' || u.subscriptionStatus === 'canceled' || u.subscriptionStatus === 'past_due' || u.subscriptionStatus === 'free'
-      ? u.subscriptionStatus
-      : 'free'),
+    status:
+      u.subscriptionStatus === "active" ||
+      u.subscriptionStatus === "canceled" ||
+      u.subscriptionStatus === "past_due" ||
+      u.subscriptionStatus === "free"
+        ? u.subscriptionStatus
+        : "free",
   };
 }
 
 // =============================================================================
 // TEAM-01: Effective tier (team plan overrides individual if higher)
 // =============================================================================
-export function computeEffectiveTier(userTier: SubscriptionTier, teamPlanTier?: SubscriptionTier): SubscriptionTier {
+export function computeEffectiveTier(
+  userTier: SubscriptionTier,
+  teamPlanTier?: SubscriptionTier
+): SubscriptionTier {
   if (!teamPlanTier) return userTier;
-  return TIER_LEVELS[teamPlanTier] > TIER_LEVELS[userTier] ? teamPlanTier : userTier;
+  return TIER_LEVELS[teamPlanTier] > TIER_LEVELS[userTier]
+    ? teamPlanTier
+    : userTier;
 }
 
 // =============================================================================
@@ -582,7 +616,9 @@ export function canAccessEntitlement(
   userAccess: UserAccess,
   entitlementKey: string
 ): boolean {
-  const ent = (DEFAULT_ENTITLEMENTS as Record<string, { minimumTier: SubscriptionTier }>)[entitlementKey];
+  const ent = (
+    DEFAULT_ENTITLEMENTS as Record<string, { minimumTier: SubscriptionTier }>
+  )[entitlementKey];
   if (!ent) return false;
   return canAccessTier(userAccess.tier, ent.minimumTier as SubscriptionTier);
 }
@@ -592,7 +628,10 @@ export function canAccessEntitlement(
 // Prefer explicit canAccessFeature / canAccessEntitlement in new code; this
 // suppresses entitlement warnings by routing directly when a key matches.
 // =============================================================================
-export function canAccessCapability(userAccess: UserAccess, key: string): boolean {
+export function canAccessCapability(
+  userAccess: UserAccess,
+  key: string
+): boolean {
   if (Object.prototype.hasOwnProperty.call(DEFAULT_ENTITLEMENTS, key)) {
     return canAccessEntitlement(userAccess, key);
   }

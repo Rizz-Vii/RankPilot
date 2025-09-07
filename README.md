@@ -36,15 +36,15 @@ Requirements: Node.js 20+, npm
 
 1. Install dependencies
 
- ```bash
- npm install
- ```
+```bash
+npm install
+```
 
 2. Start the web app (stable dev server)
 
- ```bash
- npm run dev-no-turbopack
- ```
+```bash
+npm run dev-no-turbopack
+```
 
 Optional:
 
@@ -124,7 +124,7 @@ Environment overrides (budget):
 PB_BRAIN_BUDGET_TOKEN=5000 PB_BRAIN_BUDGET_TIME=30 npm run brain:auto
 ```
 
-Artifacts written under `artifacts/brain/` (run-*.json, remediation-*.json, plan-*.txt). Sensitive fields redacted.
+Artifacts written under `artifacts/brain/` (run-_.json, remediation-_.json, plan-\*.txt). Sensitive fields redacted.
 
 ### Watch Loop Telemetry & Maintenance (Aug 2025 update)
 
@@ -180,37 +180,39 @@ Server route to verify Google reCAPTCHA tokens.
 - Upstream error: status passthrough with { error: 'captcha_provider_error' }
 
 Environment variables:
+
 - RECAPTCHA_SECRET_KEY (server-only, required in non-test envs)
 - NEXT_PUBLIC_RECAPTCHA_SITE_KEY (client, optional; controls whether UI renders captcha)
 
 Notes:
+
 - In test/CI, Register form skips captcha checks and component tests use a mock.
 - Structured responses include provenance for observability.
 
 Key environment variables:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `TWO_AGENT_MAX_TASKS` | 5 | Max tasks per planning cycle (pre-adaptive). |
-| `TWO_AGENT_AUTOSCALE` | enabled | If not `0`, may expand batch when mixed task types & low drift. |
-| `TWO_AGENT_AUTOSCALE_CAP` | 10 | Upper cap after autoscale adjustments. |
-| `TWO_AGENT_DRIFT_THRESHOLD` | 1.5 | Planner drift threshold to halve adaptive batch. |
-| `TWO_AGENT_PLANNER` | unset | If `1`, attempts OpenAI planner ordering (needs `OPENAI_API_KEY`). |
-| `TWO_AGENT_PLANNER_MODEL` | gpt-4o-mini | Model for ordering when planner enabled. |
-| `TWO_AGENT_FILE_CHURN_MINUTES` | 10 | Skip files modified within this many minutes. |
-| `TWO_AGENT_LINT_REPORT_PATH` | artifacts/eslint-report.json | Override ESLint report path. |
-| `TWO_AGENT_TSC_DIAGNOSTICS_PATH` | artifacts/tsc-diagnostics.json | Override TypeScript diagnostics path. |
-| `TWO_AGENT_TSC_BATCH` | unset | If `1`, enable diagnostic batching heuristics. |
-| `TWO_AGENT_TSC_BATCH_MIN` | 4 | Min per-rule tasks to trigger batching. |
-| `TWO_AGENT_TSC_BATCH_MAX_FILES` | 3 | Max files per batched TS task. |
-| `TWO_AGENT_PLANNER_RETRIES` | 2 | Planner retry attempts. |
-| `TWO_AGENT_PLANNER_BACKOFF_MS` | 300 | Base backoff (exponential) between planner retries. |
-| `TWO_AGENT_AUTORUN_ITERS` | 3 | Max autorun iterations. |
-| `TWO_AGENT_AUTORUN_MINUTES` | 10 | Time budget (minutes) for autorun loop. |
-| `TWO_AGENT_FORCE_REPLAN_AFTER` | 2 | Consecutive zero-plan cycles before forcing replan. |
-| `TWO_AGENT_FORCE_REPLAN_QUEUE_MIN` | 5 | Pending threshold to trigger forced replan. |
-| `TWO_AGENT_FORCE_REPLAN` | enabled | Set to `0` to disable force-replan hash clearing entirely. |
-| `TWO_AGENT_SKIP_PREGEN` | unset | If `1`, skip regenerating lint/ts diagnostics each cycle. |
+| Variable                           | Default                        | Description                                                        |
+| ---------------------------------- | ------------------------------ | ------------------------------------------------------------------ |
+| `TWO_AGENT_MAX_TASKS`              | 5                              | Max tasks per planning cycle (pre-adaptive).                       |
+| `TWO_AGENT_AUTOSCALE`              | enabled                        | If not `0`, may expand batch when mixed task types & low drift.    |
+| `TWO_AGENT_AUTOSCALE_CAP`          | 10                             | Upper cap after autoscale adjustments.                             |
+| `TWO_AGENT_DRIFT_THRESHOLD`        | 1.5                            | Planner drift threshold to halve adaptive batch.                   |
+| `TWO_AGENT_PLANNER`                | unset                          | If `1`, attempts OpenAI planner ordering (needs `OPENAI_API_KEY`). |
+| `TWO_AGENT_PLANNER_MODEL`          | gpt-4o-mini                    | Model for ordering when planner enabled.                           |
+| `TWO_AGENT_FILE_CHURN_MINUTES`     | 10                             | Skip files modified within this many minutes.                      |
+| `TWO_AGENT_LINT_REPORT_PATH`       | artifacts/eslint-report.json   | Override ESLint report path.                                       |
+| `TWO_AGENT_TSC_DIAGNOSTICS_PATH`   | artifacts/tsc-diagnostics.json | Override TypeScript diagnostics path.                              |
+| `TWO_AGENT_TSC_BATCH`              | unset                          | If `1`, enable diagnostic batching heuristics.                     |
+| `TWO_AGENT_TSC_BATCH_MIN`          | 4                              | Min per-rule tasks to trigger batching.                            |
+| `TWO_AGENT_TSC_BATCH_MAX_FILES`    | 3                              | Max files per batched TS task.                                     |
+| `TWO_AGENT_PLANNER_RETRIES`        | 2                              | Planner retry attempts.                                            |
+| `TWO_AGENT_PLANNER_BACKOFF_MS`     | 300                            | Base backoff (exponential) between planner retries.                |
+| `TWO_AGENT_AUTORUN_ITERS`          | 3                              | Max autorun iterations.                                            |
+| `TWO_AGENT_AUTORUN_MINUTES`        | 10                             | Time budget (minutes) for autorun loop.                            |
+| `TWO_AGENT_FORCE_REPLAN_AFTER`     | 2                              | Consecutive zero-plan cycles before forcing replan.                |
+| `TWO_AGENT_FORCE_REPLAN_QUEUE_MIN` | 5                              | Pending threshold to trigger forced replan.                        |
+| `TWO_AGENT_FORCE_REPLAN`           | enabled                        | Set to `0` to disable force-replan hash clearing entirely.         |
+| `TWO_AGENT_SKIP_PREGEN`            | unset                          | If `1`, skip regenerating lint/ts diagnostics each cycle.          |
 
 Forced re-planning: When `planned=0` for `TWO_AGENT_FORCE_REPLAN_AFTER` consecutive iterations and the queue still has at least `TWO_AGENT_FORCE_REPLAN_QUEUE_MIN` pending tasks, the autorun loop deletes the previous hash ( `.codex/tmp/two-agent-last-hash.txt` ) so the next iteration can re-consider tasks. Disable this behavior entirely by setting `TWO_AGENT_FORCE_REPLAN=0`.
 
@@ -221,7 +223,3 @@ Example:
 ```
 OPENAI_API_KEY=sk-... TWO_AGENT_AUTORUN_ITERS=6 TWO_AGENT_MAX_TASKS=7 npm run brain:two-agent:auto
 ```
-
-
-
-

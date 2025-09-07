@@ -24,15 +24,23 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("free");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Verify page loads correctly
       await expect(page.locator("h1")).toContainText("Keyword Tool");
-      await expect(page.locator("text=Discover high-performing keywords")).toBeVisible();
+      await expect(
+        page.locator("text=Discover high-performing keywords")
+      ).toBeVisible();
 
       // Verify form is present
       await expect(page.locator("form")).toBeVisible();
-      await expect(page.locator("button", { hasText: "Generate Keywords" })).toBeVisible();
+      await expect(
+        page.locator("button", { hasText: "Generate Keywords" })
+      ).toBeVisible();
 
       console.log("✅ Keyword Tool page loads correctly");
     });
@@ -42,7 +50,11 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Check for breadcrumb
       await expect(page.locator("nav")).toBeVisible();
@@ -58,7 +70,11 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
       // Test free tier access
       await orchestrator.userManager.loginAs("free");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
       await expect(page.locator("h1")).toContainText("Keyword Tool");
 
       // Test starter tier access
@@ -76,16 +92,24 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("free");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Check for seed keyword input
-      await expect(page.locator("input[placeholder*='Enter your seed keyword']")).toBeVisible();
+      await expect(
+        page.locator("input[placeholder*='Enter your seed keyword']")
+      ).toBeVisible();
 
       // Check for location/language selectors
       await expect(page.locator("select, [role=combobox]")).toBeVisible();
 
       // Check for submit button
-      await expect(page.locator("button", { hasText: "Generate Keywords" })).toBeVisible();
+      await expect(
+        page.locator("button", { hasText: "Generate Keywords" })
+      ).toBeVisible();
 
       console.log("✅ Form fields display correctly");
     });
@@ -95,10 +119,16 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Try to submit without seed keyword
-      const submitButton = page.locator("button", { hasText: "Generate Keywords" });
+      const submitButton = page.locator("button", {
+        hasText: "Generate Keywords",
+      });
       await submitButton.click();
 
       // Should show validation error
@@ -112,13 +142,22 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Fill valid seed keyword
-      await page.fill("input[placeholder*='Enter your seed keyword']", "digital marketing");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "digital marketing"
+      );
 
       // Verify input is accepted
-      await expect(page.locator("input[placeholder*='Enter your seed keyword']")).toHaveValue("digital marketing");
+      await expect(
+        page.locator("input[placeholder*='Enter your seed keyword']")
+      ).toHaveValue("digital marketing");
 
       console.log("✅ Valid keyword input works correctly");
     });
@@ -128,41 +167,65 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Fill seed keyword
-      await page.fill("input[placeholder*='Enter your seed keyword']", "SEO optimization");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "SEO optimization"
+      );
 
       // Submit form
-      const submitButton = page.locator("button", { hasText: "Generate Keywords" });
+      const submitButton = page.locator("button", {
+        hasText: "Generate Keywords",
+      });
       await submitButton.click();
 
       // Should show loading state
       await expect(page.locator("text=Generating")).toBeVisible();
 
       // Wait for results (extended timeout for AI processing)
-      await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
+      await expect(page.locator("text=Keyword Suggestions")).toBeVisible({
+        timeout: 30000,
+      });
 
       console.log("✅ Form submission works correctly");
     });
   });
 
   test.describe("Keyword Results", () => {
-    test("displays keyword suggestions after successful submission", async ({ page }) => {
+    test("displays keyword suggestions after successful submission", async ({
+      page,
+    }) => {
       console.log("📈 Testing keyword results display...");
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Submit keyword research
-      await page.fill("input[placeholder*='Enter your seed keyword']", "content marketing");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "content marketing"
+      );
 
-      const submitButton = page.locator("button", { hasText: "Generate Keywords" });
+      const submitButton = page.locator("button", {
+        hasText: "Generate Keywords",
+      });
       await submitButton.click();
 
       // Wait for results
-      await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
+      await expect(page.locator("text=Keyword Suggestions")).toBeVisible({
+        timeout: 30000,
+      });
 
       // Check for results table
       await expect(page.locator("table")).toBeVisible();
@@ -179,13 +242,22 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Submit keyword research
-      await page.fill("input[placeholder*='Enter your seed keyword']", "local SEO");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "local SEO"
+      );
 
       await page.locator("button", { hasText: "Generate Keywords" }).click();
-      await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
+      await expect(page.locator("text=Keyword Suggestions")).toBeVisible({
+        timeout: 30000,
+      });
 
       // Check for keyword metrics
       await expect(page.locator("text=/\\d+/")).toBeVisible(); // Numbers for search volume
@@ -204,13 +276,22 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Submit analysis
-      await page.fill("input[placeholder*='Enter your seed keyword']", "organic search");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "organic search"
+      );
 
       await page.locator("button", { hasText: "Generate Keywords" }).click();
-      await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
+      await expect(page.locator("text=Keyword Suggestions")).toBeVisible({
+        timeout: 30000,
+      });
 
       // Check for difficulty indicators
       await expect(page.locator("text=Difficulty")).toBeVisible();
@@ -228,13 +309,22 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Submit analysis
-      await page.fill("input[placeholder*='Enter your seed keyword']", "keyword research");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "keyword research"
+      );
 
       await page.locator("button", { hasText: "Generate Keywords" }).click();
-      await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
+      await expect(page.locator("text=Keyword Suggestions")).toBeVisible({
+        timeout: 30000,
+      });
 
       // Check for search volume column and data
       await expect(page.locator("text=Search Volume")).toBeVisible();
@@ -257,21 +347,31 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Verify responsive layout
       await expect(page.locator("h1")).toBeVisible();
-      await expect(page.locator("input[placeholder*='Enter your seed keyword']")).toBeVisible();
+      await expect(
+        page.locator("input[placeholder*='Enter your seed keyword']")
+      ).toBeVisible();
 
       // Check form is accessible on mobile
-      const keywordInput = page.locator("input[placeholder*='Enter your seed keyword']");
+      const keywordInput = page.locator(
+        "input[placeholder*='Enter your seed keyword']"
+      );
       const box = await keywordInput.boundingBox();
       if (box) {
         expect(box.width).toBeLessThan(400); // Should fit mobile width
       }
 
       // Test touch-friendly buttons
-      const submitButton = page.locator("button", { hasText: "Generate Keywords" });
+      const submitButton = page.locator("button", {
+        hasText: "Generate Keywords",
+      });
       const buttonBox = await submitButton.boundingBox();
       if (buttonBox) {
         expect(buttonBox.height).toBeGreaterThanOrEqual(44); // WCAG touch target
@@ -287,7 +387,11 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Mobile layout should use MobileToolLayout component
       // Verify cards stack properly
@@ -296,7 +400,10 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
       expect(cardCount).toBeGreaterThan(0);
 
       // Submit to test mobile results layout
-      await page.fill("input[placeholder*='Enter your seed keyword']", "mobile SEO");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "mobile SEO"
+      );
       await page.locator("button", { hasText: "Generate Keywords" }).click();
 
       console.log("✅ Mobile tool layout works correctly");
@@ -311,15 +418,20 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
       await page.goto("/keyword-tool", { waitUntil: "networkidle" });
 
       // Submit to get results
-      await page.fill("input[placeholder*='Enter your seed keyword']", "responsive design");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "responsive design"
+      );
       await page.locator("button", { hasText: "Generate Keywords" }).click();
 
       try {
-        await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
+        await expect(page.locator("text=Keyword Suggestions")).toBeVisible({
+          timeout: 30000,
+        });
 
         // Check if table is responsive or converts to cards on mobile
         const table = page.locator("table");
-        if (await table.count() > 0) {
+        if ((await table.count()) > 0) {
           const tableBox = await table.boundingBox();
           if (tableBox) {
             expect(tableBox.width).toBeLessThan(400); // Should fit mobile
@@ -341,7 +453,10 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
       await page.goto("/keyword-tool", { waitUntil: "networkidle" });
 
       // Submit form to trigger potential API error
-      await page.fill("input[placeholder*='Enter your seed keyword']", "test keyword");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "test keyword"
+      );
 
       await page.locator("button", { hasText: "Generate Keywords" }).click();
 
@@ -351,12 +466,14 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Wait for either success or error state
       try {
-        await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
+        await expect(page.locator("text=Keyword Suggestions")).toBeVisible({
+          timeout: 30000,
+        });
         console.log("✅ Keyword research completed successfully");
       } catch {
         // Check for error message
         const errorMessage = page.locator("text=/Error|Failed|Unable/");
-        if (await errorMessage.count() > 0) {
+        if ((await errorMessage.count()) > 0) {
           await expect(errorMessage.first()).toBeVisible();
           console.log("✅ Error handled gracefully");
         }
@@ -370,12 +487,21 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Submit form
-      await page.fill("input[placeholder*='Enter your seed keyword']", "loading test keywords");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "loading test keywords"
+      );
 
-      const submitButton = page.locator("button", { hasText: "Generate Keywords" });
+      const submitButton = page.locator("button", {
+        hasText: "Generate Keywords",
+      });
       await submitButton.click();
 
       // Should show loading immediately
@@ -392,14 +518,24 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Test very long keyword input
-      const longKeyword = "this is a very long keyword phrase that might exceed reasonable limits for keyword research tools and should be validated appropriately";
+      const longKeyword =
+        "this is a very long keyword phrase that might exceed reasonable limits for keyword research tools and should be validated appropriately";
 
-      await page.fill("input[placeholder*='Enter your seed keyword']", longKeyword);
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        longKeyword
+      );
 
-      const submitButton = page.locator("button", { hasText: "Generate Keywords" });
+      const submitButton = page.locator("button", {
+        hasText: "Generate Keywords",
+      });
       await submitButton.click();
 
       // Should either process or show validation error
@@ -407,7 +543,9 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
         await expect(page.locator("text=Generating")).toBeVisible();
         console.log("✅ Long input accepted");
       } catch {
-        await expect(page.locator("text=/too long|limit|maximum/")).toBeVisible();
+        await expect(
+          page.locator("text=/too long|limit|maximum/")
+        ).toBeVisible();
         console.log("✅ Input length validation works");
       }
 
@@ -423,7 +561,9 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       const startTime = Date.now();
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      try { await page.waitForLoadState('networkidle', { timeout: 2000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 2000 });
+      } catch {}
       const loadTime = Date.now() - startTime;
 
       // Should load within 5 seconds
@@ -441,17 +581,26 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      await page.locator('[data-testid="keyword-tool-root"], main, #keyword-tool').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('[data-testid="keyword-tool-root"], main, #keyword-tool')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Submit keyword research
-      await page.fill("input[placeholder*='Enter your seed keyword']", "performance test");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "performance test"
+      );
 
       const startTime = Date.now();
       await page.locator("button", { hasText: "Generate Keywords" }).click();
 
       // Track processing time
       try {
-        await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
+        await expect(page.locator("text=Keyword Suggestions")).toBeVisible({
+          timeout: 30000,
+        });
         const processingTime = Date.now() - startTime;
         console.log(`✅ Keywords processed in ${processingTime}ms`);
 
@@ -471,17 +620,26 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      try { await page.waitForLoadState('networkidle', { timeout: 2000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 2000 });
+      } catch {}
 
       // Submit keyword research
-      await page.fill("input[placeholder*='Enter your seed keyword']", "Firebase integration test");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "Firebase integration test"
+      );
 
       await page.locator("button", { hasText: "Generate Keywords" }).click();
 
       // Wait for completion
       try {
-        await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
-        console.log("✅ Keyword research completed and likely saved to Firebase");
+        await expect(page.locator("text=Keyword Suggestions")).toBeVisible({
+          timeout: 30000,
+        });
+        console.log(
+          "✅ Keyword research completed and likely saved to Firebase"
+        );
       } catch {
         console.log("ℹ️ Research in progress or error occurred");
       }
@@ -500,7 +658,10 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
       const form = page.locator("form");
       await expect(form).toBeVisible();
 
-      await page.fill("input[placeholder*='Enter your seed keyword']", "free tier test");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "free tier test"
+      );
       await page.locator("button", { hasText: "Generate Keywords" }).click();
 
       // Should allow research for free tier
@@ -514,10 +675,15 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/keyword-tool", { waitUntil: "domcontentloaded" });
-      try { await page.waitForLoadState('networkidle', { timeout: 2000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 2000 });
+      } catch {}
 
       // Submit to test AI flow integration
-      await page.fill("input[placeholder*='Enter your seed keyword']", "AI keyword suggestions");
+      await page.fill(
+        "input[placeholder*='Enter your seed keyword']",
+        "AI keyword suggestions"
+      );
 
       await page.locator("button", { hasText: "Generate Keywords" }).click();
 
@@ -525,7 +691,9 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
       await expect(page.locator("text=Generating")).toBeVisible();
 
       try {
-        await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
+        await expect(page.locator("text=Keyword Suggestions")).toBeVisible({
+          timeout: 30000,
+        });
         console.log("✅ AI flows integration successful");
       } catch {
         console.log("ℹ️ AI processing in progress or error occurred");

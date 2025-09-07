@@ -1,16 +1,22 @@
-import { adminDb } from '@/lib/firebase-admin';
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { adminDb } from "@/lib/firebase-admin";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function POST(_req: NextRequest): Promise<NextResponse> {
-  if (process.env.NODE_ENV === 'production' || process.env.CI_PRODUCTION === '1') {
-    return NextResponse.json({ ok: false, reason: 'disabled' }, { status: 404 });
+  if (
+    process.env.NODE_ENV === "production" ||
+    process.env.CI_PRODUCTION === "1"
+  ) {
+    return NextResponse.json(
+      { ok: false, reason: "disabled" },
+      { status: 404 }
+    );
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  const ref = adminDb.collection('kpiDaily').doc(today);
+  const ref = adminDb.collection("kpiDaily").doc(today);
 
   try {
     await adminDb.runTransaction(async (tx) => {
@@ -44,7 +50,7 @@ export async function POST(_req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ ok: true, seeded: true, date: today });
   } catch (e: unknown) {
-    const message = (e as Error)?.message ?? 'seed_failed';
+    const message = (e as Error)?.message ?? "seed_failed";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

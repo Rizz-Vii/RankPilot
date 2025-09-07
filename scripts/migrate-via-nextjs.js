@@ -13,15 +13,15 @@
       }tup
  */
 
-const { execSync } = require('child_process');
-const path = require('path');
+const { execSync } = require("child_process");
+const path = require("path");
 
 async function runDatabaseMigration() {
-    console.log("🚨 EXECUTING DATABASE MIGRATION VIA NEXT.JS...\n");
+  console.log("🚨 EXECUTING DATABASE MIGRATION VIA NEXT.JS...\n");
 
-    try {
-        // Create temporary API route for migration
-        const migrationRoute = `
+  try {
+    // Create temporary API route for migration
+    const migrationRoute = `
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, writeBatch } from 'firebase/firestore';
@@ -92,64 +92,73 @@ export async function POST() {
   }
 }`;
 
-        // Write the temporary API route
-        const fs = require('fs');
-        const apiPath = path.join(process.cwd(), 'src', 'app', 'api', 'migrate-db', 'route.ts');
-        const apiDir = path.dirname(apiPath);
+    // Write the temporary API route
+    const fs = require("fs");
+    const apiPath = path.join(
+      process.cwd(),
+      "src",
+      "app",
+      "api",
+      "migrate-db",
+      "route.ts"
+    );
+    const apiDir = path.dirname(apiPath);
 
-        if (!fs.existsSync(apiDir)) {
-            fs.mkdirSync(apiDir, { recursive: true });
-        }
-
-        fs.writeFileSync(apiPath, migrationRoute);
-        console.log("📝 Created temporary migration API route");
-
-      // Start Next.js dev server in background
-        console.log("🚀 Starting Next.js server...");
-      void execSync('npm run dev -- --port 3001 &', {
-            cwd: process.cwd(),
-            stdio: 'pipe'
-        });
-
-        // Wait for server to start
-        await new Promise(resolve => setTimeout(resolve, 10000));
-
-        // Execute migration via API call
-        console.log("📡 Executing migration...");
-        const response = await fetch('http://localhost:3001/api/migrate-db', {
-            method: 'POST',
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            console.log("✅ MIGRATION COMPLETED SUCCESSFULLY!");
-            console.log(`  Total activities scanned: ${result.totalScanned}`);
-            console.log(`  Activities updated: ${result.updated}`);
-
-            if (result.migrations.length > 0) {
-                console.log("🔄 Migration details:");
-                result.migrations.forEach(m => {
-                    console.log(`  ${m.currentType} → ${m.newType}`);
-                });
-            }
-        } else {
-            throw new Error(result.error);
-        }
-
-        // Cleanup
-        fs.unlinkSync(apiPath);
-        console.log("🧹 Cleaned up temporary files");
-
-    } catch (error) {
-      const msg = error && typeof error === 'object' && 'message' in error ? error.message : String(error);
-      console.error("❌ Migration failed:", msg);
-        process.exit(1);
+    if (!fs.existsSync(apiDir)) {
+      fs.mkdirSync(apiDir, { recursive: true });
     }
+
+    fs.writeFileSync(apiPath, migrationRoute);
+    console.log("📝 Created temporary migration API route");
+
+    // Start Next.js dev server in background
+    console.log("🚀 Starting Next.js server...");
+    void execSync("npm run dev -- --port 3001 &", {
+      cwd: process.cwd(),
+      stdio: "pipe",
+    });
+
+    // Wait for server to start
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+
+    // Execute migration via API call
+    console.log("📡 Executing migration...");
+    const response = await fetch("http://localhost:3001/api/migrate-db", {
+      method: "POST",
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      console.log("✅ MIGRATION COMPLETED SUCCESSFULLY!");
+      console.log(`  Total activities scanned: ${result.totalScanned}`);
+      console.log(`  Activities updated: ${result.updated}`);
+
+      if (result.migrations.length > 0) {
+        console.log("🔄 Migration details:");
+        result.migrations.forEach((m) => {
+          console.log(`  ${m.currentType} → ${m.newType}`);
+        });
+      }
+    } else {
+      throw new Error(result.error);
+    }
+
+    // Cleanup
+    fs.unlinkSync(apiPath);
+    console.log("🧹 Cleaned up temporary files");
+  } catch (error) {
+    const msg =
+      error && typeof error === "object" && "message" in error
+        ? error.message
+        : String(error);
+    console.error("❌ Migration failed:", msg);
+    process.exit(1);
+  }
 }
 
 if (require.main === module) {
-    runDatabaseMigration();
+  runDatabaseMigration();
 }
 
 module.exports = { runDatabaseMigration };

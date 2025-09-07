@@ -58,18 +58,26 @@ const caseStudies = [
     solution:
       "Implemented NeuroSEO™ Suite with NeuralCrawler™ for technical optimization and RewriteGen™ for product descriptions.",
     results: [
-  { metric: "Organic Traffic", value: "+340%", color: "text-success-foreground" },
+      {
+        metric: "Organic Traffic",
+        value: "+340%",
+        color: "text-success-foreground",
+      },
       {
         metric: "Revenue from Organic",
         value: "+280%",
-  color: "text-primary",
+        color: "text-primary",
       },
       {
         metric: "Keyword Rankings (Top 3)",
         value: "+150%",
-  color: "text-accent-foreground",
+        color: "text-accent-foreground",
       },
-  { metric: "Conversion Rate", value: "+45%", color: "text-warning-foreground" },
+      {
+        metric: "Conversion Rate",
+        value: "+45%",
+        color: "text-warning-foreground",
+      },
     ],
     tags: ["E-commerce", "Technical SEO", "AI Content"],
     featured: true,
@@ -84,13 +92,21 @@ const caseStudies = [
     solution:
       "Used AI Visibility Engine and SemanticMap™ to identify content gaps and create authority-building content strategy.",
     results: [
-  { metric: "Brand Visibility", value: "+450%", color: "text-success-foreground" },
-  { metric: "Lead Generation", value: "+220%", color: "text-primary" },
-  { metric: "Featured Snippets", value: "+180%", color: "text-accent-foreground" },
+      {
+        metric: "Brand Visibility",
+        value: "+450%",
+        color: "text-success-foreground",
+      },
+      { metric: "Lead Generation", value: "+220%", color: "text-primary" },
+      {
+        metric: "Featured Snippets",
+        value: "+180%",
+        color: "text-accent-foreground",
+      },
       {
         metric: "Domain Authority",
         value: "+35 points",
-  color: "text-warning-foreground",
+        color: "text-warning-foreground",
       },
     ],
     tags: ["SaaS", "Content Strategy", "Brand Building"],
@@ -109,18 +125,18 @@ const caseStudies = [
       {
         metric: "Local Search Visibility",
         value: "+520%",
-  color: "text-success-foreground",
+        color: "text-success-foreground",
       },
-  { metric: "Patient Inquiries", value: "+180%", color: "text-primary" },
+      { metric: "Patient Inquiries", value: "+180%", color: "text-primary" },
       {
         metric: "Google My Business Views",
         value: "+300%",
-  color: "text-accent-foreground",
+        color: "text-accent-foreground",
       },
       {
         metric: "Appointment Bookings",
         value: "+150%",
-  color: "text-warning-foreground",
+        color: "text-warning-foreground",
       },
     ],
     tags: ["Healthcare", "Local SEO", "E-A-T"],
@@ -136,17 +152,21 @@ const caseStudies = [
     solution:
       "Deployed full NeuroSEO™ Suite for comprehensive content scaling and technical optimization across 500+ pages.",
     results: [
-  { metric: "Organic Sessions", value: "+290%", color: "text-success-foreground" },
-  { metric: "Content Performance", value: "+400%", color: "text-primary" },
+      {
+        metric: "Organic Sessions",
+        value: "+290%",
+        color: "text-success-foreground",
+      },
+      { metric: "Content Performance", value: "+400%", color: "text-primary" },
       {
         metric: "Sales Qualified Leads",
         value: "+160%",
-  color: "text-accent-foreground",
+        color: "text-accent-foreground",
       },
       {
         metric: "Content Production Speed",
         value: "+600%",
-  color: "text-warning-foreground",
+        color: "text-warning-foreground",
       },
     ],
     tags: ["Enterprise", "Content Scaling", "B2B"],
@@ -216,7 +236,11 @@ export default function CaseStudiesPage() {
       </motion.section>
 
       {/* Success Metrics */}
-      <section className="pb-16 px-4" role="region" aria-labelledby="success-metrics-heading">
+      <section
+        className="pb-16 px-4"
+        role="region"
+        aria-labelledby="success-metrics-heading"
+      >
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-4 gap-6">
             {successMetrics.map((metric, index) => (
@@ -231,7 +255,9 @@ export default function CaseStudiesPage() {
                 <Card className="text-center hover:shadow-lg transition-shadow duration-300">
                   <CardContent className="p-6">
                     {index === 0 && (
-                      <h2 id="success-metrics-heading" className="sr-only">Success Metrics</h2>
+                      <h2 id="success-metrics-heading" className="sr-only">
+                        Success Metrics
+                      </h2>
                     )}
                     <div className="w-12 h-12 bg-primary/10 rounded-lg mx-auto mb-4 flex items-center justify-center">
                       <metric.icon className="h-6 w-6 text-primary" />
@@ -254,7 +280,11 @@ export default function CaseStudiesPage() {
       </section>
 
       {/* Case Studies */}
-      <section className="pb-16 px-4" role="region" aria-labelledby="success-stories-heading">
+      <section
+        className="pb-16 px-4"
+        role="region"
+        aria-labelledby="success-stories-heading"
+      >
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
@@ -264,7 +294,10 @@ export default function CaseStudiesPage() {
             custom={5}
             className="text-center mb-12"
           >
-            <h2 id="success-stories-heading" className="text-3xl font-bold text-foreground mb-4">
+            <h2
+              id="success-stories-heading"
+              className="text-3xl font-bold text-foreground mb-4"
+            >
               Success Stories
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -316,7 +349,11 @@ export default function CaseStudiesPage() {
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {study.tags.map((tag, tagIndex) => (
-                            <Badge key={tagIndex} variant="secondary" className="bg-primary/10 text-primary">
+                            <Badge
+                              key={tagIndex}
+                              variant="secondary"
+                              className="bg-primary/10 text-primary"
+                            >
                               {tag}
                             </Badge>
                           ))}
@@ -368,7 +405,11 @@ export default function CaseStudiesPage() {
                     </div>
 
                     <div className="mt-6 pt-6 border-t border-border">
-                      <Button variant="outline" className="w-full group" aria-label={`Read full case study: ${study.title}`}>
+                      <Button
+                        variant="outline"
+                        className="w-full group"
+                        aria-label={`Read full case study: ${study.title}`}
+                      >
                         Read Full Case Study
                         <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                       </Button>
@@ -391,12 +432,16 @@ export default function CaseStudiesPage() {
         custom={10}
       >
         <div className="max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-r from-primary to-accent text-white" role="region" aria-labelledby="cta-success-heading">
+          <Card
+            className="bg-gradient-to-r from-primary to-accent text-white"
+            role="region"
+            aria-labelledby="cta-success-heading"
+          >
             <CardContent className="p-12 text-center">
               <h2 id="cta-success-heading" className="text-3xl font-bold mb-6">
                 Ready to Write Your Success Story?
               </h2>
-        <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
+              <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
                 Join hundreds of businesses already achieving unprecedented
                 growth with RankPilot's AI-powered SEO platform.
               </p>

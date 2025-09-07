@@ -6,17 +6,15 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 export default function CheckoutCancelPage() {
-
-
   return (
-  <div className="min-h-screen bg-gradient-to-br from-destructive/10 via-background to-warning/10 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-destructive/10 via-background to-warning/10 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="max-w-2xl w-full"
       >
-  <Card className="border-destructive/30 bg-white/80 backdrop-blur">
+        <Card className="border-destructive/30 bg-white/80 backdrop-blur">
           <CardHeader className="text-center pb-6">
             <motion.div
               initial={{ scale: 0 }}
@@ -131,4 +129,3 @@ export default function CheckoutCancelPage() {
     </div>
   );
 }
-

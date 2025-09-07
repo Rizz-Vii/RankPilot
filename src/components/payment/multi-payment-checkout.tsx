@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
 import { conversionFunnel, trackPaymentEvents } from "@/lib/analytics";
 import { functions } from "@/lib/firebase";
-import { asVoidHandler } from '@/lib/react/handlers';
+import { asVoidHandler } from "@/lib/react/handlers";
 import getStripe, { STRIPE_PLANS } from "@/lib/stripe";
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { httpsCallable } from "firebase/functions";
@@ -40,7 +40,7 @@ const paymentMethods = [
     id: "paypal",
     name: "PayPal",
     description: "Pay with PayPal account",
-  icon: <span className="text-primary font-bold text-sm">PayPal</span>,
+    icon: <span className="text-primary font-bold text-sm">PayPal</span>,
     supported: ["paypal", "pay_later"],
     popular: true,
   },
@@ -61,7 +61,7 @@ export default function MultiPaymentCheckout(): JSX.Element {
   const plan = STRIPE_PLANS[planId as keyof typeof STRIPE_PLANS];
   const price =
     plan && typeof plan.price === "object"
-      ? plan.price[billingInterval as "monthly" | "yearly"] ?? 0
+      ? (plan.price[billingInterval as "monthly" | "yearly"] ?? 0)
       : 0;
   const savings =
     billingInterval === "yearly" && plan && typeof plan.price === "object"
@@ -86,7 +86,7 @@ export default function MultiPaymentCheckout(): JSX.Element {
         method: "stripe",
       });
 
-  const result = await createCheckoutSession({
+      const result = await createCheckoutSession({
         userId: user?.uid,
         priceId: plan?.priceId[billingInterval as "monthly" | "yearly"],
         plan: planId,
@@ -94,9 +94,12 @@ export default function MultiPaymentCheckout(): JSX.Element {
         successUrl: `${window.location.origin}/payment-success?plan=${planId}&amount=${price}&cycle=${billingInterval}`,
         cancelUrl: `${window.location.origin}/pricing`,
       });
-  const data = result.data as unknown;
-  const sessionId = (data && typeof data === 'object' && 'sessionId' in data) ? (data as { sessionId: string }).sessionId : undefined;
-  if (!sessionId) throw new Error('Missing sessionId');
+      const data = result.data as unknown;
+      const sessionId =
+        data && typeof data === "object" && "sessionId" in data
+          ? (data as { sessionId: string }).sessionId
+          : undefined;
+      if (!sessionId) throw new Error("Missing sessionId");
 
       const stripe = await getStripe();
       if (!stripe) throw new Error("Stripe not loaded");
@@ -116,7 +119,7 @@ export default function MultiPaymentCheckout(): JSX.Element {
         toast.error("Payment failed. Please try again.");
       }
     } catch (error: unknown) {
-      const msg = (error as { message?: string })?.message || 'Unknown error';
+      const msg = (error as { message?: string })?.message || "Unknown error";
       console.error("Checkout error:", error);
       trackPaymentEvents.abandonCheckout(
         planId,
@@ -129,13 +132,22 @@ export default function MultiPaymentCheckout(): JSX.Element {
     }
   };
 
-  interface PayPalApproveData { orderID?: string }
-  const handlePayPalApprove = async (data: PayPalApproveData): Promise<void> => {
+  interface PayPalApproveData {
+    orderID?: string;
+  }
+  const handlePayPalApprove = async (
+    data: PayPalApproveData
+  ): Promise<void> => {
     try {
       setIsProcessing(true);
 
       // Track successful PayPal payment
-      trackPaymentEvents.purchase(planId, price || 0, data?.orderID || 'unknown', "USD");
+      trackPaymentEvents.purchase(
+        planId,
+        price || 0,
+        data?.orderID || "unknown",
+        "USD"
+      );
       conversionFunnel.step(5, "payment_completed", planId, {
         method: "paypal",
       });
@@ -215,9 +227,7 @@ export default function MultiPaymentCheckout(): JSX.Element {
                     <div className="text-right">
                       <p className="font-semibold">${price}</p>
                       {billingInterval === "yearly" && savings > 0 && (
-                        <p className="text-sm text-success">
-                          Save ${savings}
-                        </p>
+                        <p className="text-sm text-success">Save ${savings}</p>
                       )}
                     </div>
                   </div>
@@ -395,25 +405,43 @@ export default function MultiPaymentCheckout(): JSX.Element {
                                 amount: price,
                               });
                               const data = result.data as unknown;
-                              const orderID = (data && typeof data === 'object' && 'orderID' in data) ? (data as { orderID: string }).orderID : undefined;
-                              if (!orderID) throw new Error('Missing orderID');
+                              const orderID =
+                                data &&
+                                typeof data === "object" &&
+                                "orderID" in data
+                                  ? (data as { orderID: string }).orderID
+                                  : undefined;
+                              if (!orderID) throw new Error("Missing orderID");
                               return orderID;
                             } catch (error: unknown) {
-                              const msg = (error as { message?: string })?.message || 'PayPal order creation failed';
-                              console.error("PayPal order creation error:", error);
+                              const msg =
+                                (error as { message?: string })?.message ||
+                                "PayPal order creation failed";
+                              console.error(
+                                "PayPal order creation error:",
+                                error
+                              );
                               toast.error("Failed to create PayPal order");
                               throw new Error(msg);
                             }
                           }}
                           onApprove={async (data: unknown) => {
-                            await handlePayPalApprove(data as PayPalApproveData);
+                            await handlePayPalApprove(
+                              data as PayPalApproveData
+                            );
                             return;
                           }}
                           onError={(error: unknown) => {
-                            const msg = (error as { message?: string })?.message || 'PayPal error';
+                            const msg =
+                              (error as { message?: string })?.message ||
+                              "PayPal error";
                             console.error("PayPal error:", error);
                             toast.error("PayPal payment failed");
-                            trackPaymentEvents.abandonCheckout(planId, 'paypal_error', msg);
+                            trackPaymentEvents.abandonCheckout(
+                              planId,
+                              "paypal_error",
+                              msg
+                            );
                           }}
                           disabled={isProcessing}
                         />

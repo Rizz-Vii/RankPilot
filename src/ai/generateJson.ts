@@ -54,7 +54,9 @@ export async function generateJson(
       console.log("Falling back to secondary provider (OpenAI)...");
     } else {
       // Re-throw other errors
-      throw new Error(`Primary AI provider failed: ${err.message || 'unknown error'}`);
+      throw new Error(
+        `Primary AI provider failed: ${err.message || "unknown error"}`
+      );
     }
   }
   // --- Attempt 2: Fallback Provider (OpenAI) ---
@@ -83,10 +85,7 @@ export async function generateJson(
     return outputSchema.parse(jsonOutput);
   } catch (fallbackError: unknown) {
     const ferr = fallbackError as { message?: string };
-    console.error(
-      "Fallback AI provider (OpenAI) also failed:",
-      ferr.message
-    );
+    console.error("Fallback AI provider (OpenAI) also failed:", ferr.message);
     throw new Error(
       "All available AI providers failed. Please try again later."
     );

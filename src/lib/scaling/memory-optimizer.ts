@@ -11,38 +11,38 @@ interface MemoryConfig {
 }
 
 export const memoryConfigurations: Record<string, MemoryConfig> = {
-  'neuroseo-light': {
-    component: 'NeuroSEO Light Analysis',
+  "neuroseo-light": {
+    component: "NeuroSEO Light Analysis",
     memoryMB: 1024,
     timeoutSeconds: 60,
     maxInstances: 20,
   },
-  'neuroseo-standard': {
-    component: 'NeuroSEO Standard Analysis',
+  "neuroseo-standard": {
+    component: "NeuroSEO Standard Analysis",
     memoryMB: 2048,
     timeoutSeconds: 180,
     maxInstances: 10,
   },
-  'neuroseo-comprehensive': {
-    component: 'NeuroSEO Comprehensive Analysis',
+  "neuroseo-comprehensive": {
+    component: "NeuroSEO Comprehensive Analysis",
     memoryMB: 4096,
     timeoutSeconds: 300,
     maxInstances: 5,
   },
-  'neuroseo-enterprise': {
-    component: 'NeuroSEO Enterprise Analysis',
+  "neuroseo-enterprise": {
+    component: "NeuroSEO Enterprise Analysis",
     memoryMB: 8192,
     timeoutSeconds: 600,
     maxInstances: 3,
   },
-  'keyword-batch': {
-    component: 'Bulk Keyword Processing',
+  "keyword-batch": {
+    component: "Bulk Keyword Processing",
     memoryMB: 2048,
     timeoutSeconds: 240,
     maxInstances: 8,
   },
-  'competitor-analysis': {
-    component: 'Competitor Analysis Engine',
+  "competitor-analysis": {
+    component: "Competitor Analysis Engine",
     memoryMB: 3072,
     timeoutSeconds: 420,
     maxInstances: 6,
@@ -55,24 +55,31 @@ export class MemoryOptimizer {
    */
   static getOptimalConfig(
     _analysisType: string,
-    userTier: 'free' | 'starter' | 'agency' | 'enterprise' | 'admin',
-    complexity: 'low' | 'medium' | 'high' = 'medium'
+    userTier: "free" | "starter" | "agency" | "enterprise" | "admin",
+    complexity: "low" | "medium" | "high" = "medium"
   ): MemoryConfig {
-    let baseConfig = memoryConfigurations['neuroseo-standard'];
+    let baseConfig = memoryConfigurations["neuroseo-standard"];
 
     // Adjust based on analysis complexity
-    if (complexity === 'high' || userTier === 'enterprise' || userTier === 'admin') {
-      baseConfig = memoryConfigurations['neuroseo-comprehensive'];
-    } else if (complexity === 'low' && (userTier === 'free' || userTier === 'starter')) {
-      baseConfig = memoryConfigurations['neuroseo-light'];
+    if (
+      complexity === "high" ||
+      userTier === "enterprise" ||
+      userTier === "admin"
+    ) {
+      baseConfig = memoryConfigurations["neuroseo-comprehensive"];
+    } else if (
+      complexity === "low" &&
+      (userTier === "free" || userTier === "starter")
+    ) {
+      baseConfig = memoryConfigurations["neuroseo-light"];
     }
 
     // Enterprise users get dedicated high-memory instances
-    if (userTier === 'enterprise' || userTier === 'admin') {
+    if (userTier === "enterprise" || userTier === "admin") {
       return {
         ...baseConfig,
-        memoryMB: memoryConfigurations['neuroseo-enterprise'].memoryMB,
-        maxInstances: memoryConfigurations['neuroseo-enterprise'].maxInstances,
+        memoryMB: memoryConfigurations["neuroseo-enterprise"].memoryMB,
+        maxInstances: memoryConfigurations["neuroseo-enterprise"].maxInstances,
       };
     }
 
@@ -104,15 +111,15 @@ export class MemoryOptimizer {
     const suggestions = [];
 
     if (metrics.peakMemoryMB > metrics.averageMemoryMB * 2) {
-      suggestions.push('Consider memory optimization - peak usage is high');
+      suggestions.push("Consider memory optimization - peak usage is high");
     }
 
     if (metrics.executionTimeMs > 60000 && metrics.peakMemoryMB < 2048) {
-      suggestions.push('Increase memory allocation for better performance');
+      suggestions.push("Increase memory allocation for better performance");
     }
 
     if (metrics.errorRate > 0.05) {
-      suggestions.push('High error rate detected - check memory limits');
+      suggestions.push("High error rate detected - check memory limits");
     }
 
     return {
@@ -150,10 +157,11 @@ export class MemoryOptimizer {
     errorRate: number;
   }): MemoryConfig {
     const targetMemory = Math.ceil(metrics.peakMemoryMB * 1.2); // 20% buffer
-    
-    const configKey = Object.keys(memoryConfigurations).find(key => 
-      memoryConfigurations[key].memoryMB >= targetMemory
-    ) || 'neuroseo-enterprise';
+
+    const configKey =
+      Object.keys(memoryConfigurations).find(
+        (key) => memoryConfigurations[key].memoryMB >= targetMemory
+      ) || "neuroseo-enterprise";
 
     return memoryConfigurations[configKey];
   }

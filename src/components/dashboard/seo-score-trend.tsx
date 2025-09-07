@@ -1,10 +1,20 @@
 "use client";
 // Dev safeguard against accidental circular dynamic import loops.
-import { registerModuleLoad } from '@/lib/dev/module-load-guard';
-registerModuleLoad(undefined, { label: 'seo-score-trend' });
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { registerModuleLoad } from "@/lib/dev/module-load-guard";
+registerModuleLoad(undefined, { label: "seo-score-trend" });
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { ChartConfig } from "@/components/ui/chart";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { Activity } from "lucide-react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
@@ -12,24 +22,63 @@ const lineChartConfig = {
   score: { label: "Score", color: "hsl(var(--chart-1))" },
 } satisfies ChartConfig;
 
-export interface SeoScoreTrendProps { data: Array<{ date: string; score: number }>; rangeLabel?: string }
+export interface SeoScoreTrendProps {
+  data: Array<{ date: string; score: number }>;
+  rangeLabel?: string;
+}
 
 export function SeoScoreTrend({ data, rangeLabel }: SeoScoreTrendProps) {
   return (
     <Card data-testid="chart-seo-score-trend">
       <CardHeader>
-        <CardTitle className="font-headline flex items-center gap-2">Overall SEO Score {rangeLabel && <span className="text-xs font-normal text-muted-foreground">({rangeLabel})</span>}</CardTitle>
-        <CardDescription>Your site's SEO score trend from NeuroSEO™ analyses. <span className="text-muted-foreground/70">Higher = stronger search health.</span></CardDescription>
+        <CardTitle className="font-headline flex items-center gap-2">
+          Overall SEO Score{" "}
+          {rangeLabel && (
+            <span className="text-xs font-normal text-muted-foreground">
+              ({rangeLabel})
+            </span>
+          )}
+        </CardTitle>
+        <CardDescription>
+          Your site's SEO score trend from NeuroSEO™ analyses.{" "}
+          <span className="text-muted-foreground/70">
+            Higher = stronger search health.
+          </span>
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {data && data.length > 0 ? (
           <ChartContainer config={lineChartConfig} className="h-[200px] w-full">
-            <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+            <LineChart
+              data={data}
+              margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+            >
               <CartesianGrid vertical={false} />
-              <XAxis dataKey="date" tickFormatter={(val) => new Date(val).toLocaleDateString("en-US", { month: "short", day: "numeric" })} tickLine={false} axisLine={false} />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(val) =>
+                  new Date(val).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })
+                }
+                tickLine={false}
+                axisLine={false}
+              />
               <YAxis domain={[0, 100]} tickLine={false} axisLine={false} />
-              <ChartTooltip cursor={false} content={(props) => <ChartTooltipContent {...props} indicator="line" />} />
-              <Line type="monotone" dataKey="score" stroke="var(--color-score)" strokeWidth={2} dot />
+              <ChartTooltip
+                cursor={false}
+                content={(props) => (
+                  <ChartTooltipContent {...props} indicator="line" />
+                )}
+              />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke="var(--color-score)"
+                strokeWidth={2}
+                dot
+              />
             </LineChart>
           </ChartContainer>
         ) : (
@@ -37,7 +86,9 @@ export function SeoScoreTrend({ data, rangeLabel }: SeoScoreTrendProps) {
             <div className="text-center">
               <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>No SEO analysis data yet</p>
-              <p className="text-sm">Run your first NeuroSEO™ analysis to see trends</p>
+              <p className="text-sm">
+                Run your first NeuroSEO™ analysis to see trends
+              </p>
             </div>
           </div>
         )}

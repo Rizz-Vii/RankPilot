@@ -15,7 +15,7 @@ getDomainAuthorityData @ dashboard-data.service.ts:294
 await in getDomainAuthorityData
 getUserDashboardData @ dashboard-data.service.ts:94
 useRealTimeDashboardData.useEffect @ use-dashboard-data.ts:30
-react_stack_bottom_frame @ react-dom-client.development.js:23637
+react*stack_bottom_frame @ react-dom-client.development.js:23637
 runWithFiberInDEV @ react-dom-client.development.js:872
 commitHookEffectListMount @ react-dom-client.development.js:12295
 commitHookPassiveMountEffects @ react-dom-client.development.js:12416
@@ -1198,7 +1198,7 @@ sw.js:43 [SW] Caching static assets
 pwa-manager.ts:69 [PWA] Service Worker registered successfully
 dashboard-data.service.ts:79 📊 Fetching dashboard data for user: 57SUBHuvaWS3LgX1Q8lSlXstxmB2
 page.tsx:360 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -1232,7 +1232,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-page.tsx:360 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+page.tsx:360 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -1280,14 +1280,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -1299,10 +1299,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -1371,14 +1371,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -1390,10 +1390,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -1462,14 +1462,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -1481,10 +1481,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -1541,7 +1541,7 @@ Nc @ webchannel_blob_es2018.js:69
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
 use-dashboard-data.ts:45 📊 Dashboard data updated in real-time
 page.tsx:360 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -1575,7 +1575,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-page.tsx:360 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+page.tsx:360 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -1621,7 +1621,7 @@ Promise.then
 hot-reloader-app.tsx:278 [Fast Refresh] rebuilding
 7Fetch failed loading: GET "<URL>".
 report-hmr-latency.ts:26 [Fast Refresh] done in 1867ms
-CustomerChatBot.tsx:122  POST http://localhost:3000/api/chat/customer 503 (Service Unavailable)
+CustomerChatBot.tsx:122 POST http://localhost:3000/api/chat/customer 503 (Service Unavailable)
 sendMessage @ CustomerChatBot.tsx:122
 await in sendMessage
 executeDispatch @ react-dom-client.development.js:16921
@@ -1634,7 +1634,7 @@ dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276
 <button>
 exports.jsxDEV @ react-jsx-dev-runtime.development.js:345
-_c @ button.tsx:46
+\_c @ button.tsx:46
 react_stack_bottom_frame @ react-dom-client.development.js:23552
 renderWithHooksAgain @ react-dom-client.development.js:6863
 renderWithHooks @ react-dom-client.development.js:6775
@@ -1693,7 +1693,7 @@ dispatchEventForPluginEventSystem @ react-dom-client.development.js:17125
 dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276Understand this error
 CustomerChatBot.tsx:161 Chat error: Error: Chat service unavailable
-    at sendMessage (CustomerChatBot.tsx:137:23)
+at sendMessage (CustomerChatBot.tsx:137:23)
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 sendMessage @ CustomerChatBot.tsx:161
@@ -1708,7 +1708,7 @@ dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276
 <button>
 exports.jsxDEV @ react-jsx-dev-runtime.development.js:345
-_c @ button.tsx:46
+\_c @ button.tsx:46
 react_stack_bottom_frame @ react-dom-client.development.js:23552
 renderWithHooksAgain @ react-dom-client.development.js:6863
 renderWithHooks @ react-dom-client.development.js:6775
@@ -3092,21 +3092,21 @@ performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 app-nav.tsx:42 Navigation clicked: Team Chat /team/chat
 hot-reloader-app.tsx:278 [Fast Refresh] rebuilding
 report-hmr-latency.ts:26 [Fast Refresh] done in 1881ms
-hook.js:608 [2025-07-31T10:52:55.009Z]  @firebase/firestore: Firestore (11.10.0): Uncaught Error in snapshot listener: FirebaseError: [code=permission-denied]: Missing or insufficient permissions.
+hook.js:608 [2025-07-31T10:52:55.009Z] @firebase/firestore: Firestore (11.10.0): Uncaught Error in snapshot listener: FirebaseError: [code=permission-denied]: Missing or insufficient permissions.
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 defaultLogHandler @ index.esm2017.js:78
 error @ index.esm2017.js:161
-__PRIVATE_logError @ index.esm2017.js:121
+**PRIVATE_logError @ index.esm2017.js:121
 error @ index.esm2017.js:17819
 onError @ index.esm2017.js:16209
-__PRIVATE_eventManagerOnWatchError @ index.esm2017.js:16156
-__PRIVATE_removeAndCleanupTarget @ index.esm2017.js:17125
+**PRIVATE_eventManagerOnWatchError @ index.esm2017.js:16156
+**PRIVATE_removeAndCleanupTarget @ index.esm2017.js:17125
 eval @ index.esm2017.js:17035
 Promise.then
-__PRIVATE_syncEngineRejectListen @ index.esm2017.js:17035
-__PRIVATE_handleTargetError @ index.esm2017.js:15479
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15488
+**PRIVATE_syncEngineRejectListen @ index.esm2017.js:17035
+**PRIVATE_handleTargetError @ index.esm2017.js:15479
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15488
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -3118,10 +3118,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -3134,19 +3134,19 @@ h.bb @ webchannel_blob_es2018.js:75
 h.Ea @ webchannel_blob_es2018.js:75
 Lc @ webchannel_blob_es2018.js:71
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
-hook.js:608 [2025-07-31T10:52:55.160Z]  @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {"ve":-1}
+hook.js:608 [2025-07-31T10:52:55.160Z] @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {"ve":-1}
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 defaultLogHandler @ index.esm2017.js:78
 error @ index.esm2017.js:161
-__PRIVATE_logError @ index.esm2017.js:121
-__PRIVATE__fail @ index.esm2017.js:197
-__PRIVATE_hardAssert @ index.esm2017.js:202
+**PRIVATE_logError @ index.esm2017.js:121
+**PRIVATE**fail @ index.esm2017.js:197
+**PRIVATE_hardAssert @ index.esm2017.js:202
 Ue @ index.esm2017.js:6535
 eval @ index.esm2017.js:6580
 forEachTarget @ index.esm2017.js:6619
 et @ index.esm2017.js:6570
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15492
+\_\_PRIVATE_onWatchStreamChange @ index.esm2017.js:15492
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -3158,10 +3158,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -3177,25 +3177,25 @@ h.Pa @ webchannel_blob_es2018.js:69
 Promise.then
 Nc @ webchannel_blob_es2018.js:69
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
-hook.js:608 [2025-07-31T10:52:55.163Z]  @firebase/firestore: Firestore (11.10.0): INTERNAL UNHANDLED ERROR:  Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {"ve":-1}
-    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)
-    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)
-    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)
-    at Array.forEach (<anonymous>)
-    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)
-    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)
-    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)
-    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)
+hook.js:608 [2025-07-31T10:52:55.163Z] @firebase/firestore: Firestore (11.10.0): INTERNAL UNHANDLED ERROR: Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {"ve":-1}
+at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)
+at **PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)
+at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)
+at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)
+at Array.forEach (<anonymous>)
+at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)
+at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)
+at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)
+at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)
+at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)
+at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)
+at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)
+at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 defaultLogHandler @ index.esm2017.js:78
 error @ index.esm2017.js:161
-__PRIVATE_logError @ index.esm2017.js:121
+\_\_PRIVATE_logError @ index.esm2017.js:121
 eval @ index.esm2017.js:19268
 Promise.catch
 eval @ index.esm2017.js:19263
@@ -3205,10 +3205,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -3224,7 +3224,7 @@ h.Pa @ webchannel_blob_es2018.js:69
 Promise.then
 Nc @ webchannel_blob_es2018.js:69
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
-webchannel_blob_es2018.js:83  POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Frankpilot-h3jpc%2Fdatabases%2F(default)&gsessionid=CZJMlymGcGp0ypQ9TSPiQ0cRzNnYCVsasHKALvf2qjs&SID=N9yOsRFQaaPo9_Nzab_R1A&RID=7095&TYPE=terminate&zx=g8hul1uspfly 400 (Bad Request)
+webchannel_blob_es2018.js:83 POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Frankpilot-h3jpc%2Fdatabases%2F(default)&gsessionid=CZJMlymGcGp0ypQ9TSPiQ0cRzNnYCVsasHKALvf2qjs&SID=N9yOsRFQaaPo9_Nzab_R1A&RID=7095&TYPE=terminate&zx=g8hul1uspfly 400 (Bad Request)
 gc @ webchannel_blob_es2018.js:83
 Y.close @ webchannel_blob_es2018.js:96
 eval @ index.esm2017.js:14573
@@ -3243,26 +3243,26 @@ h.Ea @ webchannel_blob_es2018.js:75
 Lc @ webchannel_blob_es2018.js:71
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
 3index.esm2017.js:197 Uncaught (in promise) Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {"ve":-1}
-    at __PRIVATE__fail (index.esm2017.js:197:1)
-    at __PRIVATE_hardAssert (index.esm2017.js:202:1)
-    at __PRIVATE_TargetState.Ue (index.esm2017.js:6535:1)
-    at eval (index.esm2017.js:6580:1)
-    at Array.forEach (<anonymous>)
-    at __PRIVATE_WatchChangeAggregator.forEachTarget (index.esm2017.js:6619:1)
-    at __PRIVATE_WatchChangeAggregator.et (index.esm2017.js:6570:1)
-    at __PRIVATE_onWatchStreamChange (index.esm2017.js:15492:7)
-    at __PRIVATE_PersistentListenStream.onNext (index.esm2017.js:15037:1)
-    at eval (index.esm2017.js:14980:1)
-    at eval (index.esm2017.js:15003:1)
-    at eval (index.esm2017.js:19230:1)
-    at eval (index.esm2017.js:19263:1)
-__PRIVATE__fail @ index.esm2017.js:197
-__PRIVATE_hardAssert @ index.esm2017.js:202
+at **PRIVATE**fail (index.esm2017.js:197:1)
+at **PRIVATE_hardAssert (index.esm2017.js:202:1)
+at **PRIVATE_TargetState.Ue (index.esm2017.js:6535:1)
+at eval (index.esm2017.js:6580:1)
+at Array.forEach (<anonymous>)
+at **PRIVATE_WatchChangeAggregator.forEachTarget (index.esm2017.js:6619:1)
+at **PRIVATE_WatchChangeAggregator.et (index.esm2017.js:6570:1)
+at **PRIVATE_onWatchStreamChange (index.esm2017.js:15492:7)
+at **PRIVATE_PersistentListenStream.onNext (index.esm2017.js:15037:1)
+at eval (index.esm2017.js:14980:1)
+at eval (index.esm2017.js:15003:1)
+at eval (index.esm2017.js:19230:1)
+at eval (index.esm2017.js:19263:1)
+**PRIVATE**fail @ index.esm2017.js:197
+**PRIVATE_hardAssert @ index.esm2017.js:202
 Ue @ index.esm2017.js:6535
 eval @ index.esm2017.js:6580
 forEachTarget @ index.esm2017.js:6619
 et @ index.esm2017.js:6570
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15492
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15492
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -3274,10 +3274,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -3293,23 +3293,23 @@ h.Pa @ webchannel_blob_es2018.js:69
 Promise.then
 Nc @ webchannel_blob_es2018.js:69
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
-hook.js:608 [2025-07-31T10:52:55.196Z]  @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+hook.js:608 [2025-07-31T10:52:55.196Z] @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 defaultLogHandler @ index.esm2017.js:78
 error @ index.esm2017.js:161
-__PRIVATE_logError @ index.esm2017.js:121
-__PRIVATE__fail @ index.esm2017.js:197
+**PRIVATE_logError @ index.esm2017.js:121
+**PRIVATE\_\_fail @ index.esm2017.js:197
 fail @ index.esm2017.js:182
 ac @ index.esm2017.js:19281
 enqueue @ index.esm2017.js:19223
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14973
-s_ @ index.esm2017.js:14371
+s* @ index.esm2017.js:14371
 eval @ index.esm2017.js:14536
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ua @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -3339,9 +3339,9 @@ h.connect @ webchannel_blob_es2018.js:82
 Y.m @ webchannel_blob_es2018.js:96
 Ho @ index.esm2017.js:14514
 send @ index.esm2017.js:14368
-k_ @ index.esm2017.js:14893
+k* @ index.esm2017.js:14893
 na @ index.esm2017.js:15141
-__PRIVATE_onWriteStreamOpen @ index.esm2017.js:15613
+**PRIVATE*onWriteStreamOpen @ index.esm2017.js:15613
 eval @ index.esm2017.js:14976
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:19230
@@ -3352,25 +3352,25 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14975
-o_ @ index.esm2017.js:14374
+o* @ index.esm2017.js:14374
 eval @ index.esm2017.js:14583
 setTimeout
-P_ @ index.esm2017.js:14578
-z_ @ index.esm2017.js:15115
-W_ @ index.esm2017.js:14972
+P* @ index.esm2017.js:14578
+z* @ index.esm2017.js:15115
+W\_ @ index.esm2017.js:14972
 eval @ index.esm2017.js:14962
 Promise.then
 auth @ index.esm2017.js:14953
 start @ index.esm2017.js:14858
 start @ index.esm2017.js:15109
-__PRIVATE_startWriteStream @ index.esm2017.js:15609
-__PRIVATE_fillWritePipeline @ index.esm2017.js:15585
-await in __PRIVATE_fillWritePipeline
-__PRIVATE_handleWriteError @ index.esm2017.js:15650
-await in __PRIVATE_handleWriteError
-__PRIVATE_onWriteStreamClose @ index.esm2017.js:15652
+**PRIVATE*startWriteStream @ index.esm2017.js:15609
+**PRIVATE_fillWritePipeline @ index.esm2017.js:15585
+await in **PRIVATE_fillWritePipeline
+**PRIVATE_handleWriteError @ index.esm2017.js:15650
+await in **PRIVATE_handleWriteError
+\_\_PRIVATE_onWriteStreamClose @ index.esm2017.js:15652
 close @ index.esm2017.js:14943
-G_ @ index.esm2017.js:14994
+G* @ index.esm2017.js:14994
 eval @ index.esm2017.js:14978
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:19230
@@ -3381,7 +3381,7 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14978
-__ @ index.esm2017.js:14377
+** @ index.esm2017.js:14377
 eval @ index.esm2017.js:14573
 eval @ index.esm2017.js:14523
 ab @ webchannel_blob_es2018.js:39
@@ -3397,41 +3397,41 @@ h.bb @ webchannel_blob_es2018.js:75
 h.Ea @ webchannel_blob_es2018.js:75
 Lc @ webchannel_blob_es2018.js:71
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
-index.esm2017.js:197 Uncaught Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
-    at __PRIVATE__fail (index.esm2017.js:197:1)
-    at fail (index.esm2017.js:182:1)
-    at __PRIVATE_AsyncQueueImpl.ac (index.esm2017.js:19281:1)
-    at __PRIVATE_AsyncQueueImpl.enqueue (index.esm2017.js:19223:1)
-    at __PRIVATE_AsyncQueueImpl.enqueueAndForget (index.esm2017.js:19208:1)
-    at eval (index.esm2017.js:15003:1)
-    at __PRIVATE_StreamBridge.eval [as Xo] (index.esm2017.js:14973:1)
-    at __PRIVATE_StreamBridge.s_ (index.esm2017.js:14371:1)
-    at eval (index.esm2017.js:14536:66)
-    at Y.eval (index.esm2017.js:14523:1)
-    at ab (webchannel_blob_es2018.js:39:188)
-    at F (webchannel_blob_es2018.js:37:296)
-    at Z.ua (webchannel_blob_es2018.js:98:410)
-    at Rb (webchannel_blob_es2018.js:53:89)
-    at M.Y (webchannel_blob_es2018.js:47:156)
-    at M.ca (webchannel_blob_es2018.js:44:130)
-    at ab (webchannel_blob_es2018.js:39:188)
-    at F (webchannel_blob_es2018.js:37:296)
-    at Wc (webchannel_blob_es2018.js:76:106)
-    at h.bb (webchannel_blob_es2018.js:75:87)
-    at h.Ea (webchannel_blob_es2018.js:75:17)
-    at Lc (webchannel_blob_es2018.js:71:197)
-    at h.Pa (webchannel_blob_es2018.js:69:411)
-__PRIVATE__fail @ index.esm2017.js:197
+index.esm2017.js:197 Uncaught Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE*hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+at **PRIVATE**fail (index.esm2017.js:197:1)
+at fail (index.esm2017.js:182:1)
+at **PRIVATE_AsyncQueueImpl.ac (index.esm2017.js:19281:1)
+at **PRIVATE_AsyncQueueImpl.enqueue (index.esm2017.js:19223:1)
+at **PRIVATE_AsyncQueueImpl.enqueueAndForget (index.esm2017.js:19208:1)
+at eval (index.esm2017.js:15003:1)
+at **PRIVATE_StreamBridge.eval [as Xo] (index.esm2017.js:14973:1)
+at **PRIVATE_StreamBridge.s* (index.esm2017.js:14371:1)
+at eval (index.esm2017.js:14536:66)
+at Y.eval (index.esm2017.js:14523:1)
+at ab (webchannel*blob_es2018.js:39:188)
+at F (webchannel_blob_es2018.js:37:296)
+at Z.ua (webchannel_blob_es2018.js:98:410)
+at Rb (webchannel_blob_es2018.js:53:89)
+at M.Y (webchannel_blob_es2018.js:47:156)
+at M.ca (webchannel_blob_es2018.js:44:130)
+at ab (webchannel_blob_es2018.js:39:188)
+at F (webchannel_blob_es2018.js:37:296)
+at Wc (webchannel_blob_es2018.js:76:106)
+at h.bb (webchannel_blob_es2018.js:75:87)
+at h.Ea (webchannel_blob_es2018.js:75:17)
+at Lc (webchannel_blob_es2018.js:71:197)
+at h.Pa (webchannel_blob_es2018.js:69:411)
+**PRIVATE**fail @ index.esm2017.js:197
 fail @ index.esm2017.js:182
 ac @ index.esm2017.js:19281
 enqueue @ index.esm2017.js:19223
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14973
-s_ @ index.esm2017.js:14371
+s* @ index.esm2017.js:14371
 eval @ index.esm2017.js:14536
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ua @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -3461,9 +3461,9 @@ h.connect @ webchannel_blob_es2018.js:82
 Y.m @ webchannel_blob_es2018.js:96
 Ho @ index.esm2017.js:14514
 send @ index.esm2017.js:14368
-k_ @ index.esm2017.js:14893
+k* @ index.esm2017.js:14893
 na @ index.esm2017.js:15141
-__PRIVATE_onWriteStreamOpen @ index.esm2017.js:15613
+**PRIVATE*onWriteStreamOpen @ index.esm2017.js:15613
 eval @ index.esm2017.js:14976
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:19230
@@ -3474,25 +3474,25 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14975
-o_ @ index.esm2017.js:14374
+o* @ index.esm2017.js:14374
 eval @ index.esm2017.js:14583
 setTimeout
-P_ @ index.esm2017.js:14578
-z_ @ index.esm2017.js:15115
-W_ @ index.esm2017.js:14972
+P* @ index.esm2017.js:14578
+z* @ index.esm2017.js:15115
+W\_ @ index.esm2017.js:14972
 eval @ index.esm2017.js:14962
 Promise.then
 auth @ index.esm2017.js:14953
 start @ index.esm2017.js:14858
 start @ index.esm2017.js:15109
-__PRIVATE_startWriteStream @ index.esm2017.js:15609
-__PRIVATE_fillWritePipeline @ index.esm2017.js:15585
-await in __PRIVATE_fillWritePipeline
-__PRIVATE_handleWriteError @ index.esm2017.js:15650
-await in __PRIVATE_handleWriteError
-__PRIVATE_onWriteStreamClose @ index.esm2017.js:15652
+**PRIVATE*startWriteStream @ index.esm2017.js:15609
+**PRIVATE_fillWritePipeline @ index.esm2017.js:15585
+await in **PRIVATE_fillWritePipeline
+**PRIVATE_handleWriteError @ index.esm2017.js:15650
+await in **PRIVATE_handleWriteError
+\_\_PRIVATE_onWriteStreamClose @ index.esm2017.js:15652
 close @ index.esm2017.js:14943
-G_ @ index.esm2017.js:14994
+G* @ index.esm2017.js:14994
 eval @ index.esm2017.js:14978
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:19230
@@ -3503,7 +3503,7 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14978
-__ @ index.esm2017.js:14377
+** @ index.esm2017.js:14377
 eval @ index.esm2017.js:14573
 eval @ index.esm2017.js:14523
 ab @ webchannel_blob_es2018.js:39
@@ -3519,7 +3519,7 @@ h.bb @ webchannel_blob_es2018.js:75
 h.Ea @ webchannel_blob_es2018.js:75
 Lc @ webchannel_blob_es2018.js:71
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
-webchannel_blob_es2018.js:83  POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Frankpilot-h3jpc%2Fdatabases%2F(default)&gsessionid=JQtuch9GptPWyVM8rfnCUVA9kIvPJQ6_0D_QjrOBlVc&SID=F1pIC-oR8odrLaubwQjDMg&RID=63643&TYPE=terminate&zx=2giatfg34ygq 400 (Bad Request)
+webchannel_blob_es2018.js:83 POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Frankpilot-h3jpc%2Fdatabases%2F(default)&gsessionid=JQtuch9GptPWyVM8rfnCUVA9kIvPJQ6_0D_QjrOBlVc&SID=F1pIC-oR8odrLaubwQjDMg&RID=63643&TYPE=terminate&zx=2giatfg34ygq 400 (Bad Request)
 gc @ webchannel_blob_es2018.js:83
 Y.close @ webchannel_blob_es2018.js:96
 eval @ index.esm2017.js:14573
@@ -3540,20 +3540,165 @@ h.Pa @ webchannel_blob_es2018.js:69
 Promise.then
 Nc @ webchannel_blob_es2018.js:69
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
-hook.js:608 [2025-07-31T10:52:55.335Z]  @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+hook.js:608 [2025-07-31T10:52:55.335Z] @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE*hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 defaultLogHandler @ index.esm2017.js:78
 error @ index.esm2017.js:161
-__PRIVATE_logError @ index.esm2017.js:121
-__PRIVATE__fail @ index.esm2017.js:197
+**PRIVATE_logError @ index.esm2017.js:121
+**PRIVATE**fail @ index.esm2017.js:197
 fail @ index.esm2017.js:182
 ac @ index.esm2017.js:19281
 enqueue @ index.esm2017.js:19223
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
+eval @ index.esm2017.js:14574
+eval @ index.esm2017.js:14523
+ab @ webchannel*blob_es2018.js:39
+F @ webchannel_blob_es2018.js:37
+Z.ta @ webchannel_blob_es2018.js:98
+Rb @ webchannel_blob_es2018.js:53
+M.Y @ webchannel_blob_es2018.js:47
+M.ca @ webchannel_blob_es2018.js:44
+ab @ webchannel_blob_es2018.js:39
+F @ webchannel_blob_es2018.js:37
+Wc @ webchannel_blob_es2018.js:76
+h.bb @ webchannel_blob_es2018.js:75
+h.Ea @ webchannel_blob_es2018.js:75
+Lc @ webchannel_blob_es2018.js:71
+h.Pa @ webchannel_blob_es2018.js:69
+Promise.then
+Nc @ webchannel_blob_es2018.js:69
+h.Sa @ webchannel_blob_es2018.js:69
+Promise.then
+h.send @ webchannel_blob_es2018.js:66
+h.ea @ webchannel_blob_es2018.js:74
+Jb @ webchannel_blob_es2018.js:44
+fd @ webchannel_blob_es2018.js:90
+h.Fa @ webchannel_blob_es2018.js:89
+Da @ webchannel_blob_es2018.js:28
+Promise.then
+x @ webchannel_blob_es2018.js:28
+ec @ webchannel_blob_es2018.js:88
+Rb @ webchannel_blob_es2018.js:53
+M.Y @ webchannel_blob_es2018.js:47
+M.ca @ webchannel_blob_es2018.js:44
+ab @ webchannel_blob_es2018.js:39
+F @ webchannel_blob_es2018.js:37
+Wc @ webchannel_blob_es2018.js:76
+h.bb @ webchannel_blob_es2018.js:75
+h.Ea @ webchannel_blob_es2018.js:75
+Lc @ webchannel_blob_es2018.js:71
+h.Pa @ webchannel_blob_es2018.js:69
+Promise.then
+Nc @ webchannel_blob_es2018.js:69
+h.Sa @ webchannel_blob_es2018.js:69
+Promise.then
+h.send @ webchannel_blob_es2018.js:66
+h.ea @ webchannel_blob_es2018.js:74
+Jb @ webchannel_blob_es2018.js:43
+Hb @ webchannel_blob_es2018.js:42
+h.Ga @ webchannel_blob_es2018.js:86
+Da @ webchannel_blob_es2018.js:28
+Promise.then
+x @ webchannel_blob_es2018.js:28
+fc @ webchannel_blob_es2018.js:84
+h.connect @ webchannel_blob_es2018.js:82
+Y.m @ webchannel_blob_es2018.js:96
+Ho @ index.esm2017.js:14514
+send @ index.esm2017.js:14368
+k* @ index.esm2017.js:14893
+na @ index.esm2017.js:15141
+**PRIVATE*onWriteStreamOpen @ index.esm2017.js:15613
+eval @ index.esm2017.js:14976
+eval @ index.esm2017.js:15003
+eval @ index.esm2017.js:19230
+eval @ index.esm2017.js:19263
+Promise.then
+uc @ index.esm2017.js:19263
+enqueue @ index.esm2017.js:19230
+enqueueAndForget @ index.esm2017.js:19208
+eval @ index.esm2017.js:15003
+eval @ index.esm2017.js:14975
+o* @ index.esm2017.js:14374
+eval @ index.esm2017.js:14583
+setTimeout
+P* @ index.esm2017.js:14578
+z* @ index.esm2017.js:15115
+W\_ @ index.esm2017.js:14972
+eval @ index.esm2017.js:14962
+Promise.then
+auth @ index.esm2017.js:14953
+start @ index.esm2017.js:14858
+start @ index.esm2017.js:15109
+**PRIVATE*startWriteStream @ index.esm2017.js:15609
+**PRIVATE_fillWritePipeline @ index.esm2017.js:15585
+await in **PRIVATE_fillWritePipeline
+**PRIVATE_handleWriteError @ index.esm2017.js:15650
+await in **PRIVATE_handleWriteError
+\_\_PRIVATE_onWriteStreamClose @ index.esm2017.js:15652
+close @ index.esm2017.js:14943
+G* @ index.esm2017.js:14994
+eval @ index.esm2017.js:14978
+eval @ index.esm2017.js:15003
+eval @ index.esm2017.js:19230
+eval @ index.esm2017.js:19263
+Promise.then
+uc @ index.esm2017.js:19263
+enqueue @ index.esm2017.js:19230
+enqueueAndForget @ index.esm2017.js:19208
+eval @ index.esm2017.js:15003
+eval @ index.esm2017.js:14978
+** @ index.esm2017.js:14377
+eval @ index.esm2017.js:14573
+eval @ index.esm2017.js:14523
+ab @ webchannel_blob_es2018.js:39
+F @ webchannel_blob_es2018.js:37
+Z.ta @ webchannel_blob_es2018.js:98
+Rb @ webchannel_blob_es2018.js:53
+M.Y @ webchannel_blob_es2018.js:47
+M.ca @ webchannel_blob_es2018.js:44
+ab @ webchannel_blob_es2018.js:39
+F @ webchannel_blob_es2018.js:37
+Wc @ webchannel_blob_es2018.js:76
+h.bb @ webchannel_blob_es2018.js:75
+h.Ea @ webchannel_blob_es2018.js:75
+Lc @ webchannel_blob_es2018.js:71
+h.Pa @ webchannel_blob_es2018.js:69Understand this error
+index.esm2017.js:197 Uncaught Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE*hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+at **PRIVATE**fail (index.esm2017.js:197:1)
+at fail (index.esm2017.js:182:1)
+at **PRIVATE_AsyncQueueImpl.ac (index.esm2017.js:19281:1)
+at **PRIVATE_AsyncQueueImpl.enqueue (index.esm2017.js:19223:1)
+at **PRIVATE_AsyncQueueImpl.enqueueAndForget (index.esm2017.js:19208:1)
+at eval (index.esm2017.js:15003:1)
+at \_\_PRIVATE_StreamBridge.eval [as i*] (index.esm2017.js:14980:1)
+at **PRIVATE*StreamBridge.a* (index.esm2017.js:14380:1)
+at eval (index.esm2017.js:14574:71)
+at Y.eval (index.esm2017.js:14523:1)
+at ab (webchannel_blob_es2018.js:39:188)
+at F (webchannel_blob_es2018.js:37:296)
+at Z.ta (webchannel_blob_es2018.js:98:453)
+at Rb (webchannel_blob_es2018.js:53:350)
+at M.Y (webchannel_blob_es2018.js:47:156)
+at M.ca (webchannel_blob_es2018.js:44:130)
+at ab (webchannel_blob_es2018.js:39:188)
+at F (webchannel_blob_es2018.js:37:296)
+at Wc (webchannel_blob_es2018.js:76:106)
+at h.bb (webchannel_blob_es2018.js:75:87)
+at h.Ea (webchannel_blob_es2018.js:75:17)
+at Lc (webchannel_blob_es2018.js:71:197)
+at h.Pa (webchannel_blob_es2018.js:69:411)
+**PRIVATE**fail @ index.esm2017.js:197
+fail @ index.esm2017.js:182
+ac @ index.esm2017.js:19281
+enqueue @ index.esm2017.js:19223
+enqueueAndForget @ index.esm2017.js:19208
+eval @ index.esm2017.js:15003
+eval @ index.esm2017.js:14980
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
 ab @ webchannel_blob_es2018.js:39
@@ -3609,9 +3754,9 @@ h.connect @ webchannel_blob_es2018.js:82
 Y.m @ webchannel_blob_es2018.js:96
 Ho @ index.esm2017.js:14514
 send @ index.esm2017.js:14368
-k_ @ index.esm2017.js:14893
+k* @ index.esm2017.js:14893
 na @ index.esm2017.js:15141
-__PRIVATE_onWriteStreamOpen @ index.esm2017.js:15613
+**PRIVATE*onWriteStreamOpen @ index.esm2017.js:15613
 eval @ index.esm2017.js:14976
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:19230
@@ -3622,25 +3767,25 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14975
-o_ @ index.esm2017.js:14374
+o* @ index.esm2017.js:14374
 eval @ index.esm2017.js:14583
 setTimeout
-P_ @ index.esm2017.js:14578
-z_ @ index.esm2017.js:15115
-W_ @ index.esm2017.js:14972
+P* @ index.esm2017.js:14578
+z* @ index.esm2017.js:15115
+W* @ index.esm2017.js:14972
 eval @ index.esm2017.js:14962
 Promise.then
 auth @ index.esm2017.js:14953
 start @ index.esm2017.js:14858
 start @ index.esm2017.js:15109
-__PRIVATE_startWriteStream @ index.esm2017.js:15609
-__PRIVATE_fillWritePipeline @ index.esm2017.js:15585
-await in __PRIVATE_fillWritePipeline
-__PRIVATE_handleWriteError @ index.esm2017.js:15650
-await in __PRIVATE_handleWriteError
-__PRIVATE_onWriteStreamClose @ index.esm2017.js:15652
+**PRIVATE_startWriteStream @ index.esm2017.js:15609
+**PRIVATE_fillWritePipeline @ index.esm2017.js:15585
+await in **PRIVATE_fillWritePipeline
+**PRIVATE_handleWriteError @ index.esm2017.js:15650
+await in **PRIVATE_handleWriteError
+**PRIVATE_onWriteStreamClose @ index.esm2017.js:15652
 close @ index.esm2017.js:14943
-G_ @ index.esm2017.js:14994
+G* @ index.esm2017.js:14994
 eval @ index.esm2017.js:14978
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:19230
@@ -3651,7 +3796,7 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14978
-__ @ index.esm2017.js:14377
+** @ index.esm2017.js:14377
 eval @ index.esm2017.js:14573
 eval @ index.esm2017.js:14523
 ab @ webchannel_blob_es2018.js:39
@@ -3667,158 +3812,13 @@ h.bb @ webchannel_blob_es2018.js:75
 h.Ea @ webchannel_blob_es2018.js:75
 Lc @ webchannel_blob_es2018.js:71
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
-index.esm2017.js:197 Uncaught Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
-    at __PRIVATE__fail (index.esm2017.js:197:1)
-    at fail (index.esm2017.js:182:1)
-    at __PRIVATE_AsyncQueueImpl.ac (index.esm2017.js:19281:1)
-    at __PRIVATE_AsyncQueueImpl.enqueue (index.esm2017.js:19223:1)
-    at __PRIVATE_AsyncQueueImpl.enqueueAndForget (index.esm2017.js:19208:1)
-    at eval (index.esm2017.js:15003:1)
-    at __PRIVATE_StreamBridge.eval [as i_] (index.esm2017.js:14980:1)
-    at __PRIVATE_StreamBridge.a_ (index.esm2017.js:14380:1)
-    at eval (index.esm2017.js:14574:71)
-    at Y.eval (index.esm2017.js:14523:1)
-    at ab (webchannel_blob_es2018.js:39:188)
-    at F (webchannel_blob_es2018.js:37:296)
-    at Z.ta (webchannel_blob_es2018.js:98:453)
-    at Rb (webchannel_blob_es2018.js:53:350)
-    at M.Y (webchannel_blob_es2018.js:47:156)
-    at M.ca (webchannel_blob_es2018.js:44:130)
-    at ab (webchannel_blob_es2018.js:39:188)
-    at F (webchannel_blob_es2018.js:37:296)
-    at Wc (webchannel_blob_es2018.js:76:106)
-    at h.bb (webchannel_blob_es2018.js:75:87)
-    at h.Ea (webchannel_blob_es2018.js:75:17)
-    at Lc (webchannel_blob_es2018.js:71:197)
-    at h.Pa (webchannel_blob_es2018.js:69:411)
-__PRIVATE__fail @ index.esm2017.js:197
-fail @ index.esm2017.js:182
-ac @ index.esm2017.js:19281
-enqueue @ index.esm2017.js:19223
-enqueueAndForget @ index.esm2017.js:19208
-eval @ index.esm2017.js:15003
-eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
-eval @ index.esm2017.js:14574
-eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
-F @ webchannel_blob_es2018.js:37
-Z.ta @ webchannel_blob_es2018.js:98
-Rb @ webchannel_blob_es2018.js:53
-M.Y @ webchannel_blob_es2018.js:47
-M.ca @ webchannel_blob_es2018.js:44
-ab @ webchannel_blob_es2018.js:39
-F @ webchannel_blob_es2018.js:37
-Wc @ webchannel_blob_es2018.js:76
-h.bb @ webchannel_blob_es2018.js:75
-h.Ea @ webchannel_blob_es2018.js:75
-Lc @ webchannel_blob_es2018.js:71
-h.Pa @ webchannel_blob_es2018.js:69
-Promise.then
-Nc @ webchannel_blob_es2018.js:69
-h.Sa @ webchannel_blob_es2018.js:69
-Promise.then
-h.send @ webchannel_blob_es2018.js:66
-h.ea @ webchannel_blob_es2018.js:74
-Jb @ webchannel_blob_es2018.js:44
-fd @ webchannel_blob_es2018.js:90
-h.Fa @ webchannel_blob_es2018.js:89
-Da @ webchannel_blob_es2018.js:28
-Promise.then
-x @ webchannel_blob_es2018.js:28
-ec @ webchannel_blob_es2018.js:88
-Rb @ webchannel_blob_es2018.js:53
-M.Y @ webchannel_blob_es2018.js:47
-M.ca @ webchannel_blob_es2018.js:44
-ab @ webchannel_blob_es2018.js:39
-F @ webchannel_blob_es2018.js:37
-Wc @ webchannel_blob_es2018.js:76
-h.bb @ webchannel_blob_es2018.js:75
-h.Ea @ webchannel_blob_es2018.js:75
-Lc @ webchannel_blob_es2018.js:71
-h.Pa @ webchannel_blob_es2018.js:69
-Promise.then
-Nc @ webchannel_blob_es2018.js:69
-h.Sa @ webchannel_blob_es2018.js:69
-Promise.then
-h.send @ webchannel_blob_es2018.js:66
-h.ea @ webchannel_blob_es2018.js:74
-Jb @ webchannel_blob_es2018.js:43
-Hb @ webchannel_blob_es2018.js:42
-h.Ga @ webchannel_blob_es2018.js:86
-Da @ webchannel_blob_es2018.js:28
-Promise.then
-x @ webchannel_blob_es2018.js:28
-fc @ webchannel_blob_es2018.js:84
-h.connect @ webchannel_blob_es2018.js:82
-Y.m @ webchannel_blob_es2018.js:96
-Ho @ index.esm2017.js:14514
-send @ index.esm2017.js:14368
-k_ @ index.esm2017.js:14893
-na @ index.esm2017.js:15141
-__PRIVATE_onWriteStreamOpen @ index.esm2017.js:15613
-eval @ index.esm2017.js:14976
-eval @ index.esm2017.js:15003
-eval @ index.esm2017.js:19230
-eval @ index.esm2017.js:19263
-Promise.then
-uc @ index.esm2017.js:19263
-enqueue @ index.esm2017.js:19230
-enqueueAndForget @ index.esm2017.js:19208
-eval @ index.esm2017.js:15003
-eval @ index.esm2017.js:14975
-o_ @ index.esm2017.js:14374
-eval @ index.esm2017.js:14583
-setTimeout
-P_ @ index.esm2017.js:14578
-z_ @ index.esm2017.js:15115
-W_ @ index.esm2017.js:14972
-eval @ index.esm2017.js:14962
-Promise.then
-auth @ index.esm2017.js:14953
-start @ index.esm2017.js:14858
-start @ index.esm2017.js:15109
-__PRIVATE_startWriteStream @ index.esm2017.js:15609
-__PRIVATE_fillWritePipeline @ index.esm2017.js:15585
-await in __PRIVATE_fillWritePipeline
-__PRIVATE_handleWriteError @ index.esm2017.js:15650
-await in __PRIVATE_handleWriteError
-__PRIVATE_onWriteStreamClose @ index.esm2017.js:15652
-close @ index.esm2017.js:14943
-G_ @ index.esm2017.js:14994
-eval @ index.esm2017.js:14978
-eval @ index.esm2017.js:15003
-eval @ index.esm2017.js:19230
-eval @ index.esm2017.js:19263
-Promise.then
-uc @ index.esm2017.js:19263
-enqueue @ index.esm2017.js:19230
-enqueueAndForget @ index.esm2017.js:19208
-eval @ index.esm2017.js:15003
-eval @ index.esm2017.js:14978
-__ @ index.esm2017.js:14377
-eval @ index.esm2017.js:14573
-eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
-F @ webchannel_blob_es2018.js:37
-Z.ta @ webchannel_blob_es2018.js:98
-Rb @ webchannel_blob_es2018.js:53
-M.Y @ webchannel_blob_es2018.js:47
-M.ca @ webchannel_blob_es2018.js:44
-ab @ webchannel_blob_es2018.js:39
-F @ webchannel_blob_es2018.js:37
-Wc @ webchannel_blob_es2018.js:76
-h.bb @ webchannel_blob_es2018.js:75
-h.Ea @ webchannel_blob_es2018.js:75
-Lc @ webchannel_blob_es2018.js:71
-h.Pa @ webchannel_blob_es2018.js:69Understand this error
-page.tsx:212 [2025-07-31T10:52:58.455Z]  @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+page.tsx:212 [2025-07-31T10:52:58.455Z] @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE*hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 defaultLogHandler @ index.esm2017.js:78
 error @ index.esm2017.js:161
-__PRIVATE_logError @ index.esm2017.js:121
-__PRIVATE__fail @ index.esm2017.js:197
+**PRIVATE_logError @ index.esm2017.js:121
+**PRIVATE**fail @ index.esm2017.js:197
 fail @ index.esm2017.js:182
 ac @ index.esm2017.js:19281
 enqueue @ index.esm2017.js:19223
@@ -4013,18 +4013,18 @@ commitPassiveUnmountOnFiber @ react-dom-client.development.js:14697
 recursivelyTraversePassiveUnmountEffects @ react-dom-client.development.js:14688
 commitPassiveUnmountOnFiber @ react-dom-client.development.js:14697
 recursivelyTraversePassiveUnmountEffects @ react-dom-client.development.js:14688Understand this error
-page.tsx:181 [2025-07-31T10:52:58.485Z]  @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+page.tsx:181 [2025-07-31T10:52:58.485Z] @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 defaultLogHandler @ index.esm2017.js:78
 error @ index.esm2017.js:161
-__PRIVATE_logError @ index.esm2017.js:121
-__PRIVATE__fail @ index.esm2017.js:197
+**PRIVATE_logError @ index.esm2017.js:121
+**PRIVATE**fail @ index.esm2017.js:197
 fail @ index.esm2017.js:182
 ac @ index.esm2017.js:19281
 enqueue @ index.esm2017.js:19223
 enqueueAndForget @ index.esm2017.js:19208
-__PRIVATE_firestoreClientListen @ index.esm2017.js:22100
+**PRIVATE_firestoreClientListen @ index.esm2017.js:22100
 onSnapshot @ index.esm2017.js:22104
 TeamChatPage.useEffect @ page.tsx:181
 react_stack_bottom_frame @ react-dom-client.development.js:23637
@@ -4214,58 +4214,58 @@ recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14310
 commitPassiveMountOnFiber @ react-dom-client.development.js:14330
 recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14310
 commitPassiveMountOnFiber @ react-dom-client.development.js:14330Understand this error
-index.esm2017.js:197 Uncaught Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
-    at __PRIVATE__fail (index.esm2017.js:197:1)
-    at fail (index.esm2017.js:182:1)
-    at __PRIVATE_AsyncQueueImpl.ac (index.esm2017.js:19281:1)
-    at __PRIVATE_AsyncQueueImpl.enqueue (index.esm2017.js:19223:1)
-    at __PRIVATE_AsyncQueueImpl.enqueueAndForget (index.esm2017.js:19208:1)
-    at eval (index.esm2017.js:22102:1)
-    at TeamChatPage.useEffect (page.tsx:212:7)
-    at Object.react_stack_bottom_frame (react-dom-client.development.js:23649:1)
-    at runWithFiberInDEV (react-dom-client.development.js:872:1)
-    at commitHookEffectListUnmount (react-dom-client.development.js:12386:1)
-    at commitHookPassiveUnmountEffects (react-dom-client.development.js:12427:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14699:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-__PRIVATE__fail @ index.esm2017.js:197
+index.esm2017.js:197 Uncaught Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+at **PRIVATE**fail (index.esm2017.js:197:1)
+at fail (index.esm2017.js:182:1)
+at **PRIVATE_AsyncQueueImpl.ac (index.esm2017.js:19281:1)
+at **PRIVATE_AsyncQueueImpl.enqueue (index.esm2017.js:19223:1)
+at **PRIVATE_AsyncQueueImpl.enqueueAndForget (index.esm2017.js:19208:1)
+at eval (index.esm2017.js:22102:1)
+at TeamChatPage.useEffect (page.tsx:212:7)
+at Object.react_stack_bottom_frame (react-dom-client.development.js:23649:1)
+at runWithFiberInDEV (react-dom-client.development.js:872:1)
+at commitHookEffectListUnmount (react-dom-client.development.js:12386:1)
+at commitHookPassiveUnmountEffects (react-dom-client.development.js:12427:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14699:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+**PRIVATE**fail @ index.esm2017.js:197
 fail @ index.esm2017.js:182
 ac @ index.esm2017.js:19281
 enqueue @ index.esm2017.js:19223
@@ -4465,18 +4465,18 @@ recursivelyTraversePassiveUnmountEffects @ react-dom-client.development.js:14688
 commitPassiveUnmountOnFiber @ react-dom-client.development.js:14697
 recursivelyTraversePassiveUnmountEffects @ react-dom-client.development.js:14688
 commitPassiveUnmountOnFiber @ react-dom-client.development.js:14729Understand this error
-page.tsx:235 [2025-07-31T10:52:58.541Z]  @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+page.tsx:235 [2025-07-31T10:52:58.541Z] @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 defaultLogHandler @ index.esm2017.js:78
 error @ index.esm2017.js:161
-__PRIVATE_logError @ index.esm2017.js:121
-__PRIVATE__fail @ index.esm2017.js:197
+**PRIVATE_logError @ index.esm2017.js:121
+**PRIVATE**fail @ index.esm2017.js:197
 fail @ index.esm2017.js:182
 ac @ index.esm2017.js:19281
 enqueue @ index.esm2017.js:19223
 enqueueAndForget @ index.esm2017.js:19208
-__PRIVATE_firestoreClientWrite @ index.esm2017.js:22284
+**PRIVATE_firestoreClientWrite @ index.esm2017.js:22284
 executeWrite @ index.esm2017.js:22286
 updateDoc @ index.esm2017.js:22033
 updateUserPresence @ page.tsx:235
@@ -4532,18 +4532,18 @@ performSyncWorkOnRoot @ react-dom-client.development.js:16781
 flushSyncWorkAcrossRoots_impl @ react-dom-client.development.js:16627
 processRootScheduleInMicrotask @ react-dom-client.development.js:16665
 eval @ react-dom-client.development.js:16800Understand this error
-page.tsx:244 [2025-07-31T10:52:58.546Z]  @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+page.tsx:244 [2025-07-31T10:52:58.546Z] @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 defaultLogHandler @ index.esm2017.js:78
 error @ index.esm2017.js:161
-__PRIVATE_logError @ index.esm2017.js:121
-__PRIVATE__fail @ index.esm2017.js:197
+**PRIVATE_logError @ index.esm2017.js:121
+**PRIVATE**fail @ index.esm2017.js:197
 fail @ index.esm2017.js:182
 ac @ index.esm2017.js:19281
 enqueue @ index.esm2017.js:19223
 enqueueAndForget @ index.esm2017.js:19208
-__PRIVATE_firestoreClientWrite @ index.esm2017.js:22284
+**PRIVATE_firestoreClientWrite @ index.esm2017.js:22284
 executeWrite @ index.esm2017.js:22286
 addDoc @ index.esm2017.js:22057
 updateUserPresence @ page.tsx:244
@@ -4599,63 +4599,63 @@ performSyncWorkOnRoot @ react-dom-client.development.js:16781
 flushSyncWorkAcrossRoots_impl @ react-dom-client.development.js:16627
 processRootScheduleInMicrotask @ react-dom-client.development.js:16665
 eval @ react-dom-client.development.js:16800Understand this error
-index.esm2017.js:197 Uncaught (in promise) Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
-    at __PRIVATE__fail (index.esm2017.js:197:1)
-    at fail (index.esm2017.js:182:1)
-    at __PRIVATE_AsyncQueueImpl.ac (index.esm2017.js:19281:1)
-    at __PRIVATE_AsyncQueueImpl.enqueue (index.esm2017.js:19223:1)
-    at __PRIVATE_AsyncQueueImpl.enqueueAndForget (index.esm2017.js:19208:1)
-    at __PRIVATE_firestoreClientWrite (index.esm2017.js:22284:1)
-    at executeWrite (index.esm2017.js:22286:6)
-    at addDoc (index.esm2017.js:22057:1)
-    at updateUserPresence (page.tsx:244:19)
-    at TeamChatPage.useEffect (page.tsx:227:7)
-    at Object.react_stack_bottom_frame (react-dom-client.development.js:23649:1)
-    at runWithFiberInDEV (react-dom-client.development.js:872:1)
-    at commitHookEffectListUnmount (react-dom-client.development.js:12386:1)
-    at commitHookPassiveUnmountEffects (react-dom-client.development.js:12427:1)
-    at commitPassiveUnmountEffectsInsideOfDeletedTree_begin (react-dom-client.development.js:14790:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14678:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-    at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
-    at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
-__PRIVATE__fail @ index.esm2017.js:197
+index.esm2017.js:197 Uncaught (in promise) Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+at **PRIVATE**fail (index.esm2017.js:197:1)
+at fail (index.esm2017.js:182:1)
+at **PRIVATE_AsyncQueueImpl.ac (index.esm2017.js:19281:1)
+at **PRIVATE_AsyncQueueImpl.enqueue (index.esm2017.js:19223:1)
+at **PRIVATE_AsyncQueueImpl.enqueueAndForget (index.esm2017.js:19208:1)
+at **PRIVATE_firestoreClientWrite (index.esm2017.js:22284:1)
+at executeWrite (index.esm2017.js:22286:6)
+at addDoc (index.esm2017.js:22057:1)
+at updateUserPresence (page.tsx:244:19)
+at TeamChatPage.useEffect (page.tsx:227:7)
+at Object.react_stack_bottom_frame (react-dom-client.development.js:23649:1)
+at runWithFiberInDEV (react-dom-client.development.js:872:1)
+at commitHookEffectListUnmount (react-dom-client.development.js:12386:1)
+at commitHookPassiveUnmountEffects (react-dom-client.development.js:12427:1)
+at commitPassiveUnmountEffectsInsideOfDeletedTree_begin (react-dom-client.development.js:14790:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14678:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14697:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+at commitPassiveUnmountOnFiber (react-dom-client.development.js:14729:1)
+at recursivelyTraversePassiveUnmountEffects (react-dom-client.development.js:14688:1)
+**PRIVATE**fail @ index.esm2017.js:197
 fail @ index.esm2017.js:182
 ac @ index.esm2017.js:19281
 enqueue @ index.esm2017.js:19223
 enqueueAndForget @ index.esm2017.js:19208
-__PRIVATE_firestoreClientWrite @ index.esm2017.js:22284
+**PRIVATE_firestoreClientWrite @ index.esm2017.js:22284
 executeWrite @ index.esm2017.js:22286
 addDoc @ index.esm2017.js:22057
 updateUserPresence @ page.tsx:244
@@ -4711,13 +4711,13 @@ performSyncWorkOnRoot @ react-dom-client.development.js:16781
 flushSyncWorkAcrossRoots_impl @ react-dom-client.development.js:16627
 processRootScheduleInMicrotask @ react-dom-client.development.js:16665
 eval @ react-dom-client.development.js:16800Understand this error
-hook.js:608 [2025-07-31T10:53:05.078Z]  @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+hook.js:608 [2025-07-31T10:53:05.078Z] @firebase/firestore: Firestore (11.10.0): FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 defaultLogHandler @ index.esm2017.js:78
 error @ index.esm2017.js:161
-__PRIVATE_logError @ index.esm2017.js:121
-__PRIVATE__fail @ index.esm2017.js:197
+**PRIVATE_logError @ index.esm2017.js:121
+**PRIVATE\_\_fail @ index.esm2017.js:197
 fail @ index.esm2017.js:182
 ac @ index.esm2017.js:19281
 enqueue @ index.esm2017.js:19223
@@ -4738,25 +4738,25 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14975
-o_ @ index.esm2017.js:14374
+o* @ index.esm2017.js:14374
 eval @ index.esm2017.js:14583
 setTimeout
-P_ @ index.esm2017.js:14578
-z_ @ index.esm2017.js:15115
-W_ @ index.esm2017.js:14972
+P* @ index.esm2017.js:14578
+z* @ index.esm2017.js:15115
+W* @ index.esm2017.js:14972
 eval @ index.esm2017.js:14962
 Promise.then
 auth @ index.esm2017.js:14953
 start @ index.esm2017.js:14858
 start @ index.esm2017.js:15109
-__PRIVATE_startWriteStream @ index.esm2017.js:15609
-__PRIVATE_fillWritePipeline @ index.esm2017.js:15585
-await in __PRIVATE_fillWritePipeline
-__PRIVATE_handleWriteError @ index.esm2017.js:15650
-await in __PRIVATE_handleWriteError
-__PRIVATE_onWriteStreamClose @ index.esm2017.js:15652
+**PRIVATE_startWriteStream @ index.esm2017.js:15609
+**PRIVATE_fillWritePipeline @ index.esm2017.js:15585
+await in **PRIVATE_fillWritePipeline
+**PRIVATE_handleWriteError @ index.esm2017.js:15650
+await in **PRIVATE_handleWriteError
+**PRIVATE_onWriteStreamClose @ index.esm2017.js:15652
 close @ index.esm2017.js:14943
-G_ @ index.esm2017.js:14994
+G* @ index.esm2017.js:14994
 eval @ index.esm2017.js:14978
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:19230
@@ -4767,7 +4767,7 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14978
-__ @ index.esm2017.js:14377
+** @ index.esm2017.js:14377
 eval @ index.esm2017.js:14573
 eval @ index.esm2017.js:14523
 ab @ webchannel_blob_es2018.js:39
@@ -4783,11 +4783,11 @@ h.bb @ webchannel_blob_es2018.js:75
 h.Ea @ webchannel_blob_es2018.js:75
 Lc @ webchannel_blob_es2018.js:71
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
-index.esm2017.js:197 Uncaught Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n    at __PRIVATE__fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n    at __PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n    at __PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n    at Array.forEach (<anonymous>)\n    at __PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n    at __PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n    at __PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n    at __PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
-    at __PRIVATE__fail (index.esm2017.js:197:1)
-    at fail (index.esm2017.js:182:1)
-    at __PRIVATE_AsyncQueueImpl.ac (index.esm2017.js:19281:1)
-    at __PRIVATE_AsyncQueueImpl.enqueue (index.esm2017.js:19223:1)
-    at __PRIVATE_AsyncQueueImpl.enqueueAndForget (index.esm2017.js:19208:1)
-    at DelayedOperation.handleDelayElapsed (index.esm2017.js:15825:1)
-    at eval (index.esm2017.js:15807:1)
+index.esm2017.js:197 Uncaught Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: b815) CONTEXT: {"hc":"Error: FIRESTORE (11.10.0) INTERNAL ASSERTION FAILED: Unexpected state (ID: ca9) CONTEXT: {\"ve\":-1}\n at **PRIVATE**fail (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:327:34)\n at **PRIVATE_hardAssert (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:332:48)\n at **PRIVATE_TargetState.Ue (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6665:23)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6710:19)\n at Array.forEach (<anonymous>)\n at **PRIVATE_WatchChangeAggregator.forEachTarget (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6749:46)\n at **PRIVATE_WatchChangeAggregator.et (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:6700:14)\n at **PRIVATE_onWatchStreamChange (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15622:139)\n at **PRIVATE_PersistentListenStream.onNext (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15167:30)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15110:57)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:15133:61)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19360:73)\n at eval (webpack-internal:///(app-pages-browser)/./node_modules/@firebase/firestore/dist/index.esm2017.js:19393:54)"}
+at **PRIVATE**fail (index.esm2017.js:197:1)
+at fail (index.esm2017.js:182:1)
+at **PRIVATE_AsyncQueueImpl.ac (index.esm2017.js:19281:1)
+at **PRIVATE_AsyncQueueImpl.enqueue (index.esm2017.js:19223:1)
+at **PRIVATE_AsyncQueueImpl.enqueueAndForget (index.esm2017.js:19208:1)
+at DelayedOperation.handleDelayElapsed (index.esm2017.js:15825:1)
+at eval (index.esm2017.js:15807:1)

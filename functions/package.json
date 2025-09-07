@@ -13,10 +13,10 @@
     "deploy:performance": "firebase deploy --only functions:performanceDashboard,functions:realtimeMetrics,functions:healthCheck",
     "logs": "firebase functions:log",
     "logs:performance": "firebase functions:log --only performanceDashboard,realtimeMetrics,healthCheck",
-  "test:emulator": "firebase emulators:exec --only firestore 'npm run test'",
-  "test": "mocha -r ts-node/register 'test/**/*.test.ts' --timeout 20000",
-  "test:ci": "firebase emulators:exec --only firestore 'npm test'",
-  "backfill:invoices": "ts-node src/scripts/backfill-stripe-invoices.ts"
+    "test:emulator": "firebase emulators:exec --only firestore 'npm run test'",
+    "test": "mocha -r ts-node/register 'test/**/*.test.ts' --timeout 20000",
+    "test:ci": "firebase emulators:exec --only firestore 'npm test'",
+    "backfill:invoices": "ts-node src/scripts/backfill-stripe-invoices.ts"
   },
   "engines": {
     "node": "20"
@@ -30,7 +30,7 @@
     "cheerio": "^1.1.0",
     "cors": "^2.8.5",
     "firebase-admin": "^12.7.0",
-  "firebase-functions": "^6.3.2",
+    "firebase-functions": "^6.3.2",
     "glob": "^11.0.3",
     "openai": "^5.8.3",
     "stripe": "^18.3.0",

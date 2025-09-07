@@ -19,21 +19,31 @@ test.describe("Team Chat - Comprehensive Suite", () => {
   });
 
   test.describe("Page Loading and Navigation", () => {
-    test("loads team chat page with proper authentication", async ({ page }) => {
+    test("loads team chat page with proper authentication", async ({
+      page,
+    }) => {
       console.log("💬 Testing Team Chat page loading...");
 
       // Test with starter tier (should have access)
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
       // Wait for primary chat container to render
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Verify page loads correctly
       await expect(page.locator("h1")).toContainText("Team Chat");
-      await expect(page.locator("text=Collaborate with your team in real-time")).toBeVisible();
+      await expect(
+        page.locator("text=Collaborate with your team in real-time")
+      ).toBeVisible();
 
       // Verify navigation elements
-      await expect(page.locator("button", { hasText: "Back to Team" })).toBeVisible();
+      await expect(
+        page.locator("button", { hasText: "Back to Team" })
+      ).toBeVisible();
 
       console.log("✅ Team Chat page loads correctly");
     });
@@ -53,7 +63,11 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       const backButton = page.locator("button", { hasText: "Back to Team" });
       await expect(backButton).toBeVisible();
@@ -72,7 +86,11 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Verify sidebar with channels
       await expect(page.locator("text=Channels")).toBeVisible();
@@ -80,7 +98,9 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       // Verify main chat area
       await expect(page.locator("text=Messages")).toBeVisible();
-      await expect(page.locator("input[placeholder*='Type a message']")).toBeVisible();
+      await expect(
+        page.locator("input[placeholder*='Type a message']")
+      ).toBeVisible();
 
       // Verify online users section
       await expect(page.locator("text=Online")).toBeVisible();
@@ -101,7 +121,11 @@ test.describe("Team Chat - Comprehensive Suite", () => {
       await expect(page.locator("text=random")).toBeVisible();
 
       // Check channel indicators
-      await expect(page.locator("svg").filter({ has: page.locator("title", { hasText: "Hash" }) })).toBeVisible();
+      await expect(
+        page
+          .locator("svg")
+          .filter({ has: page.locator("title", { hasText: "Hash" }) })
+      ).toBeVisible();
 
       console.log("✅ Default channels display correctly");
     });
@@ -111,7 +135,11 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Click on different channel
       const seoChannel = page.locator("text=seo-discussion");
@@ -136,17 +164,25 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Type and send a message
       const messageInput = page.locator("input[placeholder*='Type a message']");
       await messageInput.fill("Hello team! This is a test message.");
 
-      const sendButton = page.locator("button").filter({ has: page.locator("svg[title='Send']") });
+      const sendButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg[title='Send']") });
       await sendButton.click();
 
       // Verify message appears in chat
-      await expect(page.locator("text=Hello team! This is a test message.")).toBeVisible();
+      await expect(
+        page.locator("text=Hello team! This is a test message.")
+      ).toBeVisible();
 
       console.log("✅ Message sending works correctly");
     });
@@ -156,17 +192,25 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Send a message
       const messageInput = page.locator("input[placeholder*='Type a message']");
       await messageInput.fill("Test message with metadata");
 
-      const sendButton = page.locator("button").filter({ has: page.locator("svg[title='Send']") });
+      const sendButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg[title='Send']") });
       await sendButton.click();
 
       // Verify message appears with metadata
-      await expect(page.locator("text=Test message with metadata")).toBeVisible();
+      await expect(
+        page.locator("text=Test message with metadata")
+      ).toBeVisible();
 
       // Check for timestamp (should be "now" or similar)
       await expect(page.locator("text=now")).toBeVisible();
@@ -179,10 +223,16 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Try to send empty message
-      const sendButton = page.locator("button").filter({ has: page.locator("svg[title='Send']") });
+      const sendButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg[title='Send']") });
       await sendButton.click();
 
       // Should not send anything or show validation
@@ -197,12 +247,22 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Should display mock messages
-      await expect(page.locator("text=Hey everyone! Welcome to the team chat")).toBeVisible();
-      await expect(page.locator("text=Great to have everyone here")).toBeVisible();
-      await expect(page.locator("text=Looking forward to collaborating")).toBeVisible();
+      await expect(
+        page.locator("text=Hey everyone! Welcome to the team chat")
+      ).toBeVisible();
+      await expect(
+        page.locator("text=Great to have everyone here")
+      ).toBeVisible();
+      await expect(
+        page.locator("text=Looking forward to collaborating")
+      ).toBeVisible();
 
       console.log("✅ Conversation history displays correctly");
     });
@@ -214,7 +274,11 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Check direct messages section
       await expect(page.locator("text=Direct Messages")).toBeVisible();
@@ -236,7 +300,11 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Click on a team member
       const teamMember = page.locator("text=Sarah Wilson");
@@ -256,7 +324,11 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Check online section
       await expect(page.locator("text=Online")).toBeVisible();
@@ -278,10 +350,16 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Check for avatar components
-      const avatars = page.locator("[data-testid*='avatar'], .avatar, .rounded-full");
+      const avatars = page.locator(
+        "[data-testid*='avatar'], .avatar, .rounded-full"
+      );
       const avatarCount = await avatars.count();
       expect(avatarCount).toBeGreaterThan(0);
 
@@ -299,18 +377,28 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Send a message first to test actions
       const messageInput = page.locator("input[placeholder*='Type a message']");
       await messageInput.fill("Test message for actions");
 
-      const sendButton = page.locator("button").filter({ has: page.locator("svg[title='Send']") });
+      const sendButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg[title='Send']") });
       await sendButton.click();
 
       // Check for attachment and emoji buttons
-      const attachButton = page.locator("button").filter({ has: page.locator("svg[title='Paperclip']") });
-      const emojiButton = page.locator("button").filter({ has: page.locator("svg[title='Smile']") });
+      const attachButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg[title='Paperclip']") });
+      const emojiButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg[title='Smile']") });
 
       await expect(attachButton).toBeVisible();
       await expect(emojiButton).toBeVisible();
@@ -323,18 +411,28 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Check for video call button
-      const videoButton = page.locator("button").filter({ has: page.locator("svg[title='Video']") });
+      const videoButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg[title='Video']") });
       await expect(videoButton).toBeVisible();
 
       // Check for phone call button
-      const phoneButton = page.locator("button").filter({ has: page.locator("svg[title='Phone']") });
+      const phoneButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg[title='Phone']") });
       await expect(phoneButton).toBeVisible();
 
       // Check for settings button
-      const settingsButton = page.locator("button").filter({ has: page.locator("svg[title='Settings']") });
+      const settingsButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg[title='Settings']") });
       await expect(settingsButton).toBeVisible();
 
       console.log("✅ Chat header controls are functional");
@@ -350,14 +448,20 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => {});
 
       // Verify responsive layout
       await expect(page.locator("h1")).toBeVisible();
       await expect(page.locator("text=Team Chat")).toBeVisible();
 
       // Check that message input is accessible
-      await expect(page.locator("input[placeholder*='Type a message']")).toBeVisible();
+      await expect(
+        page.locator("input[placeholder*='Type a message']")
+      ).toBeVisible();
 
       // Test touch-friendly buttons (48px minimum)
       const buttons = page.locator("button");
@@ -381,11 +485,17 @@ test.describe("Team Chat - Comprehensive Suite", () => {
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
       // allow a short, non-fatal network settle to reduce flakiness
-      try { await page.waitForLoadState('networkidle', { timeout: 3000 }); } catch { /* non-fatal */ }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 3000 });
+      } catch {
+        /* non-fatal */
+      }
 
       // On mobile, sidebar might be collapsed or hidden initially
       // The main chat area should still be accessible
-      await expect(page.locator("input[placeholder*='Type a message']")).toBeVisible();
+      await expect(
+        page.locator("input[placeholder*='Type a message']")
+      ).toBeVisible();
 
       console.log("✅ Mobile sidebar behavior works correctly");
     });
@@ -397,7 +507,11 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Start typing in message input
       const messageInput = page.locator("input[placeholder*='Type a message']");
@@ -416,18 +530,26 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      await page.locator('main, [data-testid="team-chat"], .chat-container').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
+      await page
+        .locator('main, [data-testid="team-chat"], .chat-container')
+        .first()
+        .waitFor({ state: "visible", timeout: 15000 })
+        .catch(() => {});
 
       // Verify page loads and maintains functionality
       await expect(page.locator("text=Team Chat")).toBeVisible();
-      await expect(page.locator("input[placeholder*='Type a message']")).toBeVisible();
+      await expect(
+        page.locator("input[placeholder*='Type a message']")
+      ).toBeVisible();
 
       // In real implementation, connection status would be shown
       // For now, verify basic functionality is maintained
       const messageInput = page.locator("input[placeholder*='Type a message']");
       await messageInput.fill("Connection test message");
 
-      const sendButton = page.locator("button").filter({ has: page.locator("svg[title='Send']") });
+      const sendButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg[title='Send']") });
       await sendButton.click();
 
       await expect(page.locator("text=Connection test message")).toBeVisible();
@@ -444,7 +566,9 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       const startTime = Date.now();
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      try { await page.waitForLoadState('networkidle', { timeout: 2000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 2000 });
+      } catch {}
       const loadTime = Date.now() - startTime;
 
       // Should load within 5 seconds
@@ -452,7 +576,9 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       // Check for main interface elements
       await expect(page.locator("text=Team Chat")).toBeVisible();
-      await expect(page.locator("input[placeholder*='Type a message']")).toBeVisible();
+      await expect(
+        page.locator("input[placeholder*='Type a message']")
+      ).toBeVisible();
 
       console.log(`✅ Page loaded in ${loadTime}ms`);
     });
@@ -462,14 +588,18 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/chat", { waitUntil: "domcontentloaded" });
-      try { await page.waitForLoadState('networkidle', { timeout: 2000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 2000 });
+      } catch {}
 
       // Verify message history loads quickly
-      await expect(page.locator("text=Hey everyone! Welcome to the team chat")).toBeVisible();
+      await expect(
+        page.locator("text=Hey everyone! Welcome to the team chat")
+      ).toBeVisible();
 
       // Check scroll area is functional
       const scrollArea = page.locator("[data-testid*='scroll'], .scroll-area");
-      if (await scrollArea.count() > 0) {
+      if ((await scrollArea.count()) > 0) {
         await expect(scrollArea.first()).toBeVisible();
       }
 

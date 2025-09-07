@@ -1,5 +1,15 @@
 /* Mobile Touch Targets - Auto-generated */
-.touch-target { min-width: 48px; min-height: 48px; }
+.touch-target {
+  min-width: 48px;
+  min-height: 48px;
+}
 @media (pointer: coarse) {
-    button, [role="button"], input, select, textarea { min-width: 48px; min-height: 48px; }
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    min-width: 48px;
+    min-height: 48px;
+  }
 }

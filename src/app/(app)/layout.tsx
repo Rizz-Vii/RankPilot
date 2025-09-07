@@ -94,7 +94,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <SidebarMenuItem>
                       <SidebarMenuLink
                         href="/profile"
-                        isActive={pathname === "/profile" || pathname?.startsWith("/profile/")}
+                        isActive={
+                          pathname === "/profile" ||
+                          pathname?.startsWith("/profile/")
+                        }
                         className="w-full"
                       >
                         <div className="h-10 w-10 bg-primary rounded-full flex items-center justify-center shrink-0">
@@ -111,7 +114,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                               {role === "admin" ? "Administrator" : "User"}
                             </p>
                             <div className="flex items-center gap-1">
-                              {(subscription?.tier === "agency" || subscription?.tier === "enterprise") && (
+                              {(subscription?.tier === "agency" ||
+                                subscription?.tier === "enterprise") && (
                                 <Crown className="h-3 w-3 text-accent" />
                               )}
                               {subscription?.tier === "starter" && (
@@ -157,11 +161,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       <SidebarMenuItem>
                         <SidebarMenuLink
                           href="/settings"
-                          isActive={pathname === "/settings" || pathname?.startsWith("/settings/")}
+                          isActive={
+                            pathname === "/settings" ||
+                            pathname?.startsWith("/settings/")
+                          }
                           className="w-full"
                         >
                           <Settings className="h-4 w-4 shrink-0" />
-                          <span className="group-data-[state=collapsed]:hidden">Settings</span>
+                          <span className="group-data-[state=collapsed]:hidden">
+                            Settings
+                          </span>
                         </SidebarMenuLink>
                       </SidebarMenuItem>
                     </ul>
@@ -173,7 +182,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     size="sm"
                     className="w-full justify-start h-10 text-destructive-foreground hover:text-destructive-foreground/80 hover:bg-destructive/10 dark:hover:bg-destructive/20 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-2"
                   >
-                    <Link href="/logout" prefetch={false} className="flex items-center gap-3">
+                    <Link
+                      href="/logout"
+                      prefetch={false}
+                      className="flex items-center gap-3"
+                    >
                       <LogOut className="h-4 w-4 shrink-0" />
                       <span className="group-data-[state=collapsed]:hidden">
                         Sign Out

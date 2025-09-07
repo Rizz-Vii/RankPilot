@@ -7,22 +7,22 @@
  * @pattern-id: AUTO-SCRIPT-GEN-001
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 class AutoScriptGenerator {
   constructor() {
-    this.templatesDir = path.join(__dirname, '../templates');
+    this.templatesDir = path.join(__dirname, "../templates");
     this.outputDirs = {
-      automation: path.join(__dirname, '../automation'),
-      solutions: path.join(__dirname, '../solutions'),
-      utilities: path.join(__dirname, '../utilities')
+      automation: path.join(__dirname, "../automation"),
+      solutions: path.join(__dirname, "../solutions"),
+      utilities: path.join(__dirname, "../utilities"),
     };
-    
+
     this.scriptCounter = {
-      automation: this.getNextId('automation'),
-      solutions: this.getNextId('solutions'),
-      utilities: this.getNextId('utilities')
+      automation: this.getNextId("automation"),
+      solutions: this.getNextId("solutions"),
+      utilities: this.getNextId("utilities"),
     };
   }
 
@@ -34,27 +34,27 @@ class AutoScriptGenerator {
       category,
       problemDescription,
       solutionCode,
-      language = 'javascript',
-      patternId
+      language = "javascript",
+      patternId,
     } = problemData;
 
-    const scriptId = String(this.scriptCounter.solutions).padStart(3, '0');
+    const scriptId = String(this.scriptCounter.solutions).padStart(3, "0");
     const fileName = `solution-${category}-${scriptId}-v1.${this.getExtension(language)}`;
     const filePath = path.join(this.outputDirs.solutions, fileName);
 
     const scriptContent = this.generateScriptTemplate({
-      type: 'solution',
+      type: "solution",
       category,
       problemDescription,
       solutionCode,
       language,
       patternId,
-      scriptId
+      scriptId,
     });
 
     fs.writeFileSync(filePath, scriptContent);
     this.scriptCounter.solutions++;
-    
+
     console.log(`✅ Generated solution script: ${fileName}`);
     return filePath;
   }
@@ -66,23 +66,23 @@ class AutoScriptGenerator {
     const {
       taskName,
       automationCode,
-      language = 'javascript',
-      triggers = []
+      language = "javascript",
+      triggers = [],
     } = automationData;
 
     const fileName = `auto-${taskName}-v1.${this.getExtension(language)}`;
     const filePath = path.join(this.outputDirs.automation, fileName);
 
     const scriptContent = this.generateScriptTemplate({
-      type: 'automation',
+      type: "automation",
       taskName,
       automationCode,
       language,
-      triggers
+      triggers,
     });
 
     fs.writeFileSync(filePath, scriptContent);
-    
+
     console.log(`✅ Generated automation script: ${fileName}`);
     return filePath;
   }
@@ -94,23 +94,23 @@ class AutoScriptGenerator {
     const {
       functionName,
       utilityCode,
-      language = 'javascript',
-      description
+      language = "javascript",
+      description,
     } = utilityData;
 
     const fileName = `util-${functionName}-v1.${this.getExtension(language)}`;
     const filePath = path.join(this.outputDirs.utilities, fileName);
 
     const scriptContent = this.generateScriptTemplate({
-      type: 'utility',
+      type: "utility",
       functionName,
       utilityCode,
       language,
-      description
+      description,
     });
 
     fs.writeFileSync(filePath, scriptContent);
-    
+
     console.log(`✅ Generated utility script: ${fileName}`);
     return filePath;
   }
@@ -121,7 +121,7 @@ class AutoScriptGenerator {
   generateScriptTemplate(data) {
     const header = this.generateHeader(data);
     const body = this.generateBody(data);
-    
+
     return `${header}\n\n${body}`;
   }
 
@@ -130,31 +130,31 @@ class AutoScriptGenerator {
    */
   generateHeader(data) {
     const timestamp = new Date().toISOString();
-    
-    if (data.language === 'javascript') {
+
+    if (data.language === "javascript") {
       return `/**
  * @pilotbuddy-script
  * @category: ${data.type}
  * @problem: ${data.problemDescription || data.taskName || data.functionName}
  * @usage: node pilotScripts/${data.type}/${this.getFileName(data)}
  * @generated: ${timestamp}
- * @pattern-id: ${data.patternId || 'AUTO-GEN-' + Date.now()}
+ * @pattern-id: ${data.patternId || "AUTO-GEN-" + Date.now()}
  */`;
-    } else if (data.language === 'powershell') {
+    } else if (data.language === "powershell") {
       return `<#
  * @pilotbuddy-script
  * @category: ${data.type}
  * @problem: ${data.problemDescription || data.taskName || data.functionName}
  * @usage: powershell -ExecutionPolicy Bypass -File pilotScripts/${data.type}/${this.getFileName(data)}
  * @generated: ${timestamp}
- * @pattern-id: ${data.patternId || 'AUTO-GEN-' + Date.now()}
+ * @pattern-id: ${data.patternId || "AUTO-GEN-" + Date.now()}
 #>`;
     } else {
       return `# @pilotbuddy-script
 # @category: ${data.type}
 # @problem: ${data.problemDescription || data.taskName || data.functionName}
 # @generated: ${timestamp}
-# @pattern-id: ${data.patternId || 'AUTO-GEN-' + Date.now()}`;
+# @pattern-id: ${data.patternId || "AUTO-GEN-" + Date.now()}`;
     }
   }
 
@@ -165,15 +165,15 @@ class AutoScriptGenerator {
     if (data.solutionCode) {
       return data.solutionCode;
     }
-    
+
     if (data.automationCode) {
       return data.automationCode;
     }
-    
+
     if (data.utilityCode) {
       return data.utilityCode;
     }
-    
+
     // Generate basic template if no code provided
     return this.generateBasicTemplate(data);
   }
@@ -182,7 +182,7 @@ class AutoScriptGenerator {
    * Generate basic script template
    */
   generateBasicTemplate(data) {
-    if (data.language === 'javascript') {
+    if (data.language === "javascript") {
       return `console.log('🤖 PilotBuddy Auto-Generated Script');
 console.log('Script: ${data.type}');
 console.log('Purpose: ${data.problemDescription || data.taskName || data.functionName}');
@@ -190,7 +190,7 @@ console.log('Purpose: ${data.problemDescription || data.taskName || data.functio
 // TODO: Implement ${data.type} logic here
 
 module.exports = { /* Export your functions here */ };`;
-    } else if (data.language === 'powershell') {
+    } else if (data.language === "powershell") {
       return `Write-Host "🤖 PilotBuddy Auto-Generated Script" -ForegroundColor Green
 Write-Host "Script: ${data.type}" -ForegroundColor Cyan
 Write-Host "Purpose: ${data.problemDescription || data.taskName || data.functionName}" -ForegroundColor Yellow
@@ -210,23 +210,23 @@ echo "Purpose: ${data.problemDescription || data.taskName || data.functionName}"
    */
   getExtension(language) {
     const extensions = {
-      javascript: 'js',
-      typescript: 'ts',
-      powershell: 'ps1',
-      bash: 'sh',
-      python: 'py'
+      javascript: "js",
+      typescript: "ts",
+      powershell: "ps1",
+      bash: "sh",
+      python: "py",
     };
-    
-    return extensions[language] || 'txt';
+
+    return extensions[language] || "txt";
   }
 
   /**
    * Get filename from data
    */
   getFileName(data) {
-    if (data.type === 'solution') {
+    if (data.type === "solution") {
       return `solution-${data.category}-${data.scriptId}-v1.${this.getExtension(data.language)}`;
-    } else if (data.type === 'automation') {
+    } else if (data.type === "automation") {
       return `auto-${data.taskName}-v1.${this.getExtension(data.language)}`;
     } else {
       return `util-${data.functionName}-v1.${this.getExtension(data.language)}`;
@@ -241,12 +241,12 @@ echo "Purpose: ${data.problemDescription || data.taskName || data.functionName}"
       const dir = this.outputDirs[type];
       const files = fs.readdirSync(dir);
       const nums = files
-        .map(f => {
+        .map((f) => {
           const match = f.match(/(\d+)/);
           return match ? parseInt(match[1]) : 0;
         })
-        .filter(n => n > 0);
-      
+        .filter((n) => n > 0);
+
       return nums.length > 0 ? Math.max(...nums) + 1 : 1;
     } catch {
       return 1;
@@ -258,19 +258,18 @@ echo "Purpose: ${data.problemDescription || data.taskName || data.functionName}"
    */
   updatePackageJsonScripts(scriptPath, scriptType, scriptName) {
     try {
-      const packagePath = path.join(process.cwd(), 'package.json');
-      const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf-8'));
-      
+      const packagePath = path.join(process.cwd(), "package.json");
+      const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf-8"));
+
       const scriptCommand = `node ${path.relative(process.cwd(), scriptPath)}`;
       const scriptKey = `pilot:${scriptType}:${scriptName}`;
-      
+
       packageJson.scripts[scriptKey] = scriptCommand;
-      
+
       fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
       console.log(`📦 Added npm script: ${scriptKey}`);
-      
     } catch (error) {
-      console.warn('Warning: Could not update package.json:', error.message);
+      console.warn("Warning: Could not update package.json:", error.message);
     }
   }
 }
@@ -278,8 +277,8 @@ echo "Purpose: ${data.problemDescription || data.taskName || data.functionName}"
 // Example usage patterns for PilotBuddy integration
 const examples = {
   eslintSolution: {
-    category: 'eslint-compatibility',
-    problemDescription: 'ESLint v9.x compatibility with Next.js 15.4.1',
+    category: "eslint-compatibility",
+    problemDescription: "ESLint v9.x compatibility with Next.js 15.4.1",
     solutionCode: `const { execSync } = require('child_process');
 
 try {
@@ -288,12 +287,12 @@ try {
   console.log('Applying fallback ESLint configuration...');
   execSync('node scripts/build-skip-typecheck.js', { stdio: 'inherit' });
 }`,
-    language: 'javascript',
-    patternId: 'ESLINT-COMPAT-001'
+    language: "javascript",
+    patternId: "ESLINT-COMPAT-001",
   },
-  
+
   markdownAutomation: {
-    taskName: 'markdown-lint-watch',
+    taskName: "markdown-lint-watch",
     automationCode: `const { spawn } = require('child_process');
 
 const watcher = spawn('nodemon', [
@@ -303,9 +302,9 @@ const watcher = spawn('nodemon', [
 ], { stdio: 'inherit' });
 
 console.log('👁️ Watching markdown files for changes...');`,
-    language: 'javascript',
-    triggers: ['file-change', 'markdown-edit']
-  }
+    language: "javascript",
+    triggers: ["file-change", "markdown-edit"],
+  },
 };
 
 module.exports = { AutoScriptGenerator, examples };

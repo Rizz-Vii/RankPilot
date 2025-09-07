@@ -12,14 +12,14 @@ Guarantee every AI / ML generated or transformed response leaving the platform c
 
 ## Allowed Tags
 
-| Tag | Meaning | Typical Source |
-| --- | ------- | -------------- |
-| `live` | Fresh model inference or real-time analysis | Direct LLM or orchestrator result |
-| `cache` | Retrieved from internal cache layer | Cached response reuse |
-| `synthetic` | Fabricated fallback or error-safe substitute | Graceful degradation path |
-| `hybrid` | Merged cached + live fragments | Partial refresh strategy |
-| `mixed` | Multiple heterogeneous live sources combined | Multi-model ensemble result |
-| `unknown` | Middleware injected default (should be eliminated) | Missing explicit tag in handler |
+| Tag         | Meaning                                            | Typical Source                    |
+| ----------- | -------------------------------------------------- | --------------------------------- |
+| `live`      | Fresh model inference or real-time analysis        | Direct LLM or orchestrator result |
+| `cache`     | Retrieved from internal cache layer                | Cached response reuse             |
+| `synthetic` | Fabricated fallback or error-safe substitute       | Graceful degradation path         |
+| `hybrid`    | Merged cached + live fragments                     | Partial refresh strategy          |
+| `mixed`     | Multiple heterogeneous live sources combined       | Multi-model ensemble result       |
+| `unknown`   | Middleware injected default (should be eliminated) | Missing explicit tag in handler   |
 
 ## Enforcement Primitives
 
@@ -63,10 +63,10 @@ Operational / metrics endpoints (health, diagnostics, metrics export) are exempt
 
 Scripts:
 
-* `npm run test:provenance` – behavioral tests.
-* `npm run test:provenance-coverage` – code pattern enforcement.
-* `npm run test:provenance-audit` – path heuristic audit.
-* `npm run test:provenance-negative` – ensures absence detection still works.
+- `npm run test:provenance` – behavioral tests.
+- `npm run test:provenance-coverage` – code pattern enforcement.
+- `npm run test:provenance-audit` – path heuristic audit.
+- `npm run test:provenance-negative` – ensures absence detection still works.
 
 Deploy must fail if coverage < 100% (critical alert also raised in `/api/health`).
 
@@ -84,12 +84,12 @@ Target: 100%.
 
 ## Tag Guidance
 
-* `live`: Fresh inference / analysis.
-* `cache`: Entire result reused intact.
-* `hybrid`: Some sections refreshed, some reused.
-* `mixed`: Multi-source ensemble.
-* `synthetic`: Fallback (timeouts, upstream failure, validation or auth rejection).
-* `unknown`: Development defect – fix immediately.
+- `live`: Fresh inference / analysis.
+- `cache`: Entire result reused intact.
+- `hybrid`: Some sections refreshed, some reused.
+- `mixed`: Multi-source ensemble.
+- `synthetic`: Fallback (timeouts, upstream failure, validation or auth rejection).
+- `unknown`: Development defect – fix immediately.
 
 ## New AI Route Checklist
 
@@ -102,10 +102,10 @@ Target: 100%.
 
 ## Future Enhancements
 
-* AST-based audit.
-* Exemption registry with hashed file content.
-* Daily coverage trend snapshots.
-* ESLint rule for untagged AI responses.
+- AST-based audit.
+- Exemption registry with hashed file content.
+- Daily coverage trend snapshots.
+- ESLint rule for untagged AI responses.
 
 ## Ownership
 
@@ -113,4 +113,5 @@ Observability Lead (TBD) – metrics integrity.
 Platform Lead (TBD) – middleware evolution.
 
 ---
+
 Version: 1.0.0 (2025-08-11)

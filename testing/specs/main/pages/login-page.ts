@@ -1,4 +1,4 @@
-import type { Page, Locator} from "@playwright/test";
+import type { Page, Locator } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { randomDelay } from "../utils/test-utils";
 

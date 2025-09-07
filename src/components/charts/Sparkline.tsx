@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React from "react";
 
 interface SparklineProps {
   data: number[];
@@ -14,7 +14,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
   data,
   width = 120,
   height = 32,
-  stroke = 'hsl(var(--primary))',
+  stroke = "hsl(var(--primary))",
   strokeWidth = 2,
   className,
 }) => {
@@ -29,7 +29,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
       const y = height - ((v - min) / range) * height;
       return `${x},${y}`;
     })
-    .join(' ');
+    .join(" ");
   const last = data[data.length - 1];
   const prev = data.length > 1 ? data[data.length - 2] : last;
   const up = last >= prev;
@@ -55,8 +55,8 @@ export const Sparkline: React.FC<SparklineProps> = ({
       </svg>
       <div className="mt-1 text-[10px] font-medium flex items-center gap-1 text-muted-foreground">
         <span>{last}</span>
-        <span className={up ? 'text-green-600' : 'text-red-600'}>
-          {up ? '▲' : '▼'}
+        <span className={up ? "text-green-600" : "text-red-600"}>
+          {up ? "▲" : "▼"}
         </span>
       </div>
     </div>

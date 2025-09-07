@@ -2,6 +2,22 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "emulator:firestore:bg",
+      "type": "shell",
+      "command": "npx firebase emulators:start --only firestore",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "firestore-emulator",
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*Starting.*Emulator|.* emulators:start",
+          "endsPattern": ".*Firestore Emulator running|.*All emulators ready|.*ui .* Running"
+        }
+      },
+      "group": "build"
+    },
+    {
       "label": "dev-server",
       "type": "shell",
       "command": "npm run dev-no-turbopack",
@@ -105,7 +121,7 @@
     {
       "label": "delegation:auto",
       "type": "shell",
-      "command": "AIDER_AUTORUN=1 npm run delegate:process",
+      "command": "cross-env AIDER_AUTORUN=1 npm run delegate:process",
       "isBackground": true,
       "problemMatcher": {
         "owner": "delegation",
@@ -231,7 +247,7 @@
     {
       "label": "codex:concurrent-loop",
       "type": "shell",
-      "command": "CODEX_SELECTIVE=1 npm run codex:loop",
+      "command": "cross-env CODEX_SELECTIVE=1 npm run codex:loop",
       "isBackground": true,
       "problemMatcher": {
         "owner": "codex-concurrent-loop",

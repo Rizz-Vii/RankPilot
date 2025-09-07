@@ -2,10 +2,10 @@ name: 🎯 Integration Stage - Deployment-Ready to Staging Auto-Deploy
 
 on:
   workflow_run:
-    workflows: 
+    workflows:
       - "🎯 Main Hub - Performance to Deployment-Ready Promotion"
     types: [completed]
-    branches: 
+    branches:
       - workshop/deployment-ready
 
   push:
@@ -13,12 +13,12 @@ on:
       - workshop/deployment-ready
 
 env:
-  NODE_VERSION: '20.x'
-  FIREBASE_PROJECT_ID: 'rankpilot-h3jpc'
+  NODE_VERSION: "20.x"
+  FIREBASE_PROJECT_ID: "rankpilot-h3jpc"
   # Centralized Environment URLs
-  LEAN_URL: 'https://rankpilot-h3jpc--lean-branch-testing-o2qips67.web.app'
-  PERFORMANCE_URL: 'https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app'
-  PRODUCTION_URL: 'https://rankpilot-h3jpc.web.app'
+  LEAN_URL: "https://rankpilot-h3jpc--lean-branch-testing-o2qips67.web.app"
+  PERFORMANCE_URL: "https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app"
+  PRODUCTION_URL: "https://rankpilot-h3jpc.web.app"
 
 jobs:
   final-validation-testing:
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest-4-cores
     timeout-minutes: 30
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'push'
-    
+
     steps:
       - name: 📥 Checkout Deployment-Ready
         uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: 📦 Install Dependencies
         run: |
@@ -96,7 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: final-validation-testing
     if: success()
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -108,11 +108,11 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          
+
           # Checkout staging
           git checkout staging
           git pull origin staging
-          
+
           # Merge deployment-ready with all final validations
           echo "🚀 Deploying workshop/deployment-ready → staging (LIVE-COPY/BACKUP)"
           git merge origin/workshop/deployment-ready --no-ff -m "🚀 Auto-deploy: deployment-ready → staging (LIVE-COPY/BACKUP)
@@ -122,7 +122,7 @@ jobs:
           ✅ Performance benchmarks confirmed
           ✅ Security standards validated
           🎯 STAGING: Live-copy deployment ready for production"
-          
+
           # Push to trigger staging environment deployment
           git push origin staging
 

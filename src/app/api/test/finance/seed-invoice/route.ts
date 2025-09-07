@@ -1,7 +1,7 @@
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
-import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { enforceProvenance, withProvenance } from "@/lib/middleware/provenance";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 /**
  * Test-only endpoint: seeds a single financeInvoices doc for the authenticated user (or team) to drive live metrics.
@@ -11,81 +11,118 @@ import { NextResponse } from 'next/server';
  *  - status=paid|draft (default paid)
  *  - team=1 (if present and user has teamId claim, writes team scoped invoice)
  */
-export const POST = withProvenance(async function POST(req: NextRequest) {
-    if (process.env.NODE_ENV === 'production') {
-        return NextResponse.json(
-            enforceProvenance({ error: 'disabled' }, { path: 'test/finance/seed-invoice', note: 'disabled' }),
-            { status: 404 }
-        );
+export const POST = withProvenance(
+  async function POST(req: NextRequest) {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        enforceProvenance(
+          { error: "disabled" },
+          { path: "test/finance/seed-invoice", note: "disabled" }
+        ),
+        { status: 404 }
+      );
     }
     try {
-        const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization');
-        let uid: string | undefined;
-        let decoded: { uid?: string; teamId?: string } | undefined;
-        if (!authHeader) {
-            // Non-production test bypass: ?testUser=email@example.com seeds for that user without auth
-            const testUserEmail = new URL(req.url).searchParams.get('testUser');
-            if (testUserEmail) {
-                const rec = await adminAuth.getUserByEmail(testUserEmail).catch(() => null);
-                if (!rec) {
-                    const unknownBody = enforceProvenance({ error: 'unknown_test_user' }, { path: 'test/finance/seed-invoice', note: 'missing_auth_testUser_invalid' });
-                    return NextResponse.json(unknownBody, { status: 400 });
-                }
-                uid = rec.uid;
-                decoded = { uid };
-            } else {
-                const authBody = enforceProvenance({ error: 'auth_required' }, { path: 'test/finance/seed-invoice', note: 'missing_auth' });
-                return NextResponse.json(authBody, { status: 401 });
-            }
+      const authHeader =
+        req.headers.get("authorization") ?? req.headers.get("Authorization");
+      let uid: string | undefined;
+      let decoded: { uid?: string; teamId?: string } | undefined;
+      if (!authHeader) {
+        // Non-production test bypass: ?testUser=email@example.com seeds for that user without auth
+        const testUserEmail = new URL(req.url).searchParams.get("testUser");
+        if (testUserEmail) {
+          const rec = await adminAuth
+            .getUserByEmail(testUserEmail)
+            .catch(() => null);
+          if (!rec) {
+            const unknownBody = enforceProvenance(
+              { error: "unknown_test_user" },
+              {
+                path: "test/finance/seed-invoice",
+                note: "missing_auth_testUser_invalid",
+              }
+            );
+            return NextResponse.json(unknownBody, { status: 400 });
+          }
+          uid = rec.uid;
+          decoded = { uid };
         } else {
-            const idToken = authHeader.replace(/^Bearer\s+/i, '');
-            decoded = await adminAuth.verifyIdToken(idToken);
-            uid = decoded.uid;
+          const authBody = enforceProvenance(
+            { error: "auth_required" },
+            { path: "test/finance/seed-invoice", note: "missing_auth" }
+          );
+          return NextResponse.json(authBody, { status: 401 });
         }
-        const url = new URL(req.url);
-        const amountParam = url.searchParams.get('amount');
-        const statusParam = url.searchParams.get('status');
-        const useTeam = url.searchParams.get('team') === '1';
-        // Optional deterministic period override (non-prod only): period=YYYY-MM
-        const periodParam = url.searchParams.get('period');
-        const periodOverride = (periodParam && /^\d{4}-\d{2}$/.test(periodParam)) ? periodParam : undefined;
-        const amount = amountParam ? Math.max(1, Number(amountParam)) : Math.floor(50 + Math.random() * 200);
-        const status = statusParam === 'draft' ? 'draft' : 'paid';
-        const now = new Date();
-        const period = periodOverride || now.toISOString().slice(0, 7); // YYYY-MM
-        interface InvoiceDoc {
-            userId?: string;
-            period: string;
-            amount: number;
-            status: string;
-            issuedAt: Date;
-            dueAt: Date;
-            createdAt: Date;
-            updatedAt: Date;
-            planTier: string;
-            teamId?: string;
-            paidAt?: Date;
-        }
-        const doc: InvoiceDoc = {
-            userId: uid,
-            period,
-            amount,
-            status,
-            issuedAt: now,
-            dueAt: now,
-            createdAt: now,
-            updatedAt: now,
-            planTier: 'starter'
-        };
-        const teamId = decoded?.teamId;
-        if (useTeam && teamId) { doc.teamId = teamId; }
-        if (status === 'paid') doc.paidAt = now;
-        await adminDb.collection('financeInvoices').add(doc);
-        const okBody = enforceProvenance({ ok: true, period, status, amount, deterministic: Boolean(periodOverride) }, { path: 'test/finance/seed-invoice', note: 'seeded' });
-        return NextResponse.json(okBody);
+      } else {
+        const idToken = authHeader.replace(/^Bearer\s+/i, "");
+        decoded = await adminAuth.verifyIdToken(idToken);
+        uid = decoded.uid;
+      }
+      const url = new URL(req.url);
+      const amountParam = url.searchParams.get("amount");
+      const statusParam = url.searchParams.get("status");
+      const useTeam = url.searchParams.get("team") === "1";
+      // Optional deterministic period override (non-prod only): period=YYYY-MM
+      const periodParam = url.searchParams.get("period");
+      const periodOverride =
+        periodParam && /^\d{4}-\d{2}$/.test(periodParam)
+          ? periodParam
+          : undefined;
+      const amount = amountParam
+        ? Math.max(1, Number(amountParam))
+        : Math.floor(50 + Math.random() * 200);
+      const status = statusParam === "draft" ? "draft" : "paid";
+      const now = new Date();
+      const period = periodOverride || now.toISOString().slice(0, 7); // YYYY-MM
+      interface InvoiceDoc {
+        userId?: string;
+        period: string;
+        amount: number;
+        status: string;
+        issuedAt: Date;
+        dueAt: Date;
+        createdAt: Date;
+        updatedAt: Date;
+        planTier: string;
+        teamId?: string;
+        paidAt?: Date;
+      }
+      const doc: InvoiceDoc = {
+        userId: uid,
+        period,
+        amount,
+        status,
+        issuedAt: now,
+        dueAt: now,
+        createdAt: now,
+        updatedAt: now,
+        planTier: "starter",
+      };
+      const teamId = decoded?.teamId;
+      if (useTeam && teamId) {
+        doc.teamId = teamId;
+      }
+      if (status === "paid") doc.paidAt = now;
+      await adminDb.collection("financeInvoices").add(doc);
+      const okBody = enforceProvenance(
+        {
+          ok: true,
+          period,
+          status,
+          amount,
+          deterministic: Boolean(periodOverride),
+        },
+        { path: "test/finance/seed-invoice", note: "seeded" }
+      );
+      return NextResponse.json(okBody);
     } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : String(e);
-        const errBody = enforceProvenance({ error: 'internal_error', message }, { path: 'test/finance/seed-invoice', note: 'exception' });
-        return NextResponse.json(errBody, { status: 500 });
+      const message = e instanceof Error ? e.message : String(e);
+      const errBody = enforceProvenance(
+        { error: "internal_error", message },
+        { path: "test/finance/seed-invoice", note: "exception" }
+      );
+      return NextResponse.json(errBody, { status: 500 });
     }
-}, { path: 'test/finance/seed-invoice' });
+  },
+  { path: "test/finance/seed-invoice" }
+);

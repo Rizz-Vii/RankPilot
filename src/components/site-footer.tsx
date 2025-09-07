@@ -72,7 +72,9 @@ export default function SiteFooter() {
   const [emailSubscription, setEmailSubscription] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
 
-  const handleNewsletterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleNewsletterSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
     setIsSubscribing(true);
 
@@ -126,7 +128,9 @@ export default function SiteFooter() {
               delivered to your inbox.
             </p>
             <form
-              onSubmit={(e) => { void handleNewsletterSubmit(e); }}
+              onSubmit={(e) => {
+                void handleNewsletterSubmit(e);
+              }}
               className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
             >
               <Input

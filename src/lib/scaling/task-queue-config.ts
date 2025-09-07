@@ -3,7 +3,7 @@
  * Implements message queue integration for horizontal scaling
  */
 
-import { CloudTasksClient } from '@google-cloud/tasks';
+import { CloudTasksClient } from "@google-cloud/tasks";
 
 interface TaskQueueConfig {
   projectId: string;
@@ -14,9 +14,9 @@ interface TaskQueueConfig {
 }
 
 export const taskQueueConfig: TaskQueueConfig = {
-  projectId: process.env.GOOGLE_CLOUD_PROJECT || 'rankpilot-h3jpc',
-  location: process.env.GOOGLE_CLOUD_LOCATION || 'australia-southeast2',
-  queueName: 'neuroseo-processing-queue',
+  projectId: process.env.GOOGLE_CLOUD_PROJECT || "rankpilot-h3jpc",
+  location: process.env.GOOGLE_CLOUD_LOCATION || "australia-southeast2",
+  queueName: "neuroseo-processing-queue",
   maxConcurrentRequests: 10,
   maxRetries: 3,
 };
@@ -41,14 +41,14 @@ export class TaskQueueManager {
     urls: string[];
     targetKeywords: string[];
     userId: string;
-    analysisType: 'comprehensive' | 'quick' | 'competitor';
+    analysisType: "comprehensive" | "quick" | "competitor";
   }) {
     const task = {
       httpRequest: {
-        httpMethod: 'POST' as const,
+        httpMethod: "POST" as const,
         url: `${process.env.FUNCTIONS_URL}/api/neuroseo/process`,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: Buffer.from(JSON.stringify(payload)),
       },
@@ -62,11 +62,11 @@ export class TaskQueueManager {
         parent: this.queuePath,
         task,
       });
-      
+
       console.log(`Task created: ${response.name}`);
       return response;
     } catch (error) {
-      console.error('Error creating task:', error);
+      console.error("Error creating task:", error);
       throw error;
     }
   }
@@ -85,26 +85,30 @@ export class TaskQueueManager {
     for (const [index, batch] of batches.entries()) {
       const task = {
         httpRequest: {
-          httpMethod: 'POST' as const,
+          httpMethod: "POST" as const,
           url: `${process.env.FUNCTIONS_URL}/api/keywords/batch-analyze`,
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: Buffer.from(JSON.stringify({
-            keywords: batch,
-            userId: payload.userId,
-            batchIndex: index,
-          })),
+          body: Buffer.from(
+            JSON.stringify({
+              keywords: batch,
+              userId: payload.userId,
+              batchIndex: index,
+            })
+          ),
         },
         scheduleTime: {
-          seconds: Date.now() / 1000 + (index * 30), // Stagger by 30 seconds
+          seconds: Date.now() / 1000 + index * 30, // Stagger by 30 seconds
         },
       };
 
-      tasks.push(this.client.createTask({
-        parent: this.queuePath,
-        task,
-      }));
+      tasks.push(
+        this.client.createTask({
+          parent: this.queuePath,
+          task,
+        })
+      );
     }
 
     try {
@@ -112,7 +116,7 @@ export class TaskQueueManager {
       console.log(`Created ${responses.length} batch tasks`);
       return responses;
     } catch (error) {
-      console.error('Error creating batch tasks:', error);
+      console.error("Error creating batch tasks:", error);
       throw error;
     }
   }

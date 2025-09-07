@@ -76,7 +76,12 @@ export default function UnifiedMobileSidebar({
 
   if (!isMounted || !isMobile) {
     // Pre-hydration: avoid layout shift and disabled/opacity artifacts
-    return <span className="md:hidden inline-block h-12 w-12 min-h-[48px] min-w-[48px]" aria-hidden />;
+    return (
+      <span
+        className="md:hidden inline-block h-12 w-12 min-h-[48px] min-w-[48px]"
+        aria-hidden
+      />
+    );
   }
 
   return (
@@ -104,7 +109,7 @@ export default function UnifiedMobileSidebar({
         className="w-80 p-0 bg-sidebar text-sidebar-foreground border-sidebar-border"
         id={`${mode}-mobile-drawer`}
         data-testid="mobile-drawer"
-        data-state={isOpen ? 'open' : 'closed'}
+        data-state={isOpen ? "open" : "closed"}
         role="dialog"
         aria-modal="true"
         aria-labelledby={`${mode}-mobile-drawer-title`}
@@ -112,7 +117,9 @@ export default function UnifiedMobileSidebar({
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-sidebar-border bg-sidebar shrink-0">
-            <h2 id={`${mode}-mobile-drawer-title`} className="sr-only">Mobile navigation menu</h2>
+            <h2 id={`${mode}-mobile-drawer-title`} className="sr-only">
+              Mobile navigation menu
+            </h2>
             <Link
               href={mode === "app" ? "/dashboard" : "/"}
               className="flex items-center gap-2"
@@ -174,7 +181,8 @@ export default function UnifiedMobileSidebar({
                         {role === "admin" ? "Administrator" : "User"}
                       </p>
                       <div className="flex items-center gap-1">
-                        {(subscription?.tier === "agency" || subscription?.tier === "enterprise") && (
+                        {(subscription?.tier === "agency" ||
+                          subscription?.tier === "enterprise") && (
                           <Crown className="h-3 w-3 text-purple-500" />
                         )}
                         {subscription?.tier === "starter" && (
@@ -203,7 +211,9 @@ export default function UnifiedMobileSidebar({
 
                   <Button
                     variant="ghost"
-                    onClick={() => { void handleLogout(); }}
+                    onClick={() => {
+                      void handleLogout();
+                    }}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors min-h-[48px] w-full justify-start"
                   >
                     <LogOut className="h-4 w-4" />
@@ -223,7 +233,7 @@ export default function UnifiedMobileSidebar({
                 </Link>
                 <Link
                   href="/register"
-                    prefetch={false}
+                  prefetch={false}
                   onClick={closeMenu}
                   className="flex items-center justify-center px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium min-h-[48px] hover:bg-primary/90 transition-colors"
                 >

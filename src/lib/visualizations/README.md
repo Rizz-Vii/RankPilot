@@ -15,15 +15,18 @@ For server-side exports in API routes, import from `./server-exports` (which use
 Example (component):
 
 ```ts
-import { d3VisualizationEngine } from '@/lib/visualizations/d3-visualization-engine';
-import { ChartExportManager } from '@/lib/visualizations/chart-export-manager';
+import { d3VisualizationEngine } from "@/lib/visualizations/d3-visualization-engine";
+import { ChartExportManager } from "@/lib/visualizations/chart-export-manager";
 
 // Render chart
-d3VisualizationEngine.createBarChart('container-id', config);
+d3VisualizationEngine.createBarChart("container-id", config);
 
 // Export SVG/PNG/PDF/Excel on the client
 const mgr = new ChartExportManager();
-const url = await mgr.exportChart('chart-id', { format: 'pdf', title: 'Report' } as any);
+const url = await mgr.exportChart("chart-id", {
+  format: "pdf",
+  title: "Report",
+} as any);
 ```
 
 Notes
@@ -50,24 +53,40 @@ These helpers:
 Example (API route snippet):
 
 ```ts
-import { generateChartExport, persistExportArtifact } from '@/lib/visualizations/server-exports';
+import {
+  generateChartExport,
+  persistExportArtifact,
+} from "@/lib/visualizations/server-exports";
 
 const exportUrl = artifact
-  ? await persistExportArtifact({ userId, kind: 'chart', id: chartId, format, artifact, metadata: { chartType: cfg.type } })
-  : await generateChartExport({ id: chartId, userId, config: cfg, data }, format, { title: 'My Chart' });
+  ? await persistExportArtifact({
+      userId,
+      kind: "chart",
+      id: chartId,
+      format,
+      artifact,
+      metadata: { chartType: cfg.type },
+    })
+  : await generateChartExport(
+      { id: chartId, userId, config: cfg, data },
+      format,
+      { title: "My Chart" }
+    );
 ```
 
 ### Quickstart (API Route)
 
 ```ts
 // app/api/visualizations/export/route.ts
-import { NextResponse } from 'next/server';
-import { generateChartExport } from '@/lib/visualizations/server-exports';
-import { withProvenance } from '@/lib/middleware/provenance';
+import { NextResponse } from "next/server";
+import { generateChartExport } from "@/lib/visualizations/server-exports";
+import { withProvenance } from "@/lib/middleware/provenance";
 
 export async function POST(req: Request) {
   const { data, config, format, id, userId } = await req.json();
-  const url = await generateChartExport({ id, userId, data, config }, format, { title: config?.title });
+  const url = await generateChartExport({ id, userId, data, config }, format, {
+    title: config?.title,
+  });
   return NextResponse.json(withProvenance({ url }));
 }
 ```

@@ -138,7 +138,9 @@ export default function BrokenLinksGuidePage() {
           <h2 className="text-2xl font-semibold mb-4">Best Practices</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2 text-success-foreground">✅ Do</h3>
+              <h3 className="font-semibold mb-2 text-success-foreground">
+                ✅ Do
+              </h3>
               <ul className="list-disc pl-6 text-sm">
                 <li>Monitor links regularly</li>
                 <li>Set up automated monitoring</li>
@@ -147,7 +149,9 @@ export default function BrokenLinksGuidePage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2 text-destructive-foreground">❌ Don't</h3>
+              <h3 className="font-semibold mb-2 text-destructive-foreground">
+                ❌ Don't
+              </h3>
               <ul className="list-disc pl-6 text-sm">
                 <li>Ignore broken links for months</li>
                 <li>Remove all external links</li>

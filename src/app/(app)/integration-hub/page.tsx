@@ -5,7 +5,11 @@ import { Phase5IntegrationHub } from "@/components/integration/Phase5Integration
 
 export default function IntegrationHubPage() {
   return (
-    <FeatureGate feature="integration_hub" requiredTier="enterprise" showUpgrade>
+    <FeatureGate
+      feature="integration_hub"
+      requiredTier="enterprise"
+      showUpgrade
+    >
       <Phase5IntegrationHub />
     </FeatureGate>
   );

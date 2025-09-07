@@ -13,7 +13,8 @@ export const metadata: Metadata = {
 
 // Workaround for phantom ESLint cache: ensure a local identifier named `fadeIn` is referenced
 // so any stale analysis seeing it as unused is satisfied harmlessly.
-const fadeIn = 0; void fadeIn;
+const fadeIn = 0;
+void fadeIn;
 
 export default function FeaturesPage() {
   return <FeaturesPageClient />;

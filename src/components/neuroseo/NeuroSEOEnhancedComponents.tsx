@@ -26,7 +26,7 @@ import type {
   ActionableTask,
   CompetitivePositioning,
   KeyInsight,
-  NeuroSEOReport
+  NeuroSEOReport,
 } from "@/lib/neuroseo";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -60,16 +60,39 @@ import {
   Radar,
   RadarChart,
   ResponsiveContainer,
-  Tooltip
+  Tooltip,
 } from "recharts";
-import { useNeuroSeoStream, type NeuroSeoStreamSummary } from '@/lib/neuroseo/useNeuroSeoStream';
+import {
+  useNeuroSeoStream,
+  type NeuroSeoStreamSummary,
+} from "@/lib/neuroseo/useNeuroSeoStream";
 import type { BadgeProps } from "@/components/ui/badge";
 
 // Streaming wrapper component (NEU-01 UI)
-export function NeuroSEOStreamingRunner({ urls, analysisType = 'comprehensive' }: { urls: string[]; analysisType?: string }) {
-  const { status, progress, summary, error, start, cancel, queuedPosition, cached, events } = useNeuroSeoStream(urls, { analysisType });
-  const pct = progress ? Math.round((progress.completed / progress.total) * 100) : (status === 'complete' ? 100 : 0);
-  const isRunning = status === 'streaming' || status === 'connecting';
+export function NeuroSEOStreamingRunner({
+  urls,
+  analysisType = "comprehensive",
+}: {
+  urls: string[];
+  analysisType?: string;
+}) {
+  const {
+    status,
+    progress,
+    summary,
+    error,
+    start,
+    cancel,
+    queuedPosition,
+    cached,
+    events,
+  } = useNeuroSeoStream(urls, { analysisType });
+  const pct = progress
+    ? Math.round((progress.completed / progress.total) * 100)
+    : status === "complete"
+      ? 100
+      : 0;
+  const isRunning = status === "streaming" || status === "connecting";
   return (
     <Card className="mb-6">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -77,16 +100,29 @@ export function NeuroSEOStreamingRunner({ urls, analysisType = 'comprehensive' }
           <CardTitle className="text-base flex items-center gap-2">
             <Brain className="h-4 w-4" /> Live NeuroSEO™ Stream
           </CardTitle>
-          <CardDescription className="text-xs">Incremental multi-chunk analysis with SSE</CardDescription>
+          <CardDescription className="text-xs">
+            Incremental multi-chunk analysis with SSE
+          </CardDescription>
         </div>
         <div className="flex gap-2">
-          {!isRunning && status !== 'complete' && (
-            <Button size="sm" onClick={() => start()} disabled={!urls.length} variant="default" className="flex items-center gap-1">
+          {!isRunning && status !== "complete" && (
+            <Button
+              size="sm"
+              onClick={() => start()}
+              disabled={!urls.length}
+              variant="default"
+              className="flex items-center gap-1"
+            >
               <Play className="h-3 w-3" /> Start
             </Button>
           )}
           {isRunning && (
-            <Button size="sm" onClick={() => cancel()} variant="destructive" className="flex items-center gap-1">
+            <Button
+              size="sm"
+              onClick={() => cancel()}
+              variant="destructive"
+              className="flex items-center gap-1"
+            >
               <XCircle className="h-3 w-3" /> Abort
             </Button>
           )}
@@ -94,24 +130,46 @@ export function NeuroSEOStreamingRunner({ urls, analysisType = 'comprehensive' }
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Status: {status}{queuedPosition !== undefined && ` (queued #${queuedPosition})`}{cached && ' (cache hit)'}</span>
-          {progress && <span>{progress.completed}/{progress.total} chunks</span>}
+          <span>
+            Status: {status}
+            {queuedPosition !== undefined && ` (queued #${queuedPosition})`}
+            {cached && " (cache hit)"}
+          </span>
+          {progress && (
+            <span>
+              {progress.completed}/{progress.total} chunks
+            </span>
+          )}
         </div>
         <Progress value={pct} />
-  {error && <div className="text-xs text-destructive">Error: {error}</div>}
+        {error && (
+          <div className="text-xs text-destructive">Error: {error}</div>
+        )}
         {summary && (
           <div className="text-xs bg-muted p-2 rounded border">
-            {'overallScore' in summary && (
-              <div>Overall Score: <span className="font-semibold">{(summary as NeuroSeoStreamSummary).overallScore}</span></div>
+            {"overallScore" in summary && (
+              <div>
+                Overall Score:{" "}
+                <span className="font-semibold">
+                  {(summary as NeuroSeoStreamSummary).overallScore}
+                </span>
+              </div>
             )}
-            {'duration' in summary && (
-              <div>Duration: {(summary as NeuroSeoStreamSummary).duration}ms</div>
+            {"duration" in summary && (
+              <div>
+                Duration: {(summary as NeuroSeoStreamSummary).duration}ms
+              </div>
             )}
           </div>
         )}
         <div className="max-h-40 overflow-auto text-[10px] font-mono bg-slate-50 border rounded p-2">
           {events.slice(-50).map((e, i) => (
-            <div key={i}><span className="text-slate-500">{new Date(e.ts).toLocaleTimeString()} </span>{e.type}: {JSON.stringify(e.data)}</div>
+            <div key={i}>
+              <span className="text-slate-500">
+                {new Date(e.ts).toLocaleTimeString()}{" "}
+              </span>
+              {e.type}: {JSON.stringify(e.data)}
+            </div>
           ))}
         </div>
       </CardContent>
@@ -161,12 +219,12 @@ const ENGINE_CONFIGS = {
 
 // Unified token palette (extra slot uses chart-6 fallback to chart-2 if undefined)
 const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  'hsl(var(--chart-2))'
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(var(--chart-2))",
 ];
 
 // Real-time analysis progress component
@@ -174,7 +232,7 @@ export function NeuroSEOProgressIndicator({
   isAnalyzing,
   currentEngine,
   progress,
-  completedEngines
+  completedEngines,
 }: {
   isAnalyzing: boolean;
   currentEngine?: string;
@@ -215,31 +273,42 @@ export function NeuroSEOProgressIndicator({
                   initial={{ opacity: 0.5 }}
                   animate={{
                     opacity: isCompleted || isCurrent ? 1 : 0.5,
-                    scale: isCurrent ? 1.05 : 1
+                    scale: isCurrent ? 1.05 : 1,
                   }}
-                  className={`flex items-center gap-2 p-2 rounded-lg border ${isCompleted
+                  className={`flex items-center gap-2 p-2 rounded-lg border ${
+                    isCompleted
                       ? "bg-success/10 border-success/30"
                       : isCurrent
                         ? "bg-primary/10 border-primary/30 animate-pulse"
                         : "bg-muted border-border"
-                    }`}
+                  }`}
                 >
-                  <Icon className={`h-3 w-3 ${isCompleted
-                      ? "text-success"
-                      : isCurrent
-                        ? "text-primary"
-                        : "text-muted-foreground"
-                    }`} />
-                  <span className={`text-xs font-medium ${isCompleted
-                      ? "text-success"
-                      : isCurrent
-                        ? "text-primary"
-                        : "text-muted-foreground"
-                    }`}>
+                  <Icon
+                    className={`h-3 w-3 ${
+                      isCompleted
+                        ? "text-success"
+                        : isCurrent
+                          ? "text-primary"
+                          : "text-muted-foreground"
+                    }`}
+                  />
+                  <span
+                    className={`text-xs font-medium ${
+                      isCompleted
+                        ? "text-success"
+                        : isCurrent
+                          ? "text-primary"
+                          : "text-muted-foreground"
+                    }`}
+                  >
                     {config.name}
                   </span>
-                  {isCompleted && <CheckCircle className="h-3 w-3 text-success ml-auto" />}
-                  {isCurrent && <RefreshCw className="h-3 w-3 text-primary animate-spin ml-auto" />}
+                  {isCompleted && (
+                    <CheckCircle className="h-3 w-3 text-success ml-auto" />
+                  )}
+                  {isCurrent && (
+                    <RefreshCw className="h-3 w-3 text-primary animate-spin ml-auto" />
+                  )}
                 </motion.div>
               );
             })}
@@ -251,7 +320,7 @@ export function NeuroSEOProgressIndicator({
 }
 
 // Enhanced multi-engine overview component
-export function NeuroSEOEngineOverview({ report }: { report: NeuroSEOReport; }) {
+export function NeuroSEOEngineOverview({ report }: { report: NeuroSEOReport }) {
   const engineData = Object.entries(ENGINE_CONFIGS).map(([key, config]) => ({
     name: config.name,
     score: Math.round(Math.random() * 40 + 60), // Mock data for now
@@ -260,8 +329,8 @@ export function NeuroSEOEngineOverview({ report }: { report: NeuroSEOReport; }) 
     description: config.description,
   }));
 
-  const radarData = engineData.map(engine => ({
-    subject: engine.name.replace('™', ''),
+  const radarData = engineData.map((engine) => ({
+    subject: engine.name.replace("™", ""),
     score: engine.score,
     fullMark: 100,
   }));
@@ -333,13 +402,17 @@ export function NeuroSEOEngineOverview({ report }: { report: NeuroSEOReport; }) 
 }
 
 // Enhanced insights visualization
-export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; }) {
+export function NeuroSEOInsightsPanel({
+  insights,
+}: {
+  insights: KeyInsight[];
+}) {
   // Map impacts to existing badge variants (warning/success/destructive/secondary/outline)
-  const impactColors: Record<KeyInsight['impact'], BadgeProps['variant']> = {
-    critical: 'destructive',
-    high: 'warning',
-    medium: 'secondary',
-    low: 'outline'
+  const impactColors: Record<KeyInsight["impact"], BadgeProps["variant"]> = {
+    critical: "destructive",
+    high: "warning",
+    medium: "secondary",
+    low: "outline",
   } as const;
 
   const categoryIcons = {
@@ -379,7 +452,11 @@ export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; })
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h4 className="font-semibold">{insight.title}</h4>
-                          <Badge variant={impactColors[insight.impact] ?? 'secondary'}>
+                          <Badge
+                            variant={
+                              impactColors[insight.impact] ?? "secondary"
+                            }
+                          >
                             {insight.impact}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
@@ -403,7 +480,10 @@ export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; })
                               <AccordionContent>
                                 <ul className="list-disc pl-4 space-y-1">
                                   {insight.evidence.map((evidence, idx) => (
-                                    <li key={idx} className="text-sm text-muted-foreground">
+                                    <li
+                                      key={idx}
+                                      className="text-sm text-muted-foreground"
+                                    >
                                       {evidence}
                                     </li>
                                   ))}
@@ -426,19 +506,25 @@ export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; })
 }
 
 // Enhanced actionable tasks component
-export function NeuroSEOActionableTasks({ tasks }: { tasks: ActionableTask[]; }) {
+export function NeuroSEOActionableTasks({
+  tasks,
+}: {
+  tasks: ActionableTask[];
+}) {
   const [filter, setFilter] = useState<string>("all");
 
-  const priorityColors: Record<ActionableTask['priority'], BadgeProps['variant']> = {
-    urgent: 'destructive',
-    high: 'warning',
-    medium: 'secondary',
-    low: 'outline'
+  const priorityColors: Record<
+    ActionableTask["priority"],
+    BadgeProps["variant"]
+  > = {
+    urgent: "destructive",
+    high: "warning",
+    medium: "secondary",
+    low: "outline",
   } as const;
 
-  const filteredTasks = filter === "all"
-    ? tasks
-    : tasks.filter(task => task.priority === filter);
+  const filteredTasks =
+    filter === "all" ? tasks : tasks.filter((task) => task.priority === filter);
 
   return (
     <Card>
@@ -476,14 +562,20 @@ export function NeuroSEOActionableTasks({ tasks }: { tasks: ActionableTask[]; })
                 <CardContent className="pt-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Badge variant={priorityColors[task.priority] ?? 'secondary'}>
+                      <Badge
+                        variant={priorityColors[task.priority] ?? "secondary"}
+                      >
                         {task.priority}
                       </Badge>
                       <Badge variant="outline">{task.category}</Badge>
                     </div>
                     <div className="text-right text-sm">
-                      <div className="font-medium">Impact: {task.estimatedImpact}/10</div>
-                      <div className="text-muted-foreground">{task.timeframe}</div>
+                      <div className="font-medium">
+                        Impact: {task.estimatedImpact}/10
+                      </div>
+                      <div className="text-muted-foreground">
+                        {task.timeframe}
+                      </div>
                     </div>
                   </div>
 
@@ -509,14 +601,23 @@ export function NeuroSEOActionableTasks({ tasks }: { tasks: ActionableTask[]; })
                         <AccordionContent>
                           <div className="grid gap-2">
                             {task.resources.map((resource, idx) => (
-                              <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                              <div
+                                key={idx}
+                                className="flex items-center gap-2 p-2 bg-gray-50 rounded"
+                              >
                                 <Badge variant="outline" className="text-xs">
                                   {resource.type}
                                 </Badge>
-                                <span className="text-sm">{resource.title}</span>
+                                <span className="text-sm">
+                                  {resource.title}
+                                </span>
                                 {resource.url && (
                                   <Button variant="ghost" size="sm" asChild>
-                                    <a href={resource.url} target="_blank" rel="noopener noreferrer">
+                                    <a
+                                      href={resource.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
                                       View
                                     </a>
                                   </Button>
@@ -540,16 +641,28 @@ export function NeuroSEOActionableTasks({ tasks }: { tasks: ActionableTask[]; })
 
 // Competitive intelligence dashboard
 export function NeuroSEOCompetitiveDashboard({
-  positioning
+  positioning,
 }: {
   positioning?: CompetitivePositioning;
 }) {
   if (!positioning) return null;
 
   const swotData = [
-    { name: "Strengths", value: positioning.strengths.length, color: COLORS[0] },
-    { name: "Weaknesses", value: positioning.weaknesses.length, color: COLORS[1] },
-    { name: "Opportunities", value: positioning.opportunities.length, color: COLORS[2] },
+    {
+      name: "Strengths",
+      value: positioning.strengths.length,
+      color: COLORS[0],
+    },
+    {
+      name: "Weaknesses",
+      value: positioning.weaknesses.length,
+      color: COLORS[1],
+    },
+    {
+      name: "Opportunities",
+      value: positioning.opportunities.length,
+      color: COLORS[2],
+    },
     { name: "Threats", value: positioning.threats.length, color: COLORS[3] },
   ];
 
@@ -656,7 +769,7 @@ export function NeuroSEOCompetitiveDashboard({
         </div>
 
         {/* Recommendations */}
-  <div className="mt-6 p-4 bg-primary/10 rounded-lg">
+        <div className="mt-6 p-4 bg-primary/10 rounded-lg">
           <h4 className="font-semibold mb-2">Strategic Recommendations</h4>
           <ul className="space-y-2">
             {positioning.recommendations.map((rec, idx) => (
@@ -677,7 +790,7 @@ export function NeuroSEOFeatureGate({
   children,
   requiredTier,
   currentTier,
-  featureName
+  featureName,
 }: {
   children: React.ReactNode;
   requiredTier: string;
@@ -689,10 +802,11 @@ export function NeuroSEOFeatureGate({
     starter: 1,
     agency: 2,
     enterprise: 3,
-    admin: 4
+    admin: 4,
   };
 
-  const hasAccess = tierLevels[currentTier as keyof typeof tierLevels] >=
+  const hasAccess =
+    tierLevels[currentTier as keyof typeof tierLevels] >=
     tierLevels[requiredTier as keyof typeof tierLevels];
 
   if (hasAccess) {
@@ -704,13 +818,13 @@ export function NeuroSEOFeatureGate({
       <CardContent className="pt-6">
         <div className="text-center py-8">
           <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="font-semibold mb-2">{featureName} - Premium Feature</h3>
+          <h3 className="font-semibold mb-2">
+            {featureName} - Premium Feature
+          </h3>
           <p className="text-muted-foreground mb-4">
             Upgrade to {requiredTier} tier to access this feature
           </p>
-          <Button variant="outline">
-            Upgrade Now
-          </Button>
+          <Button variant="outline">Upgrade Now</Button>
         </div>
       </CardContent>
     </Card>

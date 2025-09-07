@@ -216,9 +216,7 @@ export function AdminUserSubscriptionManager() {
                 <SelectContent>
                   <SelectItem value="free">Free</SelectItem>
                   <SelectItem value="starter">Starter ($19/month)</SelectItem>
-                  <SelectItem value="agency">
-                    Agency ($49/month)
-                  </SelectItem>
+                  <SelectItem value="agency">Agency ($49/month)</SelectItem>
                   <SelectItem value="enterprise">
                     Enterprise ($99/month)
                   </SelectItem>
@@ -268,7 +266,12 @@ export function AdminUserSubscriptionManager() {
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={() => { void handleManualUpdate(); }} disabled={loading}>
+            <Button
+              onClick={() => {
+                void handleManualUpdate();
+              }}
+              disabled={loading}
+            >
               {loading ? "Updating..." : "Update Subscription"}
             </Button>
           </div>
@@ -323,7 +326,11 @@ export function AdminUserSubscriptionManager() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { void executeAction(); }}>
+            <AlertDialogAction
+              onClick={() => {
+                void executeAction();
+              }}
+            >
               Execute
             </AlertDialogAction>
           </AlertDialogFooter>

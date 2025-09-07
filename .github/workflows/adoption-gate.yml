@@ -5,7 +5,7 @@ name: NeuroSEO Adoption Gate (Legacy – candidate for deprecation once central 
 on:
   pull_request:
   push:
-    branches: [ master, main, workshop/** ]
+    branches: [master, main, workshop/**]
 
 jobs:
   adoption:

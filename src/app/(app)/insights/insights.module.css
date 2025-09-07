@@ -1,21 +1,39 @@
 @keyframes progressShift {
-  0% { background-position: 0% 50%; }
-  100% { background-position: -200% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: -200% 50%;
+  }
 }
 
 .animatedBar {
   /* Tokenized gradient replacing legacy hex palette */
-  background-image: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--chart-2)) 40%, hsl(var(--chart-3)) 60%, hsl(var(--primary)) 100%);
+  background-image: linear-gradient(
+    90deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--chart-2)) 40%,
+    hsl(var(--chart-3)) 60%,
+    hsl(var(--primary)) 100%
+  );
   background-size: 200% 100%;
   animation: progressShift 3s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animatedBar { animation: none; background-size: 100% 100%; }
+  .animatedBar {
+    animation: none;
+    background-size: 100% 100%;
+  }
 }
 
-.animatedBar:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
+.animatedBar:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
 
 .collapsibleShadow {
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 4px 10px -2px rgba(0,0,0,0.06);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 4px 10px -2px rgba(0, 0, 0, 0.06);
 }

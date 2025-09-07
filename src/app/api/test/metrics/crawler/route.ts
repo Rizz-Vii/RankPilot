@@ -9,56 +9,71 @@
 // Response: JSON { domain, added: { hits, fallbacks }, totals: { aggregateHits, legacyFallbacks, adoptionPct } }
 // Adoption % = aggregateHits / (aggregateHits + legacyFallbacks) * 100 (null if denom=0)
 
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import {
-    recordCrawlerAggregateHit,
-    recordCrawlerLegacyFallback,
-    recordSemanticMapAggregateHit,
-    recordSemanticMapLegacyFallback,
-    getUnifiedMetricsSnapshot,
-} from '@/lib/metrics/unified-metrics';
+  recordCrawlerAggregateHit,
+  recordCrawlerLegacyFallback,
+  recordSemanticMapAggregateHit,
+  recordSemanticMapLegacyFallback,
+  getUnifiedMetricsSnapshot,
+} from "@/lib/metrics/unified-metrics";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-    if (process.env.NODE_ENV === 'production') {
-        return NextResponse.json({ error: 'disabled in production' }, { status: 404 });
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "disabled in production" },
+      { status: 404 }
+    );
+  }
+  const url = new URL(req.url);
+  const hits = Math.min(
+    1000,
+    Math.max(0, parseInt(url.searchParams.get("hits") || "0", 10) || 0)
+  );
+  const fallbacks = Math.min(
+    1000,
+    Math.max(0, parseInt(url.searchParams.get("fallbacks") || "0", 10) || 0)
+  );
+  const domain = (url.searchParams.get("domain") || "crawler").toLowerCase();
+  if (domain !== "crawler" && domain !== "semantic") {
+    return NextResponse.json({ error: "invalid domain" }, { status: 400 });
+  }
+  for (let i = 0; i < hits; i++) {
+    if (domain === "crawler") {
+      recordCrawlerAggregateHit();
+    } else {
+      recordSemanticMapAggregateHit();
     }
-    const url = new URL(req.url);
-    const hits = Math.min(1000, Math.max(0, parseInt(url.searchParams.get('hits') || '0', 10) || 0));
-    const fallbacks = Math.min(1000, Math.max(0, parseInt(url.searchParams.get('fallbacks') || '0', 10) || 0));
-    const domain = (url.searchParams.get('domain') || 'crawler').toLowerCase();
-    if (domain !== 'crawler' && domain !== 'semantic') {
-        return NextResponse.json({ error: 'invalid domain' }, { status: 400 });
+  }
+  for (let i = 0; i < fallbacks; i++) {
+    if (domain === "crawler") {
+      recordCrawlerLegacyFallback();
+    } else {
+      recordSemanticMapLegacyFallback();
     }
-    for (let i = 0; i < hits; i++) {
-        if (domain === 'crawler') {
-            recordCrawlerAggregateHit();
-        } else {
-            recordSemanticMapAggregateHit();
-        }
-    }
-    for (let i = 0; i < fallbacks; i++) {
-        if (domain === 'crawler') {
-            recordCrawlerLegacyFallback();
-        } else {
-            recordSemanticMapLegacyFallback();
-        }
-    }
-    const unified = getUnifiedMetricsSnapshot();
-    type UnifiedCounters = { aggregateHits?: number; legacyFallbacks?: number };
-    const counters =
-        domain === 'crawler'
-            ? (unified as { crawler?: UnifiedCounters }).crawler ?? { aggregateHits: 0, legacyFallbacks: 0 }
-            : (unified as { semanticMap?: UnifiedCounters }).semanticMap ?? { aggregateHits: 0, legacyFallbacks: 0 };
-    const aHits = Number(counters.aggregateHits ?? 0);
-    const lFallbacks = Number(counters.legacyFallbacks ?? 0);
-    const denom = aHits + lFallbacks;
-    const adoptionPct = denom ? +( ((aHits / denom) * 100).toFixed(2) ) : null;
-    return NextResponse.json({
-        domain,
-        added: { hits, fallbacks },
-        totals: { aggregateHits: aHits, legacyFallbacks: lFallbacks, adoptionPct },
-    });
+  }
+  const unified = getUnifiedMetricsSnapshot();
+  type UnifiedCounters = { aggregateHits?: number; legacyFallbacks?: number };
+  const counters =
+    domain === "crawler"
+      ? ((unified as { crawler?: UnifiedCounters }).crawler ?? {
+          aggregateHits: 0,
+          legacyFallbacks: 0,
+        })
+      : ((unified as { semanticMap?: UnifiedCounters }).semanticMap ?? {
+          aggregateHits: 0,
+          legacyFallbacks: 0,
+        });
+  const aHits = Number(counters.aggregateHits ?? 0);
+  const lFallbacks = Number(counters.legacyFallbacks ?? 0);
+  const denom = aHits + lFallbacks;
+  const adoptionPct = denom ? +((aHits / denom) * 100).toFixed(2) : null;
+  return NextResponse.json({
+    domain,
+    added: { hits, fallbacks },
+    totals: { aggregateHits: aHits, legacyFallbacks: lFallbacks, adoptionPct },
+  });
 }

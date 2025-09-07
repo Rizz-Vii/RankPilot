@@ -264,7 +264,7 @@ export function monitorPerformance(operationType: string) {
     descriptor: TypedPropertyDescriptor<(...args: A) => Promise<R>>
   ) {
     const original = descriptor.value!;
-    descriptor.value = (async function (this: unknown, ...args: A) {
+    descriptor.value = async function (this: unknown, ...args: A) {
       const operationId = performanceMonitor.startOperation(operationType);
       try {
         const result = await original.apply(this, args as A);
@@ -274,11 +274,11 @@ export function monitorPerformance(operationType: string) {
         performanceMonitor.endOperation(
           operationId,
           false,
-          error instanceof Error ? error.message : 'Unknown error'
+          error instanceof Error ? error.message : "Unknown error"
         );
         throw error;
       }
-    }) as (...args: A) => Promise<R>;
+    } as (...args: A) => Promise<R>;
     return descriptor;
   };
 }

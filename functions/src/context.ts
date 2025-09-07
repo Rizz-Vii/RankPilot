@@ -20,46 +20,53 @@ const db = getFirestore();
 
 // Types
 export interface AuditContext {
-    url: string;
-    score: {
-        performance: number;
-        accessibility: number;
-        seo: number;
-        bestPractices: number;
-    };
-    issues: string[];
-    suggestions: string[];
-    lastAnalyzed: string;
+  url: string;
+  score: {
+    performance: number;
+    accessibility: number;
+    seo: number;
+    bestPractices: number;
+  };
+  issues: string[];
+  suggestions: string[];
+  lastAnalyzed: string;
 }
 
 export interface SiteContext {
-    totalPages: number;
-    contentSummary: string;
-    keywords: string[];
-    recentAnalyses: Array<Record<string, unknown>>;
+  totalPages: number;
+  contentSummary: string;
+  keywords: string[];
+  recentAnalyses: Array<Record<string, unknown>>;
 }
 
 export interface AdminContext {
-    systemMetrics: {
-        totalUsers: number;
-        activeSubscriptions: number;
-        totalAnalyses: number;
-        errorRate: number;
-    };
-    recentActivity: Array<{ type: string; description: string; timestamp: Date | string }>;
-    performanceInsights: string[];
+  systemMetrics: {
+    totalUsers: number;
+    activeSubscriptions: number;
+    totalAnalyses: number;
+    errorRate: number;
+  };
+  recentActivity: Array<{
+    type: string;
+    description: string;
+    timestamp: Date | string;
+  }>;
+  performanceInsights: string[];
 }
 
 export interface ChatContext {
-    userTier: string;
-    recentConversations: unknown[];
-    availableFeatures: string[];
+  userTier: string;
+  recentConversations: unknown[];
+  availableFeatures: string[];
 }
 
 /**
  * Fetches audit context for a specific URL
  */
-export const getAuditContext = async (uid: string, url: string): Promise<AuditContext | null> => {
+export const getAuditContext = async (
+  uid: string,
+  url: string
+): Promise<AuditContext | null> => {
   try {
     // Query audits collection for the specific URL
     const auditsRef = db.collection("audits").doc(uid).collection("urls");
@@ -82,7 +89,8 @@ export const getAuditContext = async (uid: string, url: string): Promise<AuditCo
       },
       issues: Array.isArray(data.issues) ? data.issues : [],
       suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
-      lastAnalyzed: data.timestamp?.toDate?.()?.toISOString() || new Date().toISOString(),
+      lastAnalyzed:
+        data.timestamp?.toDate?.()?.toISOString() || new Date().toISOString(),
     };
   } catch (error) {
     console.error("Error fetching audit context:", error);
@@ -101,14 +109,17 @@ export const getSiteContext = async (uid: string): Promise<SiteContext> => {
 
     // Get recent analyses
     const auditsRef = db.collection("audits").doc(uid).collection("urls");
-    const auditsSnapshot = await auditsRef.orderBy("timestamp", "desc").limit(10).get();
+    const auditsSnapshot = await auditsRef
+      .orderBy("timestamp", "desc")
+      .limit(10)
+      .get();
 
-    const pages = pagesSnapshot.docs.map(doc => doc.data());
-    const analyses = auditsSnapshot.docs.map(doc => doc.data());
+    const pages = pagesSnapshot.docs.map((doc) => doc.data());
+    const analyses = auditsSnapshot.docs.map((doc) => doc.data());
 
     // Extract keywords from content
     const keywords: string[] = [];
-    pages.forEach(page => {
+    pages.forEach((page) => {
       if (page.keywords && Array.isArray(page.keywords)) {
         keywords.push(...page.keywords);
       }
@@ -116,7 +127,7 @@ export const getSiteContext = async (uid: string): Promise<SiteContext> => {
 
     // Create content summary
     const contentSummary = pages
-      .map(page => page.text || "")
+      .map((page) => page.text || "")
       .join(" ")
       .substring(0, 1000);
 
@@ -140,14 +151,16 @@ export const getSiteContext = async (uid: string): Promise<SiteContext> => {
 /**
  * Fetches admin context data
  */
-export const getAdminContext = async (userTier: string): Promise<AdminContext> => {
+export const getAdminContext = async (
+  userTier: string
+): Promise<AdminContext> => {
   try {
     // Get system metrics
     const usersSnapshot = await db.collection("users").get();
     const auditsSnapshot = await db.collectionGroup("urls").get();
 
     const totalUsers = usersSnapshot.size;
-    const activeSubscriptions = usersSnapshot.docs.filter(doc => {
+    const activeSubscriptions = usersSnapshot.docs.filter((doc) => {
       const data = doc.data();
       return data.subscriptionTier && data.subscriptionTier !== "free";
     }).length;
@@ -160,9 +173,21 @@ export const getAdminContext = async (userTier: string): Promise<AdminContext> =
         errorRate: 0.1, // Placeholder
       },
       recentActivity: [
-        { type: "user_signup", description: "New user registration", timestamp: new Date() },
-        { type: "audit_completed", description: "SEO audit completed", timestamp: new Date() },
-        { type: "subscription_upgrade", description: "User upgraded to Agency tier", timestamp: new Date() },
+        {
+          type: "user_signup",
+          description: "New user registration",
+          timestamp: new Date(),
+        },
+        {
+          type: "audit_completed",
+          description: "SEO audit completed",
+          timestamp: new Date(),
+        },
+        {
+          type: "subscription_upgrade",
+          description: "User upgraded to Agency tier",
+          timestamp: new Date(),
+        },
       ],
       performanceInsights: [
         "System performance is optimal",
@@ -188,7 +213,10 @@ export const getAdminContext = async (userTier: string): Promise<AdminContext> =
 /**
  * Fetches chat context
  */
-export const getChatContext = async (uid: string, isAdmin: boolean = false): Promise<ChatContext> => {
+export const getChatContext = async (
+  uid: string,
+  isAdmin: boolean = false
+): Promise<ChatContext> => {
   try {
     // Get user data
     const userDoc = await db.collection("users").doc(uid).get();
@@ -196,15 +224,23 @@ export const getChatContext = async (uid: string, isAdmin: boolean = false): Pro
 
     // Get recent conversations
     const chatCollection = isAdmin ? "adminChats" : "chatLogs";
-    const chatRef = db.collection(chatCollection).doc(uid).collection("sessions");
-    const chatSnapshot = await chatRef.orderBy("lastActivity", "desc").limit(5).get();
+    const chatRef = db
+      .collection(chatCollection)
+      .doc(uid)
+      .collection("sessions");
+    const chatSnapshot = await chatRef
+      .orderBy("lastActivity", "desc")
+      .limit(5)
+      .get();
 
-    const conversations = chatSnapshot.docs.map(doc => {
+    const conversations = chatSnapshot.docs.map((doc) => {
       const data = doc.data();
       return {
         sessionId: doc.id,
         lastMessage: data.lastMessage || "",
-        timestamp: data.lastActivity?.toDate?.()?.toISOString() || new Date().toISOString(),
+        timestamp:
+          data.lastActivity?.toDate?.()?.toISOString() ||
+          new Date().toISOString(),
       };
     });
 
@@ -212,15 +248,30 @@ export const getChatContext = async (uid: string, isAdmin: boolean = false): Pro
     const tierFeatures = {
       free: ["dashboard", "basic-audit"],
       starter: ["dashboard", "basic-audit", "content-analyzer"],
-      agency: ["dashboard", "basic-audit", "content-analyzer", "neuroseo-basic", "competitors"],
-      enterprise: ["dashboard", "basic-audit", "content-analyzer", "neuroseo-advanced", "competitors", "unlimited-neuroseo"],
+      agency: [
+        "dashboard",
+        "basic-audit",
+        "content-analyzer",
+        "neuroseo-basic",
+        "competitors",
+      ],
+      enterprise: [
+        "dashboard",
+        "basic-audit",
+        "content-analyzer",
+        "neuroseo-advanced",
+        "competitors",
+        "unlimited-neuroseo",
+      ],
       admin: ["all-features", "system-management", "user-analytics"],
     };
 
     return {
       userTier,
       recentConversations: conversations,
-      availableFeatures: tierFeatures[userTier as keyof typeof tierFeatures] || tierFeatures.free,
+      availableFeatures:
+        tierFeatures[userTier as keyof typeof tierFeatures] ||
+        tierFeatures.free,
     };
   } catch (error) {
     console.error("Error fetching chat context:", error);
@@ -235,25 +286,40 @@ export const getChatContext = async (uid: string, isAdmin: boolean = false): Pro
 /**
  * Fetches NeuroSEO context
  */
-export const getNeuroSEOContext = async (uid: string, url?: string): Promise<{ insights: string; }> => {
+export const getNeuroSEOContext = async (
+  uid: string,
+  url?: string
+): Promise<{ insights: string }> => {
   try {
     // Get NeuroSEO analyses
-    const neuroSEORef = db.collection("neuroSeoAnalyses").doc(uid).collection("analyses");
+    const neuroSEORef = db
+      .collection("neuroSeoAnalyses")
+      .doc(uid)
+      .collection("analyses");
     let query = neuroSEORef.orderBy("timestamp", "desc").limit(5);
 
     if (url) {
-      query = neuroSEORef.where("url", "==", url).orderBy("timestamp", "desc").limit(3);
+      query = neuroSEORef
+        .where("url", "==", url)
+        .orderBy("timestamp", "desc")
+        .limit(3);
     }
 
     const snapshot = await query.get();
-    const analyses = snapshot.docs.map(doc => doc.data());
+    const analyses = snapshot.docs.map((doc) => doc.data());
 
     if (analyses.length === 0) {
-      return { insights: "No NeuroSEO™ analyses available yet. Consider running a comprehensive analysis." };
+      return {
+        insights:
+          "No NeuroSEO™ analyses available yet. Consider running a comprehensive analysis.",
+      };
     }
 
     const insights = analyses
-      .map(analysis => analysis.summary || analysis.insights || "Analysis completed")
+      .map(
+        (analysis) =>
+          analysis.summary || analysis.insights || "Analysis completed"
+      )
       .join(" | ");
 
     return { insights: insights.substring(0, 500) };

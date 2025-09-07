@@ -287,8 +287,12 @@ export class AIVisibilityEngine {
   }
 
   private generateSourceTitle(query: LLMQuery, url: string): string {
-    let domain = 'example.com';
-    try { domain = new URL(url).hostname.replace("www.", ""); } catch { /* keep default */ }
+    let domain = "example.com";
+    try {
+      domain = new URL(url).hostname.replace("www.", "");
+    } catch {
+      /* keep default */
+    }
     const keyword = query.targetKeywords[0];
 
     const titleTemplates = [
@@ -355,8 +359,12 @@ export class AIVisibilityEngine {
 
     // Add content from top sources
     sources.slice(0, 3).forEach((source) => {
-      let host = 'source';
-      try { host = new URL(source.url).hostname; } catch { /* noop */ }
+      let host = "source";
+      try {
+        host = new URL(source.url).hostname;
+      } catch {
+        /* noop */
+      }
       response += `According to ${host}, ${source.snippet} `;
     });
 
@@ -374,11 +382,11 @@ export class AIVisibilityEngine {
       const query = queries[i];
       // Instrument query characteristics for diagnostics
       let qLen = 0;
-      if (typeof (query as unknown) === 'string') {
+      if (typeof (query as unknown) === "string") {
         qLen = (query as unknown as string).length;
       } else {
         const qStr = (query as LLMQuery).query;
-        if (typeof qStr === 'string') qLen = qStr.length;
+        if (typeof qStr === "string") qLen = qStr.length;
       }
       visibilityMetrics.queryChars = qLen;
       visibilityMetrics.queryTokenEstimate = Math.ceil(qLen / 4);
@@ -432,8 +440,12 @@ export class AIVisibilityEngine {
 
   private extractCitationContext(responseText: string, url: string): string {
     // Extract the sentence that mentions the domain
-    let domain = '';
-    try { domain = new URL(url).hostname.replace("www.", ""); } catch { domain = url; }
+    let domain = "";
+    try {
+      domain = new URL(url).hostname.replace("www.", "");
+    } catch {
+      domain = url;
+    }
     const sentences = responseText.split(/[.!?]+/);
 
     const relevantSentence = sentences.find((sentence) =>

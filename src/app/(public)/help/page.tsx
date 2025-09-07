@@ -115,7 +115,10 @@ const supportChannels = [
 
 export default function HelpPage() {
   const prefersReducedMotion = useReducedMotion();
-  const isMobile = typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false;
+  const isMobile =
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 640px)").matches
+      : false;
   const duration = prefersReducedMotion || isMobile ? 0.35 : 0.6;
   const step = prefersReducedMotion || isMobile ? 0.08 : 0.15;
   const fadeIn = makeFadeIn(duration, step);
@@ -197,7 +200,9 @@ export default function HelpPage() {
                     <CardTitle className="text-xl">{channel.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center">
-                    <p className="text-muted-foreground mb-4">{channel.description}</p>
+                    <p className="text-muted-foreground mb-4">
+                      {channel.description}
+                    </p>
                     <div className="flex items-center justify-center text-sm text-muted-foreground mb-6">
                       <Clock className="h-4 w-4 mr-1" />
                       {channel.availability}

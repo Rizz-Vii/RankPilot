@@ -25,7 +25,11 @@ export default function AuthLayout({
           <AuthMobileSidebar />
         </div>
 
-        <main id="main-content" role="main" className="flex-grow flex items-center justify-center py-12">
+        <main
+          id="main-content"
+          role="main"
+          className="flex-grow flex items-center justify-center py-12"
+        >
           {children}
         </main>
       </div>

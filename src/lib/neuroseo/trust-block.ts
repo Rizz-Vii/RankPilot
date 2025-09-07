@@ -37,12 +37,12 @@ export interface ContentCredibility {
 
 export interface TrustSignal {
   type:
-  | "author"
-  | "source"
-  | "publication"
-  | "citation"
-  | "review"
-  | "endorsement";
+    | "author"
+    | "source"
+    | "publication"
+    | "citation"
+    | "review"
+    | "endorsement";
   value: string;
   weight: number;
   confidence: number;
@@ -87,10 +87,10 @@ export interface TrustMetrics {
 
 export interface TrustImprovement {
   category:
-  | "expertise"
-  | "authoritativeness"
-  | "trustworthiness"
-  | "compliance";
+    | "expertise"
+    | "authoritativeness"
+    | "trustworthiness"
+    | "compliance";
   title: string;
   description: string;
   implementation: string;
@@ -162,7 +162,11 @@ export class TrustBlockEngine {
     );
 
     // Run compliance checks
-    const compliance = await this.runComplianceChecks(url, content, contentType);
+    const compliance = await this.runComplianceChecks(
+      url,
+      content,
+      contentType
+    );
 
     // Calculate trust metrics
     const metrics = this.calculateTrustMetrics(
@@ -312,7 +316,7 @@ export class TrustBlockEngine {
         expertiseAlignment +
         freshness +
         comprehensiveness) /
-      5
+        5
     );
 
     return {
@@ -696,8 +700,7 @@ export class TrustBlockEngine {
       .map((sentence) => sentence.trim());
   }
 
-  private checkRequiredDisclaimers(
-    content: string): DisclaimerEntry[] {
+  private checkRequiredDisclaimers(content: string): DisclaimerEntry[] {
     const disclaimers: DisclaimerEntry[] = [];
 
     // Medical disclaimers
@@ -1006,7 +1009,8 @@ export class TrustBlockEngine {
   }
 
   private async benchmarkCompetitors(
-    competitorUrls: string[]): Promise<CompetitorTrustAnalysis> {
+    competitorUrls: string[]
+  ): Promise<CompetitorTrustAnalysis> {
     // Simulate competitor analysis
     const competitors = competitorUrls.map((url) => ({
       url,
@@ -1019,9 +1023,9 @@ export class TrustBlockEngine {
     const averageEATScore =
       competitors.length > 0
         ? Math.round(
-          competitors.reduce((sum, comp) => sum + comp.eatScore, 0) /
-          competitors.length
-        )
+            competitors.reduce((sum, comp) => sum + comp.eatScore, 0) /
+              competitors.length
+          )
         : 75;
 
     const industryBenchmark = {

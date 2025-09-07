@@ -3,8 +3,6 @@
   "problem": "Test systematic debugging framework",
   "startTime": "Mon Jul 28 11:37:34 UTC 2025",
   "endTime": "Mon Jul 28 11:37:34 UTC 2025",
-  "completedSteps": [
-    ""
-  ],
+  "completedSteps": [""],
   "autoValidate": false
 }

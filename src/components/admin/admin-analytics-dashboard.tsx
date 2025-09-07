@@ -8,20 +8,35 @@
  * Dependencies: Enhanced auth service, dashboard service
  */
 
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { EnhancedAuthService, type UserAnalytics } from '@/lib/services/enhanced-auth.service';
-import { useEffect, useState, type ReactElement } from 'react';
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  EnhancedAuthService,
+  type UserAnalytics,
+} from "@/lib/services/enhanced-auth.service";
+import { useEffect, useState, type ReactElement } from "react";
 
 interface AdminDashboardProps {
   className?: string;
 }
 
-interface PlatformMetrics { growth?: { new_subscriptions?: number };[key: string]: unknown }
+interface PlatformMetrics {
+  growth?: { new_subscriptions?: number };
+  [key: string]: unknown;
+}
 
-export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): ReactElement {
+export function AdminAnalyticsDashboard({
+  className,
+}: AdminDashboardProps): ReactElement {
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
-  const [platformMetrics, setPlatformMetrics] = useState<PlatformMetrics | null>(null);
+  const [platformMetrics, setPlatformMetrics] =
+    useState<PlatformMetrics | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,14 +47,13 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
         // Fetch comprehensive admin analytics using our indexes
         const [userAnalytics, subscriptionInsights] = await Promise.all([
           EnhancedAuthService.getUserAnalytics(),
-          EnhancedAuthService.getSubscriptionInsights()
+          EnhancedAuthService.getSubscriptionInsights(),
         ]);
 
         setAnalytics(userAnalytics);
         setPlatformMetrics(subscriptionInsights);
-
       } catch (error) {
-        console.error('Error loading admin dashboard:', error);
+        console.error("Error loading admin dashboard:", error);
       } finally {
         setLoading(false);
       }
@@ -78,7 +92,9 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
             <Badge variant="outline">Live</Badge>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(analytics?.totalUsers ?? 0).toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {(analytics?.totalUsers ?? 0).toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
               Active platform registrations
             </p>
@@ -87,7 +103,9 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active Subscriptions
+            </CardTitle>
             <Badge variant="secondary">Index-Optimized</Badge>
           </CardHeader>
           <CardContent>
@@ -109,7 +127,9 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
             <Badge variant="outline">7 Days</Badge>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics?.recentLogins || 0}</div>
+            <div className="text-2xl font-bold">
+              {analytics?.recentLogins || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
               Users active this week
             </p>
@@ -118,11 +138,15 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Subscriptions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              New Subscriptions
+            </CardTitle>
             <Badge variant="default">30 Days</Badge>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{platformMetrics?.growth?.new_subscriptions || 0}</div>
+            <div className="text-2xl font-bold">
+              {platformMetrics?.growth?.new_subscriptions || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
               Monthly subscription growth
             </p>
@@ -136,16 +160,20 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
           <CardHeader>
             <CardTitle>Subscription Tiers</CardTitle>
             <CardDescription>
-              User distribution across subscription plans (Index: subscriptionTier+createdAt)
+              User distribution across subscription plans (Index:
+              subscriptionTier+createdAt)
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {(analytics?.subscriptionTrends ?? []).map((tier) => (
-                <div key={tier.tier} className="flex items-center justify-between">
+                <div
+                  key={tier.tier}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center space-x-2">
                     <Badge
-                      variant={tier.tier === 'free' ? 'outline' : 'default'}
+                      variant={tier.tier === "free" ? "outline" : "default"}
                       className="capitalize"
                     >
                       {tier.tier}
@@ -154,9 +182,7 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
                       {tier.count.toLocaleString()} users
                     </span>
                   </div>
-                  <div className="text-sm font-medium">
-                    {tier.growth}%
-                  </div>
+                  <div className="text-sm font-medium">{tier.growth}%</div>
                 </div>
               ))}
             </div>
@@ -172,24 +198,29 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {Object.entries(analytics?.usersByRole || {}).map(([role, count]) => (
-                <div key={role} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Badge
-                      variant={role === 'admin' ? 'destructive' : 'secondary'}
-                      className="capitalize"
-                    >
-                      {role}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {count.toLocaleString()} users
-                    </span>
+              {Object.entries(analytics?.usersByRole || {}).map(
+                ([role, count]) => (
+                  <div key={role} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Badge
+                        variant={role === "admin" ? "destructive" : "secondary"}
+                        className="capitalize"
+                      >
+                        {role}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {count.toLocaleString()} users
+                      </span>
+                    </div>
+                    <div className="text-sm font-medium">
+                      {analytics?.totalUsers
+                        ? Math.round((count / analytics.totalUsers) * 100)
+                        : 0}
+                      %
+                    </div>
                   </div>
-                  <div className="text-sm font-medium">
-                    {analytics?.totalUsers ? Math.round((count / analytics.totalUsers) * 100) : 0}%
-                  </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
           </CardContent>
         </Card>

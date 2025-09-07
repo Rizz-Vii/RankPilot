@@ -42,7 +42,7 @@ export default function PrivacySettingsCard({
   profile,
 }: PrivacySettingsCardProps): JSX.Element {
   const { toast } = useToast();
-  const logger = getLogger('settings.privacy');
+  const logger = getLogger("settings.privacy");
   const [isLoading, setIsLoading] = useState(false);
   const [profileVisibility, setProfileVisibility] = useState(
     asUserProfile(profile)?.privacy?.profileVisibility ?? false
@@ -54,7 +54,10 @@ export default function PrivacySettingsCard({
     asUserProfile(profile)?.privacy?.activityTracking ?? true
   );
 
-  const handlePrivacyUpdate = async (setting: string, value: boolean): Promise<void> => {
+  const handlePrivacyUpdate = async (
+    setting: string,
+    value: boolean
+  ): Promise<void> => {
     setIsLoading(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
@@ -62,15 +65,27 @@ export default function PrivacySettingsCard({
         [`privacy.${setting}`]: value,
         updatedAt: serverTimestamp(),
       });
-      logger.audit('privacy.setting.updated', { userId: user.uid, setting, value });
+      logger.audit("privacy.setting.updated", {
+        userId: user.uid,
+        setting,
+        value,
+      });
 
       toast({
         title: "Privacy Settings Updated",
         description: "Your privacy preferences have been saved.",
       });
     } catch (e: unknown) {
-      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as { message?: string }).message : undefined;
-      logger.error('privacy.setting.update.error', { userId: user.uid, setting, value, error: msg });
+      const msg =
+        e && typeof e === "object" && "message" in e
+          ? (e as { message?: string }).message
+          : undefined;
+      logger.error("privacy.setting.update.error", {
+        userId: user.uid,
+        setting,
+        value,
+        error: msg,
+      });
       toast({
         variant: "destructive",
         title: "Update Failed",
@@ -85,25 +100,43 @@ export default function PrivacySettingsCard({
     try {
       setIsLoading(true);
       const exportFn = httpsCallable(regionFunctions, "exportUserData");
-  const res: unknown = await exportFn({ userId: user.uid });
-      logger.audit('privacy.data.export.requested', { userId: user.uid });
+      const res: unknown = await exportFn({ userId: user.uid });
+      logger.audit("privacy.data.export.requested", { userId: user.uid });
       // Audit timestamp now recorded server-side in export function.
       // Trigger download locally
-      const data = (res && typeof res === 'object' && 'data' in res) ? (res as { data?: unknown }).data : res;
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const data =
+        res && typeof res === "object" && "data" in res
+          ? (res as { data?: unknown }).data
+          : res;
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `rankpilot-export-${user.uid}-${Date.now()}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast({ title: 'Export Ready', description: 'Your data export has downloaded.' });
+      toast({
+        title: "Export Ready",
+        description: "Your data export has downloaded.",
+      });
     } catch (e: unknown) {
-      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as { message?: string }).message : undefined;
-      logger.error('privacy.data.export.error', { userId: user.uid, error: msg });
-      toast({ variant: 'destructive', title: 'Export Failed', description: msg || 'Unable to export data.' });
+      const msg =
+        e && typeof e === "object" && "message" in e
+          ? (e as { message?: string }).message
+          : undefined;
+      logger.error("privacy.data.export.error", {
+        userId: user.uid,
+        error: msg,
+      });
+      toast({
+        variant: "destructive",
+        title: "Export Failed",
+        description: msg || "Unable to export data.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -115,12 +148,26 @@ export default function PrivacySettingsCard({
       const delFn = httpsCallable(regionFunctions, "requestAccountDeletion");
       await delFn({ userId: user.uid });
       // Deletion audit recorded server-side.
-      logger.audit('privacy.account.deletion.requested', { userId: user.uid });
-      toast({ variant: 'destructive', title: 'Deletion Scheduled', description: 'Your account has been scheduled for deletion.' });
+      logger.audit("privacy.account.deletion.requested", { userId: user.uid });
+      toast({
+        variant: "destructive",
+        title: "Deletion Scheduled",
+        description: "Your account has been scheduled for deletion.",
+      });
     } catch (e: unknown) {
-      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as { message?: string }).message : undefined;
-      logger.error('privacy.account.deletion.error', { userId: user.uid, error: msg });
-      toast({ variant: 'destructive', title: 'Deletion Failed', description: msg || 'Unable to schedule deletion.' });
+      const msg =
+        e && typeof e === "object" && "message" in e
+          ? (e as { message?: string }).message
+          : undefined;
+      logger.error("privacy.account.deletion.error", {
+        userId: user.uid,
+        error: msg,
+      });
+      toast({
+        variant: "destructive",
+        title: "Deletion Failed",
+        description: msg || "Unable to schedule deletion.",
+      });
     } finally {
       setIsLoading(false);
     }

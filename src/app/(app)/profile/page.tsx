@@ -64,24 +64,33 @@ export default function ProfilePage() {
     timestamp: ActivityTs;
     metadata?: unknown;
   };
-  const normalizedActivities: NormalizedActivity[] = (activities || []).map((a) => {
-    const obj = a as unknown as Record<string, unknown>;
-    const id = typeof obj.id === 'string' ? obj.id : Math.random().toString(36).slice(2);
-    const type = typeof obj.type === 'string' ? obj.type : 'activity';
-    const title = typeof obj.title === 'string' ? obj.title : undefined;
-    const url = typeof obj.url === 'string' ? obj.url : undefined;
-    const keywords = Array.isArray(obj.keywords) ? (obj.keywords as unknown[]).filter((k): k is string => typeof k === 'string') : undefined;
-    const score = typeof obj.score === 'number' ? obj.score : undefined;
-    const metadata = obj.metadata as unknown;
-    const tsUnknown = obj.timestamp as unknown;
-    let timestamp: ActivityTs = tsUnknown as ActivityTs;
-    if (typeof tsUnknown === 'number' && tsUnknown > 1e12) {
-      timestamp = new Date(tsUnknown);
-    } else if (typeof tsUnknown === 'number' && tsUnknown < 1e12) {
-      timestamp = { seconds: tsUnknown };
+  const normalizedActivities: NormalizedActivity[] = (activities || []).map(
+    (a) => {
+      const obj = a as unknown as Record<string, unknown>;
+      const id =
+        typeof obj.id === "string"
+          ? obj.id
+          : Math.random().toString(36).slice(2);
+      const type = typeof obj.type === "string" ? obj.type : "activity";
+      const title = typeof obj.title === "string" ? obj.title : undefined;
+      const url = typeof obj.url === "string" ? obj.url : undefined;
+      const keywords = Array.isArray(obj.keywords)
+        ? (obj.keywords as unknown[]).filter(
+            (k): k is string => typeof k === "string"
+          )
+        : undefined;
+      const score = typeof obj.score === "number" ? obj.score : undefined;
+      const metadata = obj.metadata as unknown;
+      const tsUnknown = obj.timestamp as unknown;
+      let timestamp: ActivityTs = tsUnknown as ActivityTs;
+      if (typeof tsUnknown === "number" && tsUnknown > 1e12) {
+        timestamp = new Date(tsUnknown);
+      } else if (typeof tsUnknown === "number" && tsUnknown < 1e12) {
+        timestamp = { seconds: tsUnknown };
+      }
+      return { id, type, title, url, keywords, score, timestamp, metadata };
     }
-    return { id, type, title, url, keywords, score, timestamp, metadata };
-  });
+  );
 
   return (
     <main className="container mx-auto py-6 space-y-8">
@@ -137,12 +146,17 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {(activities || []).filter((a) => a.type === "audit").length || 0}
+                  {(activities || []).filter((a) => a.type === "audit")
+                    .length || 0}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
                   {(activities || []).filter(
-                    (a) => a.type === "audit" && toJsDate((a as { timestamp?: unknown }).timestamp).getMonth() === new Date().getMonth()
+                    (a) =>
+                      a.type === "audit" &&
+                      toJsDate(
+                        (a as { timestamp?: unknown }).timestamp
+                      ).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
               </CardContent>
@@ -155,12 +169,18 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {(activities || []).filter((a) => a.type === "keyword-research").length || 0}
+                  {(activities || []).filter(
+                    (a) => a.type === "keyword-research"
+                  ).length || 0}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
                   {(activities || []).filter(
-                    (a) => a.type === "keyword-research" && toJsDate((a as { timestamp?: unknown }).timestamp).getMonth() === new Date().getMonth()
+                    (a) =>
+                      a.type === "keyword-research" &&
+                      toJsDate(
+                        (a as { timestamp?: unknown }).timestamp
+                      ).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
               </CardContent>
@@ -173,12 +193,17 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {(activities || []).filter((a) => a.type === "serp-analysis").length || 0}
+                  {(activities || []).filter((a) => a.type === "serp-analysis")
+                    .length || 0}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
                   {(activities || []).filter(
-                    (a) => a.type === "serp-analysis" && toJsDate((a as { timestamp?: unknown }).timestamp).getMonth() === new Date().getMonth()
+                    (a) =>
+                      a.type === "serp-analysis" &&
+                      toJsDate(
+                        (a as { timestamp?: unknown }).timestamp
+                      ).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
               </CardContent>
@@ -186,6 +211,6 @@ export default function ProfilePage() {
           </div>
         </TabsContent>
       </Tabs>
-  </main>
+    </main>
   );
 }

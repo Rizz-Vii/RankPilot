@@ -58,7 +58,6 @@ export function UsageAnalytics() {
   });
   const [loading, setLoading] = useState(true);
 
-
   // Helper functions to derive missing properties
   const isActive = subscription?.status === "active";
   const isPremium = subscription?.tier !== "free";
@@ -84,17 +83,28 @@ export function UsageAnalytics() {
         const snap = await getDoc(ref);
         if (snap.exists() && mounted) {
           const data = snap.data() as Partial<UsageData> | undefined;
-          setUsage(prev => ({
-            projects: typeof data?.projects === 'number' ? data.projects : prev.projects,
-            keywords: typeof data?.keywords === 'number' ? data.keywords : prev.keywords,
-            reports: typeof data?.reports === 'number' ? data.reports : prev.reports,
-            apiCalls: typeof data?.apiCalls === 'number' ? data.apiCalls : prev.apiCalls,
-            storage: typeof data?.storage === 'number' ? data.storage : prev.storage,
-            users: typeof data?.users === 'number' ? data.users : prev.users,
+          setUsage((prev) => ({
+            projects:
+              typeof data?.projects === "number"
+                ? data.projects
+                : prev.projects,
+            keywords:
+              typeof data?.keywords === "number"
+                ? data.keywords
+                : prev.keywords,
+            reports:
+              typeof data?.reports === "number" ? data.reports : prev.reports,
+            apiCalls:
+              typeof data?.apiCalls === "number"
+                ? data.apiCalls
+                : prev.apiCalls,
+            storage:
+              typeof data?.storage === "number" ? data.storage : prev.storage,
+            users: typeof data?.users === "number" ? data.users : prev.users,
           }));
         } else if (mounted) {
           // Deterministic fallback (bounded) for UI continuity
-          setUsage(u => ({ ...u }));
+          setUsage((u) => ({ ...u }));
         }
       } catch {
         // silent degrade – keep prior usage
@@ -266,7 +276,9 @@ export function UsageAnalytics() {
                 )}
 
                 {item.limit === -1 && (
-                  <p className="text-xs text-success-foreground mt-2">Unlimited</p>
+                  <p className="text-xs text-success-foreground mt-2">
+                    Unlimited
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -280,7 +292,7 @@ export function UsageAnalytics() {
           getUsageStatus(item.current, item.limit) === "warning" ||
           getUsageStatus(item.current, item.limit) === "exceeded"
       ) && (
-  <Card className="border-warning/30 bg-warning/10 dark:border-warning/40 dark:bg-warning/15">
+        <Card className="border-warning/30 bg-warning/10 dark:border-warning/40 dark:bg-warning/15">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-warning-foreground">
               <AlertTriangle className="w-5 h-5" />

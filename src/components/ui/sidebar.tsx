@@ -5,8 +5,20 @@ import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 import { motion } from "framer-motion"; // value import
 import { PanelLeft } from "lucide-react";
-import type { ComponentProps, ComponentPropsWithoutRef, ReactNode } from "react";
-import { createContext, forwardRef, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import type {
+  ComponentProps,
+  ComponentPropsWithoutRef,
+  ReactNode,
+} from "react";
+import {
+  createContext,
+  forwardRef,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -23,8 +35,6 @@ import "./sidebar.css";
 // --- Constants ---
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-
-
 
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
@@ -136,7 +146,12 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
     useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
         const target = event.target as HTMLElement | null;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        if (
+          target &&
+          (target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.isContentEditable)
+        ) {
           return; // ignore while typing
         }
         if (
@@ -566,8 +581,9 @@ export {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem, SidebarMenuLink, SidebarProvider,
+  SidebarMenuItem,
+  SidebarMenuLink,
+  SidebarProvider,
   SidebarTrigger, // Ensure SidebarMenuLink is also exported if used
-  useSidebar
+  useSidebar,
 };
-

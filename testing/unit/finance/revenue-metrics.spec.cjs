@@ -1,12 +1,30 @@
-const { computeRevenueMetrics } = require('../../../dist/lib/finance/revenue-metrics.js');
+const {
+  computeRevenueMetrics,
+} = require("../../../dist/lib/finance/revenue-metrics.js");
 
-describe('computeRevenueMetrics', () => {
-  test('computes metrics with active and churned users', () => {
+describe("computeRevenueMetrics", () => {
+  test("computes metrics with active and churned users", () => {
     const now = new Date();
     const subs = [
-      { userId: 'a', amountMonthly: 50, status: 'active', startedAt: new Date(now.getTime() - 1000*60*60*24*60) },
-      { userId: 'b', amountMonthly: 50, status: 'canceled', startedAt: new Date(now.getTime() - 1000*60*60*24*90), canceledAt: new Date(now.getTime() - 1000*60*60*24*2) },
-      { userId: 'c', amountMonthly: 100, status: 'active', startedAt: new Date(now.getTime() - 1000*60*60*24*10) }
+      {
+        userId: "a",
+        amountMonthly: 50,
+        status: "active",
+        startedAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 60),
+      },
+      {
+        userId: "b",
+        amountMonthly: 50,
+        status: "canceled",
+        startedAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 90),
+        canceledAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 2),
+      },
+      {
+        userId: "c",
+        amountMonthly: 100,
+        status: "active",
+        startedAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 10),
+      },
     ];
     const snap = computeRevenueMetrics(subs, now);
     expect(snap.mrr).toBe(150);

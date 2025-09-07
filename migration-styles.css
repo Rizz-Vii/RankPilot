@@ -1,62 +1,62 @@
 /* Migration Tool Styles */
 body {
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    padding: 20px;
-    background: #1e1e1e;
-    color: #d4d4d4;
-    margin: 0;
-    line-height: 1.6;
+  font-family: "Consolas", "Monaco", "Courier New", monospace;
+  padding: 20px;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  margin: 0;
+  line-height: 1.6;
 }
 
 h1 {
-    color: #4CAF50;
-    margin-bottom: 20px;
+  color: #4caf50;
+  margin-bottom: 20px;
 }
 
 button {
-    padding: 12px 24px;
-    background: #0066cc;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    transition: background-color 0.3s;
+  padding: 12px 24px;
+  background: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s;
 }
 
 button:hover {
-    background: #0052a3;
+  background: #0052a3;
 }
 
 button:active {
-    background: #004080;
+  background: #004080;
 }
 
 #output {
-    background: #2d2d30;
-    padding: 15px;
-    margin: 20px 0;
-    border-radius: 8px;
-    white-space: pre-wrap;
-    border: 1px solid #3c3c3c;
-    min-height: 100px;
-    font-family: inherit;
+  background: #2d2d30;
+  padding: 15px;
+  margin: 20px 0;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  border: 1px solid #3c3c3c;
+  min-height: 100px;
+  font-family: inherit;
 }
 
 p {
-    margin-bottom: 20px;
-    color: #cccccc;
+  margin-bottom: 20px;
+  color: #cccccc;
 }
 
 .success {
-    color: #4CAF50;
+  color: #4caf50;
 }
 
 .error {
-    color: #f44336;
+  color: #f44336;
 }
 
 .warning {
-    color: #ff9800;
+  color: #ff9800;
 }

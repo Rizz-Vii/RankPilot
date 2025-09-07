@@ -114,7 +114,7 @@ eval @ web-vitals.js:1
 requestIdleCallback
 B @ web-vitals.js:1
 eval @ web-vitals.js:1
-CustomerChatBot.tsx:122  POST http://localhost:3000/api/chat/customer 503 (Service Unavailable)
+CustomerChatBot.tsx:122 POST http://localhost:3000/api/chat/customer 503 (Service Unavailable)
 sendMessage @ CustomerChatBot.tsx:122
 await in sendMessage
 executeDispatch @ react-dom-client.development.js:16921
@@ -186,7 +186,7 @@ dispatchEventForPluginEventSystem @ react-dom-client.development.js:17125
 dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276Understand this error
 CustomerChatBot.tsx:161 Chat error: Error: Chat service unavailable
-    at sendMessage (CustomerChatBot.tsx:137:23)
+at sendMessage (CustomerChatBot.tsx:137:23)
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 sendMessage @ CustomerChatBot.tsx:161
@@ -201,7 +201,7 @@ dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276
 <button>
 exports.jsxDEV @ react-jsx-dev-runtime.development.js:345
-_c @ button.tsx:46
+\_c @ button.tsx:46
 react_stack_bottom_frame @ react-dom-client.development.js:23552
 renderWithHooksAgain @ react-dom-client.development.js:6863
 renderWithHooks @ react-dom-client.development.js:6775
@@ -272,7 +272,7 @@ dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276
 <button>
 exports.jsxDEV @ react-jsx-dev-runtime.development.js:345
-_c @ button.tsx:46
+\_c @ button.tsx:46
 react_stack_bottom_frame @ react-dom-client.development.js:23552
 renderWithHooksAgain @ react-dom-client.development.js:6863
 renderWithHooks @ react-dom-client.development.js:6775
@@ -1840,7 +1840,7 @@ dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276Understand this error
 dashboard-data.service.ts:79 📊 Fetching dashboard data for user: vGZSfZA7yPOOCgUGtAS2ywvwP8l1
 page.tsx:360 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -1874,7 +1874,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-page.tsx:360 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+page.tsx:360 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -1922,14 +1922,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -1944,7 +1944,7 @@ eval @ index.esm2017.js:14980
 a_ @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -1977,14 +1977,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -1996,10 +1996,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -2032,14 +2032,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -2051,10 +2051,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -2075,7 +2075,7 @@ Nc @ webchannel_blob_es2018.js:69
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
 use-dashboard-data.ts:45 📊 Dashboard data updated in real-time
 page.tsx:360 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -2109,7 +2109,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-page.tsx:360 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+page.tsx:360 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -2145,7 +2145,7 @@ performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 5Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -2164,7 +2164,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -2188,7 +2188,7 @@ use-dashboard-data.ts:25 🔄 Setting up real-time dashboard data for user: Y0hv
 dashboard-data.service.ts:79 📊 Fetching dashboard data for user: Y0hv244mtsYk4dwsxBCS1xBOhab2
 dashboard-data.service.ts:411 📡 Setting up real-time dashboard subscription for user: Y0hv244mtsYk4dwsxBCS1xBOhab2
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -2213,7 +2213,7 @@ commitRootWhenReady @ react-dom-client.development.js:15178
 performWorkOnRoot @ react-dom-client.development.js:15097
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -2852,7 +2852,7 @@ performSyncWorkOnRoot @ react-dom-client.development.js:16778
 flushSyncWorkAcrossRoots_impl @ react-dom-client.development.js:16627Understand this error
 dashboard-data.service.ts:79 📊 Fetching dashboard data for user: Y0hv244mtsYk4dwsxBCS1xBOhab2
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -2871,7 +2871,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -2904,14 +2904,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -2923,10 +2923,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -2998,11 +2998,11 @@ h.connect @ webchannel_blob_es2018.js:82
 Y.m @ webchannel_blob_es2018.js:96
 Ho @ index.esm2017.js:14514
 send @ index.esm2017.js:14368
-k_ @ index.esm2017.js:14893
-H_ @ index.esm2017.js:15068
-__PRIVATE_sendWatchRequest @ index.esm2017.js:15412
+k* @ index.esm2017.js:14893
+H* @ index.esm2017.js:15068
+**PRIVATE_sendWatchRequest @ index.esm2017.js:15412
 eval @ index.esm2017.js:15453
-__PRIVATE_onWatchStreamOpen @ index.esm2017.js:15452
+**PRIVATE_onWatchStreamOpen @ index.esm2017.js:15452
 eval @ index.esm2017.js:14976
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:19230
@@ -3013,7 +3013,7 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14975
-o_ @ index.esm2017.js:14374
+o* @ index.esm2017.js:14374
 eval @ index.esm2017.js:14583Understand this error
 dashboard-data.service.ts:160 Error fetching SEO score trend: FirebaseError: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/rankpilot-h3jpc/firestore/indexes?create_composite=Clhwcm9qZWN0cy9yYW5rcGlsb3QtaDNqcGMvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL25ldXJvU2VvQW5hbHlzZXMvaW5kZXhlcy9fEAEaCgoGc3RhdHVzEAEaCgoGdXNlcklkEAEaDwoLY29tcGxldGVkQXQQAhoMCghfX25hbWVfXxAC
 overrideMethod @ hook.js:608
@@ -3029,14 +3029,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE*syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -3048,10 +3048,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -3123,11 +3123,11 @@ h.connect @ webchannel_blob_es2018.js:82
 Y.m @ webchannel_blob_es2018.js:96
 Ho @ index.esm2017.js:14514
 send @ index.esm2017.js:14368
-k_ @ index.esm2017.js:14893
-H_ @ index.esm2017.js:15068
-__PRIVATE_sendWatchRequest @ index.esm2017.js:15412
+k* @ index.esm2017.js:14893
+H* @ index.esm2017.js:15068
+**PRIVATE_sendWatchRequest @ index.esm2017.js:15412
 eval @ index.esm2017.js:15453
-__PRIVATE_onWatchStreamOpen @ index.esm2017.js:15452
+**PRIVATE_onWatchStreamOpen @ index.esm2017.js:15452
 eval @ index.esm2017.js:14976
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:19230
@@ -3138,7 +3138,7 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14975
-o_ @ index.esm2017.js:14374
+o* @ index.esm2017.js:14374
 eval @ index.esm2017.js:14583Understand this error
 dashboard-data.service.ts:347 Error fetching backlink data: FirebaseError: Missing or insufficient permissions.
 overrideMethod @ hook.js:608
@@ -3154,14 +3154,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE*syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -3173,10 +3173,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -3248,11 +3248,11 @@ h.connect @ webchannel_blob_es2018.js:82
 Y.m @ webchannel_blob_es2018.js:96
 Ho @ index.esm2017.js:14514
 send @ index.esm2017.js:14368
-k_ @ index.esm2017.js:14893
-H_ @ index.esm2017.js:15068
-__PRIVATE_sendWatchRequest @ index.esm2017.js:15412
+k* @ index.esm2017.js:14893
+H* @ index.esm2017.js:15068
+**PRIVATE_sendWatchRequest @ index.esm2017.js:15412
 eval @ index.esm2017.js:15453
-__PRIVATE_onWatchStreamOpen @ index.esm2017.js:15452
+**PRIVATE_onWatchStreamOpen @ index.esm2017.js:15452
 eval @ index.esm2017.js:14976
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:19230
@@ -3263,11 +3263,11 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14975
-o_ @ index.esm2017.js:14374
+o* @ index.esm2017.js:14374
 eval @ index.esm2017.js:14583Understand this error
 use-dashboard-data.ts:45 📊 Dashboard data updated in real-time
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3286,7 +3286,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3307,7 +3307,7 @@ performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 user-subscription-sync.ts:44 ✅ User starter@rankpilot.com already has subscription data
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3326,7 +3326,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3346,7 +3346,7 @@ performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3365,7 +3365,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3385,7 +3385,7 @@ performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3404,7 +3404,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3428,7 +3428,7 @@ use-dashboard-data.ts:25 🔄 Setting up real-time dashboard data for user: test
 dashboard-data.service.ts:79 📊 Fetching dashboard data for user: test_agency_user
 dashboard-data.service.ts:411 📡 Setting up real-time dashboard subscription for user: test_agency_user
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3453,7 +3453,7 @@ commitRootWhenReady @ react-dom-client.development.js:15178
 performWorkOnRoot @ react-dom-client.development.js:15097
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4092,7 +4092,7 @@ performSyncWorkOnRoot @ react-dom-client.development.js:16778
 flushSyncWorkAcrossRoots_impl @ react-dom-client.development.js:16627Understand this error
 dashboard-data.service.ts:79 📊 Fetching dashboard data for user: test_agency_user
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4111,7 +4111,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4144,7 +4144,7 @@ error @ intercept-console-error.js:62
 getSEOScoreTrend @ dashboard-data.service.ts:160Understand this error
 use-dashboard-data.ts:45 📊 Dashboard data updated in real-time
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4163,7 +4163,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4184,7 +4184,7 @@ performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 user-subscription-sync.ts:44 ✅ User agency@rankpilot.com already has subscription data
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4203,7 +4203,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4223,7 +4223,7 @@ performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4242,7 +4242,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4262,7 +4262,7 @@ performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4281,7 +4281,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4305,7 +4305,7 @@ use-dashboard-data.ts:25 🔄 Setting up real-time dashboard data for user: m7nb
 dashboard-data.service.ts:79 📊 Fetching dashboard data for user: m7nbs1tNrxYIlaclebE5sKI6ok53
 dashboard-data.service.ts:411 📡 Setting up real-time dashboard subscription for user: m7nbs1tNrxYIlaclebE5sKI6ok53
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4330,7 +4330,7 @@ commitRootWhenReady @ react-dom-client.development.js:15178
 performWorkOnRoot @ react-dom-client.development.js:15097
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4969,7 +4969,7 @@ performSyncWorkOnRoot @ react-dom-client.development.js:16778
 flushSyncWorkAcrossRoots_impl @ react-dom-client.development.js:16627Understand this error
 dashboard-data.service.ts:79 📊 Fetching dashboard data for user: m7nbs1tNrxYIlaclebE5sKI6ok53
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4988,7 +4988,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5021,7 +5021,7 @@ error @ intercept-console-error.js:62
 getSEOScoreTrend @ dashboard-data.service.ts:160Understand this error
 use-dashboard-data.ts:45 📊 Dashboard data updated in real-time
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5040,7 +5040,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5061,7 +5061,7 @@ performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 user-subscription-sync.ts:44 ✅ User enterprise@rankpilot.com already has subscription data
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5080,7 +5080,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5100,7 +5100,7 @@ performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5119,7 +5119,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5139,7 +5139,7 @@ performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5158,7 +5158,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5182,7 +5182,7 @@ use-dashboard-data.ts:25 🔄 Setting up real-time dashboard data for user: UFGr
 dashboard-data.service.ts:79 📊 Fetching dashboard data for user: UFGrzIf2N3UTPd5Xz7vT8tMZpHJ3
 dashboard-data.service.ts:411 📡 Setting up real-time dashboard subscription for user: UFGrzIf2N3UTPd5Xz7vT8tMZpHJ3
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5207,7 +5207,7 @@ commitRootWhenReady @ react-dom-client.development.js:15178
 performWorkOnRoot @ react-dom-client.development.js:15097
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5846,7 +5846,7 @@ performSyncWorkOnRoot @ react-dom-client.development.js:16778
 flushSyncWorkAcrossRoots_impl @ react-dom-client.development.js:16627Understand this error
 dashboard-data.service.ts:79 📊 Fetching dashboard data for user: UFGrzIf2N3UTPd5Xz7vT8tMZpHJ3
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5865,7 +5865,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5898,7 +5898,7 @@ error @ intercept-console-error.js:62
 getSEOScoreTrend @ dashboard-data.service.ts:160Understand this error
 use-dashboard-data.ts:45 📊 Dashboard data updated in real-time
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5917,7 +5917,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5938,7 +5938,7 @@ performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 user-subscription-sync.ts:44 ✅ User admin@rankpilot.com already has subscription data
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5957,7 +5957,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5977,7 +5977,7 @@ performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
 hook.js:608 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -5996,7 +5996,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-hook.js:600 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+hook.js:600 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -6423,8 +6423,8 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerListen @ index.esm2017.js:16110
-await in __PRIVATE_eventManagerListen
+**PRIVATE_eventManagerListen @ index.esm2017.js:16110
+await in **PRIVATE_eventManagerListen
 eval @ index.esm2017.js:22100
 await in eval
 eval @ index.esm2017.js:19230
@@ -6433,7 +6433,7 @@ Promise.then
 uc @ index.esm2017.js:19263
 enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
-__PRIVATE_firestoreClientListen @ index.esm2017.js:22100
+**PRIVATE_firestoreClientListen @ index.esm2017.js:22100
 onSnapshot @ index.esm2017.js:22104
 subscribeToUserDashboardData @ dashboard-data.service.ts:422
 useRealTimeDashboardData.useEffect @ use-dashboard-data.ts:42
@@ -7004,8 +7004,8 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerListen @ index.esm2017.js:16110
-await in __PRIVATE_eventManagerListen
+**PRIVATE_eventManagerListen @ index.esm2017.js:16110
+await in **PRIVATE_eventManagerListen
 eval @ index.esm2017.js:22100
 await in eval
 eval @ index.esm2017.js:19230
@@ -7014,7 +7014,7 @@ Promise.then
 uc @ index.esm2017.js:19263
 enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
-__PRIVATE_firestoreClientListen @ index.esm2017.js:22100
+**PRIVATE_firestoreClientListen @ index.esm2017.js:22100
 onSnapshot @ index.esm2017.js:22104
 subscribeToUserDashboardData @ dashboard-data.service.ts:422
 useRealTimeDashboardData.useEffect @ use-dashboard-data.ts:42
@@ -7585,8 +7585,8 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerListen @ index.esm2017.js:16110
-await in __PRIVATE_eventManagerListen
+**PRIVATE_eventManagerListen @ index.esm2017.js:16110
+await in **PRIVATE_eventManagerListen
 eval @ index.esm2017.js:22100
 await in eval
 eval @ index.esm2017.js:19230
@@ -7595,7 +7595,7 @@ Promise.then
 uc @ index.esm2017.js:19263
 enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
-__PRIVATE_firestoreClientListen @ index.esm2017.js:22100
+**PRIVATE_firestoreClientListen @ index.esm2017.js:22100
 onSnapshot @ index.esm2017.js:22104
 subscribeToUserDashboardData @ dashboard-data.service.ts:422
 useRealTimeDashboardData.useEffect @ use-dashboard-data.ts:42
@@ -7772,7 +7772,7 @@ commitRoot @ react-dom-client.development.js:15948
 onUnsuspend @ react-dom-client.development.js:21027Understand this error
 use-dashboard-data.ts:45 📊 Dashboard data updated in real-time
 page.tsx:360 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -7812,7 +7812,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-page.tsx:360 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+page.tsx:360 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -7879,8 +7879,8 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerListen @ index.esm2017.js:16110
-await in __PRIVATE_eventManagerListen
+**PRIVATE_eventManagerListen @ index.esm2017.js:16110
+await in **PRIVATE_eventManagerListen
 eval @ index.esm2017.js:22100
 await in eval
 eval @ index.esm2017.js:19230
@@ -7903,8 +7903,8 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerListen @ index.esm2017.js:16110
-await in __PRIVATE_eventManagerListen
+**PRIVATE_eventManagerListen @ index.esm2017.js:16110
+await in **PRIVATE_eventManagerListen
 eval @ index.esm2017.js:22100
 await in eval
 eval @ index.esm2017.js:19230
@@ -7927,15 +7927,15 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerListen @ index.esm2017.js:16110
-await in __PRIVATE_eventManagerListen
+**PRIVATE_eventManagerListen @ index.esm2017.js:16110
+await in \_\_PRIVATE_eventManagerListen
 eval @ index.esm2017.js:22100
 await in eval
 eval @ index.esm2017.js:19230
 eval @ index.esm2017.js:19263Understand this error
 use-dashboard-data.ts:45 📊 Dashboard data updated in real-time
 page.tsx:360 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -7969,7 +7969,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-page.tsx:360 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+page.tsx:360 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -8003,7 +8003,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-AdminChatBot.tsx:154  POST http://localhost:3000/api/chat/admin 503 (Service Unavailable)
+AdminChatBot.tsx:154 POST http://localhost:3000/api/chat/admin 503 (Service Unavailable)
 sendMessage @ AdminChatBot.tsx:154
 await in sendMessage
 eval @ AdminChatBot.tsx:418
@@ -8019,7 +8019,7 @@ dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276
 <button>
 exports.jsxDEV @ react-jsx-dev-runtime.development.js:345
-_c @ button.tsx:46
+\_c @ button.tsx:46
 react_stack_bottom_frame @ react-dom-client.development.js:23552
 renderWithHooksAgain @ react-dom-client.development.js:6863
 renderWithHooks @ react-dom-client.development.js:6775
@@ -8070,7 +8070,7 @@ flushSyncWorkAcrossRoots_impl @ react-dom-client.development.js:16627
 processRootScheduleInMicrotask @ react-dom-client.development.js:16665
 eval @ react-dom-client.development.js:16800Understand this error
 AdminChatBot.tsx:196 Admin chat error: Error: Admin chat service unavailable
-    at sendMessage (AdminChatBot.tsx:168:23)
+at sendMessage (AdminChatBot.tsx:168:23)
 overrideMethod @ hook.js:608
 error @ intercept-console-error.js:62
 sendMessage @ AdminChatBot.tsx:196
@@ -8088,7 +8088,7 @@ dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276
 <button>
 exports.jsxDEV @ react-jsx-dev-runtime.development.js:345
-_c @ button.tsx:46
+\_c @ button.tsx:46
 react_stack_bottom_frame @ react-dom-client.development.js:23552
 renderWithHooksAgain @ react-dom-client.development.js:6863
 renderWithHooks @ react-dom-client.development.js:6775
@@ -8154,7 +8154,7 @@ dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276
 <button>
 exports.jsxDEV @ react-jsx-dev-runtime.development.js:345
-_c @ button.tsx:46
+\_c @ button.tsx:46
 react_stack_bottom_frame @ react-dom-client.development.js:23552
 renderWithHooksAgain @ react-dom-client.development.js:6863
 renderWithHooks @ react-dom-client.development.js:6775

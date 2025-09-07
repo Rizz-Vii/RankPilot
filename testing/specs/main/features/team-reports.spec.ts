@@ -18,7 +18,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
   });
 
   test.describe("Page Loading and Navigation", () => {
-    test("loads team reports page with proper authentication", async ({ page }) => {
+    test("loads team reports page with proper authentication", async ({
+      page,
+    }) => {
       console.log("📊 Testing Team Reports page loading...");
 
       // Test with starter tier (should have access)
@@ -27,12 +29,20 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
       // Wait for main heading to ensure client-side rendering completed
       await page.locator("h1").waitFor({ state: "visible", timeout: 30000 });
-      await expect(page.locator("h1")).toContainText("Team Reports", { timeout: 30000 });
-      await expect(page.locator("text=Create, manage, and share SEO performance reports")).toBeVisible();
+      await expect(page.locator("h1")).toContainText("Team Reports", {
+        timeout: 30000,
+      });
+      await expect(
+        page.locator("text=Create, manage, and share SEO performance reports")
+      ).toBeVisible();
 
       // Verify navigation elements
-      await expect(page.locator("button", { hasText: "Back to Team" })).toBeVisible();
-      await expect(page.locator("button", { hasText: "New Report" })).toBeVisible();
+      await expect(
+        page.locator("button", { hasText: "Back to Team" })
+      ).toBeVisible();
+      await expect(
+        page.locator("button", { hasText: "New Report" })
+      ).toBeVisible();
 
       console.log("✅ Team Reports page loads correctly");
     });
@@ -52,7 +62,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("button", { hasText: "Back to Team" })).toBeVisible({ timeout: 20000 });
+      await expect(
+        page.locator("button", { hasText: "Back to Team" })
+      ).toBeVisible({ timeout: 20000 });
 
       const backButton = page.locator("button", { hasText: "Back to Team" });
       await expect(backButton).toBeVisible();
@@ -71,7 +83,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("button", { hasText: "New Report" })).toBeVisible({ timeout: 20000 });
+      await expect(
+        page.locator("button", { hasText: "New Report" })
+      ).toBeVisible({ timeout: 20000 });
 
       // Open create dialog
       const newReportButton = page.locator("button", { hasText: "New Report" });
@@ -109,11 +123,17 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       // Verify report appears in list
       await expect(page.locator("text=E2E Test Report")).toBeVisible();
-      await expect(page.locator("text=Test report created by automation")).toBeVisible();
+      await expect(
+        page.locator("text=Test report created by automation")
+      ).toBeVisible();
 
       // Verify badges are displayed
-      await expect(page.locator(".bg-green-500", { hasText: "Monthly" })).toBeVisible();
-      await expect(page.locator(".bg-blue-500", { hasText: "Scheduled" })).toBeVisible();
+      await expect(
+        page.locator(".bg-green-500", { hasText: "Monthly" })
+      ).toBeVisible();
+      await expect(
+        page.locator(".bg-blue-500", { hasText: "Scheduled" })
+      ).toBeVisible();
 
       console.log("✅ Report created successfully with all fields");
     });
@@ -123,7 +143,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("[role=dialog]")).toBeHidden({ timeout: 20000 });
+      await expect(page.locator("[role=dialog]")).toBeHidden({
+        timeout: 20000,
+      });
 
       // Open create dialog
       await page.locator("button", { hasText: "New Report" }).click();
@@ -170,7 +192,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       // Verify scheduled report appears with correct status
       await expect(page.locator("text=Scheduled Test Report")).toBeVisible();
-      await expect(page.locator(".bg-blue-500", { hasText: "Scheduled" })).toBeVisible();
+      await expect(
+        page.locator(".bg-blue-500", { hasText: "Scheduled" })
+      ).toBeVisible();
 
       console.log("✅ Scheduled report creation works correctly");
     });
@@ -182,23 +206,41 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("#scheduledDate")).toBeHidden({ timeout: 20000 });
+      await expect(page.locator("#scheduledDate")).toBeHidden({
+        timeout: 20000,
+      });
 
       // Should display mock reports
-      await expect(page.locator("text=Monthly SEO Performance Report")).toBeVisible();
+      await expect(
+        page.locator("text=Monthly SEO Performance Report")
+      ).toBeVisible();
       await expect(page.locator("text=Q1 Competitive Analysis")).toBeVisible();
-      await expect(page.locator("text=Weekly Content Performance")).toBeVisible();
+      await expect(
+        page.locator("text=Weekly Content Performance")
+      ).toBeVisible();
 
       // Verify report cards display all required elements
       // Check type badges
-      await expect(page.locator(".bg-green-500", { hasText: "Monthly" })).toBeVisible();
-      await expect(page.locator(".bg-purple-500", { hasText: "Quarterly" })).toBeVisible();
-      await expect(page.locator(".bg-blue-500", { hasText: "Weekly" })).toBeVisible();
+      await expect(
+        page.locator(".bg-green-500", { hasText: "Monthly" })
+      ).toBeVisible();
+      await expect(
+        page.locator(".bg-purple-500", { hasText: "Quarterly" })
+      ).toBeVisible();
+      await expect(
+        page.locator(".bg-blue-500", { hasText: "Weekly" })
+      ).toBeVisible();
 
       // Check status badges
-      await expect(page.locator(".bg-green-500", { hasText: "Published" })).toBeVisible();
-      await expect(page.locator(".bg-blue-500", { hasText: "Scheduled" })).toBeVisible();
-      await expect(page.locator(".bg-gray-500", { hasText: "Draft" })).toBeVisible();
+      await expect(
+        page.locator(".bg-green-500", { hasText: "Published" })
+      ).toBeVisible();
+      await expect(
+        page.locator(".bg-blue-500", { hasText: "Scheduled" })
+      ).toBeVisible();
+      await expect(
+        page.locator(".bg-gray-500", { hasText: "Draft" })
+      ).toBeVisible();
 
       // Check content sections
       await expect(page.locator("text=Content Sections")).toBeVisible();
@@ -218,10 +260,15 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("text=Monthly SEO Performance Report")).toBeVisible({ timeout: 30000 });
+      await expect(
+        page.locator("text=Monthly SEO Performance Report")
+      ).toBeVisible({ timeout: 30000 });
 
       // Find first report dropdown button
-      const dropdownButton = page.locator("button").filter({ has: page.locator("svg") }).first();
+      const dropdownButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg") })
+        .first();
       await dropdownButton.click();
 
       // Verify menu options
@@ -239,11 +286,19 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("button").filter({ has: page.locator("svg") }).first()).toBeVisible({ timeout: 20000 });
+      await expect(
+        page
+          .locator("button")
+          .filter({ has: page.locator("svg") })
+          .first()
+      ).toBeVisible({ timeout: 20000 });
 
       // Find first report and open dropdown
-      const firstReport = page.locator('.hover\\:shadow-lg').first();
-      const dropdownButton = firstReport.locator("button").filter({ has: page.locator("svg") }).first();
+      const firstReport = page.locator(".hover\\:shadow-lg").first();
+      const dropdownButton = firstReport
+        .locator("button")
+        .filter({ has: page.locator("svg") })
+        .first();
       await dropdownButton.click();
 
       // Click download
@@ -261,7 +316,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator('.hover\\:shadow-lg').first()).toBeVisible({ timeout: 30000 });
+      await expect(page.locator(".hover\\:shadow-lg").first()).toBeVisible({
+        timeout: 30000,
+      });
 
       // Create a test report first
       await page.locator("button", { hasText: "New Report" }).click();
@@ -270,8 +327,13 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       await expect(page.locator("text=Report to Delete")).toBeVisible();
 
       // Now delete it
-      const reportToDelete = page.locator("text=Report to Delete").locator("..");
-      const dropdownButton = reportToDelete.locator("button").filter({ has: page.locator("svg") }).first();
+      const reportToDelete = page
+        .locator("text=Report to Delete")
+        .locator("..");
+      const dropdownButton = reportToDelete
+        .locator("button")
+        .filter({ has: page.locator("svg") })
+        .first();
       await dropdownButton.click();
 
       const deleteButton = page.locator("text=Delete");
@@ -279,7 +341,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       // Verify report is removed
       await expect(page.locator("text=Report to Delete")).not.toBeVisible();
-      await expect(page.locator("text=Report deleted successfully")).toBeVisible();
+      await expect(
+        page.locator("text=Report deleted successfully")
+      ).toBeVisible();
 
       console.log("✅ Report deletion works correctly");
     });
@@ -291,19 +355,27 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("text=Report to Delete")).toBeHidden({ timeout: 30000 });
+      await expect(page.locator("text=Report to Delete")).toBeHidden({
+        timeout: 30000,
+      });
 
       // Search for specific report
       const searchInput = page.locator("input[placeholder*='Search reports']");
       await searchInput.fill("Monthly");
 
       // Should show only matching reports
-      await expect(page.locator("text=Monthly SEO Performance Report")).toBeVisible();
-      await expect(page.locator("text=Weekly Content Performance")).not.toBeVisible();
+      await expect(
+        page.locator("text=Monthly SEO Performance Report")
+      ).toBeVisible();
+      await expect(
+        page.locator("text=Weekly Content Performance")
+      ).not.toBeVisible();
 
       // Clear search
       await searchInput.clear();
-      await expect(page.locator("text=Weekly Content Performance")).toBeVisible();
+      await expect(
+        page.locator("text=Weekly Content Performance")
+      ).toBeVisible();
 
       console.log("✅ Report search works correctly");
     });
@@ -313,16 +385,25 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("input[placeholder*='Search reports']")).toBeVisible({ timeout: 20000 });
+      await expect(
+        page.locator("input[placeholder*='Search reports']")
+      ).toBeVisible({ timeout: 20000 });
 
       // Filter by Monthly type
-      const typeFilter = page.locator("select, [role=combobox]").filter({ hasText: "All Types" }).first();
+      const typeFilter = page
+        .locator("select, [role=combobox]")
+        .filter({ hasText: "All Types" })
+        .first();
       await typeFilter.click();
       await page.locator("text=Monthly").click();
 
       // Should show only monthly reports
-      await expect(page.locator("text=Monthly SEO Performance Report")).toBeVisible();
-      await expect(page.locator("text=Weekly Content Performance")).not.toBeVisible();
+      await expect(
+        page.locator("text=Monthly SEO Performance Report")
+      ).toBeVisible();
+      await expect(
+        page.locator("text=Weekly Content Performance")
+      ).not.toBeVisible();
 
       console.log("✅ Type filtering works correctly");
     });
@@ -332,16 +413,25 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("select, [role=combobox]")).toBeVisible({ timeout: 20000 });
+      await expect(page.locator("select, [role=combobox]")).toBeVisible({
+        timeout: 20000,
+      });
 
       // Filter by Published status
-      const statusFilter = page.locator("select, [role=combobox]").filter({ hasText: "All Statuses" }).first();
+      const statusFilter = page
+        .locator("select, [role=combobox]")
+        .filter({ hasText: "All Statuses" })
+        .first();
       await statusFilter.click();
       await page.locator("text=Published").click();
 
       // Should show only published reports
-      await expect(page.locator("text=Monthly SEO Performance Report")).toBeVisible(); // Published
-      await expect(page.locator("text=Weekly Content Performance")).not.toBeVisible(); // Draft
+      await expect(
+        page.locator("text=Monthly SEO Performance Report")
+      ).toBeVisible(); // Published
+      await expect(
+        page.locator("text=Weekly Content Performance")
+      ).not.toBeVisible(); // Draft
 
       console.log("✅ Status filtering works correctly");
     });
@@ -351,7 +441,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("text=No reports found")).toBeHidden({ timeout: 20000 });
+      await expect(page.locator("text=No reports found")).toBeHidden({
+        timeout: 20000,
+      });
 
       // Search for non-existent report
       const searchInput = page.locator("input[placeholder*='Search reports']");
@@ -359,7 +451,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       // Should show empty state
       await expect(page.locator("text=No reports found")).toBeVisible();
-      await expect(page.locator("text=Try adjusting your filters")).toBeVisible();
+      await expect(
+        page.locator("text=Try adjusting your filters")
+      ).toBeVisible();
 
       console.log("✅ Empty state displays correctly");
     });
@@ -371,7 +465,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("text=Content Sections")).toBeVisible({ timeout: 20000 });
+      await expect(page.locator("text=Content Sections")).toBeVisible({
+        timeout: 20000,
+      });
 
       // Check for content section indicators
       await expect(page.locator("text=Content Sections")).toBeVisible();
@@ -390,7 +486,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator("text=Recipients")).toBeVisible({ timeout: 20000 });
+      await expect(page.locator("text=Recipients")).toBeVisible({
+        timeout: 20000,
+      });
 
       // Check for recipient information
       await expect(page.locator("text=Recipients")).toBeVisible();
@@ -402,15 +500,21 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("✅ Recipient information displays correctly");
     });
 
-    test("displays schedule information for scheduled reports", async ({ page }) => {
+    test("displays schedule information for scheduled reports", async ({
+      page,
+    }) => {
       console.log("⏰ Testing schedule information display...");
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
-      await expect(page.locator(".bg-blue-500", { hasText: "Scheduled" })).toBeVisible({ timeout: 20000 });
+      await expect(
+        page.locator(".bg-blue-500", { hasText: "Scheduled" })
+      ).toBeVisible({ timeout: 20000 });
 
       // Look for scheduled reports and their schedule info
-      const scheduledBadge = page.locator(".bg-blue-500", { hasText: "Scheduled" });
+      const scheduledBadge = page.locator(".bg-blue-500", {
+        hasText: "Scheduled",
+      });
       await expect(scheduledBadge).toBeVisible();
 
       // Check for schedule information
@@ -433,10 +537,12 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       // Verify responsive layout
       await expect(page.locator("h1")).toBeVisible();
-      await expect(page.locator("button", { hasText: "New Report" })).toBeVisible();
+      await expect(
+        page.locator("button", { hasText: "New Report" })
+      ).toBeVisible();
 
       // Check that cards stack properly on mobile
-      const reportCards = page.locator('.grid');
+      const reportCards = page.locator(".grid");
       await expect(reportCards).toHaveClass(/grid/);
 
       // Test touch-friendly buttons (48px minimum)
@@ -462,14 +568,16 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       const startTime = Date.now();
       await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
       // Wait for a representative element indicating client render finished
-      await expect(page.locator('.grid .hover\\:shadow-lg').first()).toBeVisible({ timeout: 30000 });
+      await expect(
+        page.locator(".grid .hover\\:shadow-lg").first()
+      ).toBeVisible({ timeout: 30000 });
       const loadTime = Date.now() - startTime;
 
       // Should load within 5 seconds
       expect(loadTime).toBeLessThan(5000);
 
       // Check for loading states
-      const reportCards = page.locator('.grid .hover\\:shadow-lg');
+      const reportCards = page.locator(".grid .hover\\:shadow-lg");
       const cardCount = await reportCards.count();
       expect(cardCount).toBeGreaterThan(0); // Should have loaded content
 

@@ -1,13 +1,8 @@
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
-import type {
-  CallableRequest
-} from "firebase-functions/v2/https";
-import {
-  HttpsError,
-  onCall
-} from "firebase-functions/v2/https";
+import type { CallableRequest } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 const db = getFirestore();
 const auth = getAuth();
@@ -114,7 +109,11 @@ export const sendWelcomeEmailFunction = onCall<WelcomeEmailData>(
         throw new HttpsError("unauthenticated", "User must be authenticated");
       }
 
-      const { userEmail, customerName: _customerName, plan: _plan } = request.data;
+      const {
+        userEmail,
+        customerName: _customerName,
+        plan: _plan,
+      } = request.data;
 
       // Get user data
       const userRecord = await auth.getUser(request.auth.uid);
@@ -167,7 +166,12 @@ export const sendBillingReminder = onCall<BillingReminderData>(
         throw new HttpsError("unauthenticated", "User must be authenticated");
       }
 
-      const { userEmail, customerName: _customerName, dueDate: _dueDate, amount: _amount } = request.data;
+      const {
+        userEmail,
+        customerName: _customerName,
+        dueDate: _dueDate,
+        amount: _amount,
+      } = request.data;
 
       // Get user data
       const userRecord = await auth.getUser(request.auth.uid);

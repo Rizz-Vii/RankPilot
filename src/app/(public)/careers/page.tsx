@@ -126,7 +126,7 @@ export default function CareersPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Build the Future of
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               {" "}
               AI-Powered SEO
             </span>
@@ -246,7 +246,9 @@ export default function CareersPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground mb-4">{job.description}</p>
+                    <p className="text-muted-foreground mb-4">
+                      {job.description}
+                    </p>
 
                     <div className="mb-4">
                       <h4 className="font-semibold text-foreground mb-2">
@@ -264,7 +266,7 @@ export default function CareersPage() {
                         <Badge
                           key={tagIndex}
                           variant="secondary"
-                            className="bg-primary/10 text-primary"
+                          className="bg-primary/10 text-primary"
                         >
                           {tag}
                         </Badge>

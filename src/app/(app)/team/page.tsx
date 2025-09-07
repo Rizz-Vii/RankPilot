@@ -44,7 +44,16 @@ import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { isDemoContentEnabled } from "@/lib/flags/demo";
 import type { TeamMember } from "@/lib/services/team.service";
-import { removeTeamMember as apiRemoveMember, updateTeamMemberRole as apiUpdateRole, canModifyMember, canRemoveMember, inviteTeamMember, resendTeamInvite, subscribeToTeamMembers, transferTeamOwnership } from "@/lib/services/team.service";
+import {
+  removeTeamMember as apiRemoveMember,
+  updateTeamMemberRole as apiUpdateRole,
+  canModifyMember,
+  canRemoveMember,
+  inviteTeamMember,
+  resendTeamInvite,
+  subscribeToTeamMembers,
+  transferTeamOwnership,
+} from "@/lib/services/team.service";
 import { safeErrorMessage } from "@/lib/utils";
 import {
   AlertCircle,
@@ -57,7 +66,7 @@ import {
   Shield,
   Trash2,
   UserPlus,
-  Users
+  Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -99,7 +108,9 @@ export default function TeamManagementPage() {
     message: "",
   });
   const [isInviting, setIsInviting] = useState(false);
-  const [transferLoadingId, setTransferLoadingId] = useState<string | null>(null);
+  const [transferLoadingId, setTransferLoadingId] = useState<string | null>(
+    null
+  );
 
   // Hold latest unsubscribe function once subscription promise resolves
   const unsubscribeRef = useRef<(() => void) | null>(null);
@@ -120,23 +131,33 @@ export default function TeamManagementPage() {
         console.error("Team subscription error", err);
         toast.error("Team updates failed");
         setLoading(false);
-      }
-    }).then((unsub) => {
-      if (!active) {
-        try { unsub(); } catch { /* noop */ }
-        return;
-      }
-      unsubscribeRef.current = unsub;
-    }).catch((err) => {
-      // already surfaced via onError, only log if active (diagnostic)
-      if (active) console.error("Team subscription setup failed", err);
-    });
+      },
+    })
+      .then((unsub) => {
+        if (!active) {
+          try {
+            unsub();
+          } catch {
+            /* noop */
+          }
+          return;
+        }
+        unsubscribeRef.current = unsub;
+      })
+      .catch((err) => {
+        // already surfaced via onError, only log if active (diagnostic)
+        if (active) console.error("Team subscription setup failed", err);
+      });
 
     return () => {
       active = false;
       const u = unsubscribeRef.current;
       if (u) {
-        try { u(); } catch { /* noop */ }
+        try {
+          u();
+        } catch {
+          /* noop */
+        }
       }
       unsubscribeRef.current = null;
     };
@@ -148,62 +169,83 @@ export default function TeamManagementPage() {
       return;
     }
     // basic duplicate guard
-    if (teamMembers.some(m => m.email.toLowerCase() === inviteForm.email.toLowerCase())) {
+    if (
+      teamMembers.some(
+        (m) => m.email.toLowerCase() === inviteForm.email.toLowerCase()
+      )
+    ) {
       toast.error("User already invited or a member");
       return;
     }
     setIsInviting(true);
     try {
-      await inviteTeamMember({ email: inviteForm.email, role: inviteForm.role, message: inviteForm.message });
+      await inviteTeamMember({
+        email: inviteForm.email,
+        role: inviteForm.role,
+        message: inviteForm.message,
+      });
       toast.success("Invitation sent");
       setInviteForm({ email: "", role: "member", message: "" });
       setIsInviteDialogOpen(false);
-    } catch (e:unknown) {
+    } catch (e: unknown) {
       console.error(e);
       toast.error(safeErrorMessage(e));
-    } finally { setIsInviting(false); }
+    } finally {
+      setIsInviting(false);
+    }
   };
 
-  const updateMemberRole = async (memberId: string, newRole: TeamMember["role"]) => {
-    const original = teamMembers.find(m => m.id === memberId);
+  const updateMemberRole = async (
+    memberId: string,
+    newRole: TeamMember["role"]
+  ) => {
+    const original = teamMembers.find((m) => m.id === memberId);
     if (!original) return;
     if (!canModifyMember(user?.uid || "", original, teamMembers)) {
       toast.error("Insufficient permissions");
       return;
     }
     // optimistic
-    setTeamMembers(teamMembers.map(m => m.id === memberId ? { ...m, role: newRole } : m));
+    setTeamMembers(
+      teamMembers.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
+    );
     try {
       await apiUpdateRole(memberId, newRole);
       toast.success("Role updated");
-    } catch (e:unknown) {
+    } catch (e: unknown) {
       // rollback
-      setTeamMembers(teamMembers.map(m => m.id === memberId ? original : m));
+      setTeamMembers(
+        teamMembers.map((m) => (m.id === memberId ? original : m))
+      );
       toast.error(safeErrorMessage(e));
     }
   };
 
   const removeMember = async (memberId: string) => {
-    const target = teamMembers.find(m => m.id === memberId);
+    const target = teamMembers.find((m) => m.id === memberId);
     if (!target) return;
     if (!canRemoveMember(target, teamMembers)) {
       toast.error("Cannot remove this member");
       return;
     }
     const prev = teamMembers;
-    setTeamMembers(teamMembers.filter(m => m.id !== memberId));
+    setTeamMembers(teamMembers.filter((m) => m.id !== memberId));
     try {
       await apiRemoveMember(memberId);
       toast.success("Member removed");
-    } catch (e:unknown) {
+    } catch (e: unknown) {
       setTeamMembers(prev); // rollback
       toast.error(safeErrorMessage(e));
     }
   };
 
   const resendInvite = async (memberId: string) => {
-    try { await resendTeamInvite(memberId); toast.success("Invitation resent"); }
-    catch (e:unknown) { toast.error(safeErrorMessage(e)); }
+    try {
+      await resendTeamInvite(memberId);
+      toast.success("Invitation resent");
+    } catch (e: unknown) {
+      toast.error(safeErrorMessage(e));
+    }
   };
 
   const getStatusIcon = (status: TeamMember["status"]) => {
@@ -234,19 +276,24 @@ export default function TeamManagementPage() {
     }
   };
 
-  const currentUserMember = teamMembers.find(m => m.userId === user?.uid || m.id === user?.uid);
-  const isOwner = currentUserMember?.role === 'owner';
+  const currentUserMember = teamMembers.find(
+    (m) => m.userId === user?.uid || m.id === user?.uid
+  );
+  const isOwner = currentUserMember?.role === "owner";
   const isLoading = authLoading || loading;
 
   return (
-  <FeatureGate feature="team_management" requiredTier="agency" showUpgrade>
-  <main className="container mx-auto py-6 space-y-8" data-testid="team-management-page">
-  {/* Demo mode banner (informational only) */}
-  <Alert className="mb-2" data-testid="team-banner">
+    <FeatureGate feature="team_management" requiredTier="agency" showUpgrade>
+      <main
+        className="container mx-auto py-6 space-y-8"
+        data-testid="team-management-page"
+      >
+        {/* Demo mode banner (informational only) */}
+        <Alert className="mb-2" data-testid="team-banner">
           <AlertDescription>
             {demoEnabled
-              ? 'Some collaboration features may use demo scaffolding until all APIs are wired.'
-              : 'Demo content is disabled. Only live-backed features are shown.'}
+              ? "Some collaboration features may use demo scaffolding until all APIs are wired."
+              : "Demo content is disabled. Only live-backed features are shown."}
           </AlertDescription>
         </Alert>
         <ToolPageHeader
@@ -254,7 +301,11 @@ export default function TeamManagementPage() {
           description="Manage team members, roles, permissions, and collaboration."
           badges={[
             { label: "Collaboration", variant: "secondary" },
-            { label: "Enterprise", variant: "outline", className: "text-primary border-primary/40" }
+            {
+              label: "Enterprise",
+              variant: "outline",
+              className: "text-primary border-primary/40",
+            },
           ]}
           showBreadcrumb
         >
@@ -333,7 +384,9 @@ export default function TeamManagementPage() {
                 </div>
                 <div className="flex gap-3 pt-4">
                   <Button
-                    onClick={() => { void sendInvite(); }}
+                    onClick={() => {
+                      void sendInvite();
+                    }}
                     disabled={isInviting}
                     className="flex-1"
                   >
@@ -355,7 +408,9 @@ export default function TeamManagementPage() {
         <div className="grid gap-4 md:grid-cols-3">
           <Card
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => { void router.push("/team/chat"); }}
+            onClick={() => {
+              void router.push("/team/chat");
+            }}
           >
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-full bg-primary/10 p-3">
@@ -372,7 +427,9 @@ export default function TeamManagementPage() {
 
           <Card
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => { void router.push("/team/projects"); }}
+            onClick={() => {
+              void router.push("/team/projects");
+            }}
           >
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-full bg-success/10 p-3">
@@ -389,7 +446,9 @@ export default function TeamManagementPage() {
 
           <Card
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => { void router.push("/team/reports"); }}
+            onClick={() => {
+              void router.push("/team/reports");
+            }}
           >
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-full bg-accent/10 p-3">
@@ -406,7 +465,7 @@ export default function TeamManagementPage() {
         </div>
 
         {/* Team Stats */}
-  <div className="grid gap-4 md:grid-cols-3" data-testid="team-stats">
+        <div className="grid gap-4 md:grid-cols-3" data-testid="team-stats">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -467,157 +526,190 @@ export default function TeamManagementPage() {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto" data-testid="team-members-table">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead scope="col">Member</TableHead>
-                  <TableHead scope="col">Role</TableHead>
-                  <TableHead scope="col">Status</TableHead>
-                  <TableHead scope="col">Last Active</TableHead>
-                  <TableHead scope="col" className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading && (
-                  [...Array(5)].map((_, i) => (
-                    <TableRow key={`skeleton-${i}`} data-testid={`team-member-skeleton-${i}`}>
-                      <TableCell colSpan={5} className="py-4">
-                        <div className="flex items-center gap-4 animate-pulse">
-                          <div className="h-8 w-8 rounded-full bg-muted" />
-                          <div className="flex-1 grid grid-cols-4 gap-4">
-                            <div className="h-4 bg-muted rounded col-span-2" />
-                            <div className="h-4 bg-muted rounded col-span-1" />
-                            <div className="h-4 bg-muted rounded col-span-1" />
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead scope="col">Member</TableHead>
+                    <TableHead scope="col">Role</TableHead>
+                    <TableHead scope="col">Status</TableHead>
+                    <TableHead scope="col">Last Active</TableHead>
+                    <TableHead scope="col" className="text-right">
+                      Actions
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading &&
+                    [...Array(5)].map((_, i) => (
+                      <TableRow
+                        key={`skeleton-${i}`}
+                        data-testid={`team-member-skeleton-${i}`}
+                      >
+                        <TableCell colSpan={5} className="py-4">
+                          <div className="flex items-center gap-4 animate-pulse">
+                            <div className="h-8 w-8 rounded-full bg-muted" />
+                            <div className="flex-1 grid grid-cols-4 gap-4">
+                              <div className="h-4 bg-muted rounded col-span-2" />
+                              <div className="h-4 bg-muted rounded col-span-1" />
+                              <div className="h-4 bg-muted rounded col-span-1" />
+                            </div>
                           </div>
-                        </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  {!isLoading && teamMembers.length === 0 && (
+                    <TableRow data-testid="empty-team-state">
+                      <TableCell
+                        colSpan={5}
+                        className="text-center py-10 text-muted-foreground"
+                      >
+                        No team members yet. Invite your first collaborator.
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-                {!isLoading && teamMembers.length === 0 && (
-                  <TableRow data-testid="empty-team-state">
-                    <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                      No team members yet. Invite your first collaborator.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!isLoading && teamMembers.map((member) => (
-                  <TableRow key={member.id} data-testid={`team-member-row-${member.id}`}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={member.avatar} alt={member.name} />
-                          <AvatarFallback>
-                            {member.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{member.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {member.email}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getRoleColor(member.role)}>
-                          {member.role}
-                        </Badge>
-                        {member.role === "owner" && (
-                          <div className="text-sm text-muted-foreground">
-                            Full access and team management
+                  )}
+                  {!isLoading &&
+                    teamMembers.map((member) => (
+                      <TableRow
+                        key={member.id}
+                        data-testid={`team-member-row-${member.id}`}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage
+                                src={member.avatar}
+                                alt={member.name}
+                              />
+                              <AvatarFallback>
+                                {member.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{member.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {member.email}
+                              </p>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(member.status)}
-                        <span className="capitalize">{member.status}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {member.lastActive ? member.lastActive.toLocaleDateString() : "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center gap-2 justify-end">
-                        {member.status === "pending" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => { void resendInvite(member.id); }}
-                            data-testid={`resend-invite-${member.id}`}
-                          >
-                            Resend
-                          </Button>
-                        )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge className={getRoleColor(member.role)}>
+                              {member.role}
+                            </Badge>
+                            {member.role === "owner" && (
+                              <div className="text-sm text-muted-foreground">
+                                Full access and team management
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(member.status)}
+                            <span className="capitalize">{member.status}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {member.lastActive
+                              ? member.lastActive.toLocaleDateString()
+                              : "—"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center gap-2 justify-end">
+                            {member.status === "pending" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  void resendInvite(member.id);
+                                }}
+                                data-testid={`resend-invite-${member.id}`}
+                              >
+                                Resend
+                              </Button>
+                            )}
 
-                        {member.role !== "owner" && (
-                          <Select
-                            value={member.role}
-                            onValueChange={(value: TeamMember["role"]) => { void updateMemberRole(member.id, value); }}
-                          >
-                            <SelectTrigger className="w-[100px]" data-testid={`role-select-${member.id}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="viewer">Viewer</SelectItem>
-                              <SelectItem value="member">Member</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
+                            {member.role !== "owner" && (
+                              <Select
+                                value={member.role}
+                                onValueChange={(value: TeamMember["role"]) => {
+                                  void updateMemberRole(member.id, value);
+                                }}
+                              >
+                                <SelectTrigger
+                                  className="w-[100px]"
+                                  data-testid={`role-select-${member.id}`}
+                                >
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="viewer">Viewer</SelectItem>
+                                  <SelectItem value="member">Member</SelectItem>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
 
-                        {isOwner && member.role !== 'owner' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={transferLoadingId === member.id}
-                            onClick={() => {
-                              void (async () => {
-                              if (!window.confirm(`Transfer ownership to ${member.name}? This will reduce your permissions.`)) return;
-                              setTransferLoadingId(member.id);
-                              try {
-                                await transferTeamOwnership(member.id);
-                                toast.success("Ownership transferred");
-                              } catch (e:unknown) {
-                                toast.error(safeErrorMessage(e));
-                              } finally {
-                                setTransferLoadingId(null);
-                              }
-                              })();
-                            }}
-                            className="text-accent-foreground hover:text-accent-foreground/80"
-                            data-testid={`transfer-ownership-${member.id}`}
-                          >
-                            {transferLoadingId === member.id ? 'Transferring...' : 'Make Owner'}
-                          </Button>
-                        )}
+                            {isOwner && member.role !== "owner" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={transferLoadingId === member.id}
+                                onClick={() => {
+                                  void (async () => {
+                                    if (
+                                      !window.confirm(
+                                        `Transfer ownership to ${member.name}? This will reduce your permissions.`
+                                      )
+                                    )
+                                      return;
+                                    setTransferLoadingId(member.id);
+                                    try {
+                                      await transferTeamOwnership(member.id);
+                                      toast.success("Ownership transferred");
+                                    } catch (e: unknown) {
+                                      toast.error(safeErrorMessage(e));
+                                    } finally {
+                                      setTransferLoadingId(null);
+                                    }
+                                  })();
+                                }}
+                                className="text-accent-foreground hover:text-accent-foreground/80"
+                                data-testid={`transfer-ownership-${member.id}`}
+                              >
+                                {transferLoadingId === member.id
+                                  ? "Transferring..."
+                                  : "Make Owner"}
+                              </Button>
+                            )}
 
-                        {member.role !== "owner" && canRemoveMember(member, teamMembers) && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => { void removeMember(member.id); }}
-                            className="text-destructive-foreground hover:text-destructive-foreground/80"
-                            aria-label={`Remove ${member.name}`}
-                            data-testid={`remove-member-${member.id}`}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                            {member.role !== "owner" &&
+                              canRemoveMember(member, teamMembers) && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    void removeMember(member.id);
+                                  }}
+                                  className="text-destructive-foreground hover:text-destructive-foreground/80"
+                                  aria-label={`Remove ${member.name}`}
+                                  data-testid={`remove-member-${member.id}`}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>

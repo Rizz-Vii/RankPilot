@@ -10,7 +10,7 @@ let _ai: GenkitAI | null = null;
 export function getAI(): GenkitAI {
   if (!_ai) {
     // Lightweight test stub path (avoids heavy Genkit init in unit tests)
-    if (process.env.GENKIT_TEST_STUB === '1') {
+    if (process.env.GENKIT_TEST_STUB === "1") {
       _ai = { generate: async () => ({ text: () => null }) } as GenkitAI;
       return _ai;
     }

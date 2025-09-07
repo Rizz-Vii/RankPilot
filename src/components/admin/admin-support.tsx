@@ -18,7 +18,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -40,7 +46,13 @@ import {
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
-import { Filter, Mail, MessageSquareReply, RefreshCw, UserPlus } from "lucide-react";
+import {
+  Filter,
+  Mail,
+  MessageSquareReply,
+  RefreshCw,
+  UserPlus,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -65,14 +77,19 @@ interface TimestampLike {
 }
 
 function isTimestampLike(v: unknown): v is TimestampLike {
-  return !!v && typeof v === 'object' && 'toDate' in v && typeof (v as { toDate?: unknown }).toDate === 'function';
+  return (
+    !!v &&
+    typeof v === "object" &&
+    "toDate" in v &&
+    typeof (v as { toDate?: unknown }).toDate === "function"
+  );
 }
 
 // Safe error message extractor (avoid any casts)
 const safeMessage = (e: unknown, fallback: string): string => {
-  if (e && typeof e === 'object' && 'message' in e) {
+  if (e && typeof e === "object" && "message" in e) {
     const msg = (e as { message?: unknown }).message;
-    if (typeof msg === 'string' && msg.trim()) return msg;
+    if (typeof msg === "string" && msg.trim()) return msg;
   }
   return fallback;
 };
@@ -90,7 +107,10 @@ export default function AdminSupport() {
   const [activeItem, setActiveItem] = useState<SupportMessage | null>(null);
 
   useEffect(() => {
-    const qy = query(collection(db, "supportMessages"), orderBy("createdAt", "desc"));
+    const qy = query(
+      collection(db, "supportMessages"),
+      orderBy("createdAt", "desc")
+    );
     const unsub = onSnapshot(
       qy,
       (snap) => {
@@ -98,17 +118,17 @@ export default function AdminSupport() {
           const data = d.data() as Partial<SupportMessage>;
           return {
             id: d.id,
-            name: data.name || '',
-            email: data.email || '',
-            subject: data.subject || '',
-            message: data.message || '',
-            category: data.category || 'general',
+            name: data.name || "",
+            email: data.email || "",
+            subject: data.subject || "",
+            message: data.message || "",
+            category: data.category || "general",
             status: data.status,
             emailStatus: data.emailStatus,
             emailMessageId: data.emailMessageId,
             assignedTo: data.assignedTo,
             createdAt: data.createdAt,
-            updatedAt: data.updatedAt
+            updatedAt: data.updatedAt,
           };
         });
         setItems(list);
@@ -117,8 +137,10 @@ export default function AdminSupport() {
       (error: unknown) => {
         console.error("AdminSupport Firestore error:", error);
         setLoading(false);
-        const msg = safeMessage(error, 'Failed to load support messages');
-        try { toast.error(msg); } catch {}
+        const msg = safeMessage(error, "Failed to load support messages");
+        try {
+          toast.error(msg);
+        } catch {}
       }
     );
     return () => unsub();
@@ -131,18 +153,24 @@ export default function AdminSupport() {
         it.subject?.toLowerCase().includes(search.toLowerCase()) ||
         it.email?.toLowerCase().includes(search.toLowerCase()) ||
         it.name?.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = statusFilter === "all" || (it.status || "received") === statusFilter;
-      const matchesCategory = categoryFilter === "all" || (it.category || "general") === categoryFilter;
+      const matchesStatus =
+        statusFilter === "all" || (it.status || "received") === statusFilter;
+      const matchesCategory =
+        categoryFilter === "all" ||
+        (it.category || "general") === categoryFilter;
       return matchesSearch && matchesStatus && matchesCategory;
     });
   }, [items, search, statusFilter, categoryFilter]);
 
   const setStatus = async (id: string, status: string) => {
     try {
-      await updateDoc(doc(db, "supportMessages", id), { status, updatedAt: serverTimestamp() });
+      await updateDoc(doc(db, "supportMessages", id), {
+        status,
+        updatedAt: serverTimestamp(),
+      });
       toast.success("Status updated");
     } catch (e: unknown) {
-      const msg = safeMessage(e, 'Failed to update status');
+      const msg = safeMessage(e, "Failed to update status");
       toast.error(msg);
     }
   };
@@ -157,14 +185,16 @@ export default function AdminSupport() {
       });
       toast.success("Assigned to you");
     } catch (e: unknown) {
-      const msg = safeMessage(e, 'Failed to assign');
+      const msg = safeMessage(e, "Failed to assign");
       toast.error(msg);
     }
   };
 
   const openReply = (item: SupportMessage) => {
     setActiveItem(item);
-    setReplySubject(item.subject?.startsWith("Re:") ? item.subject : `Re: ${item.subject}`);
+    setReplySubject(
+      item.subject?.startsWith("Re:") ? item.subject : `Re: ${item.subject}`
+    );
     setReplyBody("");
     setReplyOpen(true);
   };
@@ -182,19 +212,26 @@ export default function AdminSupport() {
         }),
       });
       if (!res.ok) {
-        let fallback = 'Failed to send reply';
+        let fallback = "Failed to send reply";
         try {
           const j = await res.json();
-          if (j && typeof j === 'object' && 'message' in j && typeof (j as { message?: unknown }).message === 'string') {
+          if (
+            j &&
+            typeof j === "object" &&
+            "message" in j &&
+            typeof (j as { message?: unknown }).message === "string"
+          ) {
             fallback = String((j as { message: string }).message);
           }
-        } catch {/* ignore parse */ }
+        } catch {
+          /* ignore parse */
+        }
         throw new Error(fallback);
       }
       toast.success("Reply sent");
       setReplyOpen(false);
     } catch (e: unknown) {
-      const msg = safeMessage(e, 'Failed to send reply');
+      const msg = safeMessage(e, "Failed to send reply");
       toast.error(msg);
     }
   };
@@ -206,11 +243,15 @@ export default function AdminSupport() {
           <CardTitle className="flex items-center gap-2">
             <MessageSquareReply className="h-5 w-5" /> Support Inbox
           </CardTitle>
-          <CardDescription>View, assign, reply, and resolve support messages.</CardDescription>
+          <CardDescription>
+            View, assign, reply, and resolve support messages.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {loading && (
-            <div className="text-sm text-muted-foreground mb-3">Loading messages…</div>
+            <div className="text-sm text-muted-foreground mb-3">
+              Loading messages…
+            </div>
           )}
           <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-4">
             <div className="flex-1 relative">
@@ -248,7 +289,10 @@ export default function AdminSupport() {
                   <SelectItem value="general">General</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" onClick={() => setSearch("")}> <RefreshCw className="h-4 w-4 mr-2"/> Reset</Button>
+              <Button variant="outline" onClick={() => setSearch("")}>
+                {" "}
+                <RefreshCw className="h-4 w-4 mr-2" /> Reset
+              </Button>
             </div>
           </div>
 
@@ -270,29 +314,44 @@ export default function AdminSupport() {
                   <TableRow key={m.id}>
                     <TableCell className="whitespace-nowrap">
                       {isTimestampLike(m.createdAt)
-                        ? formatDistanceToNow(m.createdAt.toDate(), { addSuffix: true })
+                        ? formatDistanceToNow(m.createdAt.toDate(), {
+                            addSuffix: true,
+                          })
                         : "—"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4"/>
+                        <Mail className="h-4 w-4" />
                         <div>
-                          <div className="font-medium">{m.name || "Unknown"}</div>
-                          <div className="text-xs text-muted-foreground">{m.email}</div>
+                          <div className="font-medium">
+                            {m.name || "Unknown"}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {m.email}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="min-w-[220px]">{m.subject}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="capitalize">{m.category || "general"}</Badge>
+                      <Badge variant="secondary" className="capitalize">
+                        {m.category || "general"}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Badge variant={m.status === "resolved" ? "secondary" : "outline"} className="capitalize">
+                        <Badge
+                          variant={
+                            m.status === "resolved" ? "secondary" : "outline"
+                          }
+                          className="capitalize"
+                        >
                           {m.status || "received"}
                         </Badge>
                         {m.emailStatus && (
-                          <Badge variant="outline" className="capitalize">{m.emailStatus}</Badge>
+                          <Badge variant="outline" className="capitalize">
+                            {m.emailStatus}
+                          </Badge>
                         )}
                       </div>
                     </TableCell>
@@ -300,19 +359,38 @@ export default function AdminSupport() {
                       {m.assignedTo ? (
                         <span className="text-sm">{m.assignedTo}</span>
                       ) : (
-                        <span className="text-sm text-muted-foreground">Unassigned</span>
+                        <span className="text-sm text-muted-foreground">
+                          Unassigned
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline" onClick={() => { void assignToMe(m.id); }}>
-                          <UserPlus className="h-4 w-4 mr-1"/> Assign to me
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            void assignToMe(m.id);
+                          }}
+                        >
+                          <UserPlus className="h-4 w-4 mr-1" /> Assign to me
                         </Button>
-                        <Button size="sm" onClick={() => { openReply(m); }}>
-                          <MessageSquareReply className="h-4 w-4 mr-1"/> Reply
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            openReply(m);
+                          }}
+                        >
+                          <MessageSquareReply className="h-4 w-4 mr-1" /> Reply
                         </Button>
                         {m.status !== "resolved" && (
-                          <Button size="sm" variant="secondary" onClick={() => { void setStatus(m.id, "resolved"); }}>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              void setStatus(m.id, "resolved");
+                            }}
+                          >
                             Resolve
                           </Button>
                         )}
@@ -325,7 +403,9 @@ export default function AdminSupport() {
           </div>
 
           {filtered.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">No messages</div>
+            <div className="text-center py-8 text-muted-foreground">
+              No messages
+            </div>
           )}
         </CardContent>
       </Card>
@@ -334,15 +414,35 @@ export default function AdminSupport() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reply to {activeItem?.email}</DialogTitle>
-            <DialogDescription>Send a response; the conversation will be logged.</DialogDescription>
+            <DialogDescription>
+              Send a response; the conversation will be logged.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <Input value={replySubject} onChange={(e) => setReplySubject(e.target.value)} placeholder="Subject"/>
-            <Textarea value={replyBody} onChange={(e) => setReplyBody(e.target.value)} rows={6} placeholder="Write your reply..."/>
+            <Input
+              value={replySubject}
+              onChange={(e) => setReplySubject(e.target.value)}
+              placeholder="Subject"
+            />
+            <Textarea
+              value={replyBody}
+              onChange={(e) => setReplyBody(e.target.value)}
+              rows={6}
+              placeholder="Write your reply..."
+            />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setReplyOpen(false)}>Cancel</Button>
-            <Button onClick={() => { void sendReply(); }} disabled={!replyBody.trim()}>Send reply</Button>
+            <Button variant="outline" onClick={() => setReplyOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                void sendReply();
+              }}
+              disabled={!replyBody.trim()}
+            >
+              Send reply
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

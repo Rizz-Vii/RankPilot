@@ -3,550 +3,537 @@
  * Comprehensive testing for Firestore integration and security protocols
  */
 
-import type { APIResponse } from '@playwright/test';
-import { expect, test } from '@playwright/test';
+import type { APIResponse } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 // Production URLs
-const BASE_URL = 'http://localhost:3000';
-const RANKPILOT_APP_URL = 'http://localhost:3000';
+const BASE_URL = "http://localhost:3000";
+const RANKPILOT_APP_URL = "http://localhost:3000";
 // Added diagnostics container to consume previously unused catch error variables
 const testDiagnostics = { errors: [] as string[] };
 const pushDiagnostic = (err: unknown) => {
-    testDiagnostics.errors.push(err instanceof Error ? err.message : String(err));
+  testDiagnostics.errors.push(err instanceof Error ? err.message : String(err));
 };
 
-test.describe('RankPilot Database Integration Tests', () => {
+test.describe("RankPilot Database Integration Tests", () => {
+  test.beforeEach(async ({ page }) => {
+    page.setDefaultNavigationTimeout(45000);
+    page.setDefaultTimeout(30000);
+  });
 
-    test.beforeEach(async ({ page }) => {
-        page.setDefaultNavigationTimeout(45000);
-        page.setDefaultTimeout(30000);
+  test.describe("Firestore Security Rules Validation", () => {
+    test("User Data Access - Authentication Required", async ({ page }) => {
+      console.log("🔐 Testing Firestore Security Rules...");
+
+      // Attempt to access user data without authentication
+      try {
+        const response = await page.request.get(`${BASE_URL}/api/user`, {
+          timeout: 15000,
+        });
+
+        console.log(`   User Data Access Status: ${response.status()}`);
+
+        // Should require authentication
+        expect([401, 403]).toContain(response.status());
+        console.log("   ✅ User data properly protected");
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ✅ User data access properly restricted");
+      }
     });
 
-    test.describe('Firestore Security Rules Validation', () => {
+    test("Project Data - Tier-Based Access Control", async ({ page }) => {
+      console.log("🏗️ Testing Project Access Controls...");
 
-        test('User Data Access - Authentication Required', async ({ page }) => {
-            console.log('🔐 Testing Firestore Security Rules...');
+      // Test different subscription tier access
+      const testCases = [
+        { tier: "free", expectedAccess: "limited" },
+        { tier: "starter", expectedAccess: "basic" },
+        { tier: "agency", expectedAccess: "advanced" },
+        { tier: "enterprise", expectedAccess: "full" },
+      ];
 
-            // Attempt to access user data without authentication
-            try {
-                const response = await page.request.get(`${BASE_URL}/api/user`, {
-                    timeout: 15000
-                });
+      for (const testCase of testCases) {
+        try {
+          const response = await page.request.get(`${BASE_URL}/api/dashboard`, {
+            timeout: 15000,
+          });
 
-                console.log(`   User Data Access Status: ${response.status()}`);
+          console.log(`   ${testCase.tier} tier access: ${response.status()}`);
 
-                // Should require authentication
-                expect([401, 403]).toContain(response.status());
-                console.log('   ✅ User data properly protected');
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ✅ User data access properly restricted');
-            }
-        });
-
-        test('Project Data - Tier-Based Access Control', async ({ page }) => {
-            console.log('🏗️ Testing Project Access Controls...');
-
-            // Test different subscription tier access
-            const testCases = [
-                { tier: 'free', expectedAccess: 'limited' },
-                { tier: 'starter', expectedAccess: 'basic' },
-                { tier: 'agency', expectedAccess: 'advanced' },
-                { tier: 'enterprise', expectedAccess: 'full' }
-            ];
-
-            for (const testCase of testCases) {
-                try {
-                    const response = await page.request.get(`${BASE_URL}/api/dashboard`, {
-                        timeout: 15000
-                    });
-
-                    console.log(`   ${testCase.tier} tier access: ${response.status()}`);
-
-                    // Should either authenticate or show proper tier restrictions
-                    expect([200, 401, 403, 402]).toContain(response.status());
-
-                } catch (error) {
-                    pushDiagnostic(error);
-                    console.log(`   ${testCase.tier} tier: Access properly controlled`);
-                }
-            }
-        });
-
-        test('Analytics Data - Read Permissions', async ({ page }) => {
-            console.log('📊 Testing Analytics Data Security...');
-
-            try {
-                const response = await page.request.get(`${BASE_URL}/api/insights`, {
-                    timeout: 20000
-                });
-
-                console.log(`   Analytics Access Status: ${response.status()}`);
-
-                // Should require proper authentication and authorization
-                expect([200, 401, 403]).toContain(response.status());
-                console.log('   ✅ Analytics data access controlled');
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ✅ Analytics data properly secured');
-            }
-        });
+          // Should either authenticate or show proper tier restrictions
+          expect([200, 401, 403, 402]).toContain(response.status());
+        } catch (error) {
+          pushDiagnostic(error);
+          console.log(`   ${testCase.tier} tier: Access properly controlled`);
+        }
+      }
     });
 
-    test.describe('Database Performance - Query Optimization', () => {
+    test("Analytics Data - Read Permissions", async ({ page }) => {
+      console.log("📊 Testing Analytics Data Security...");
 
-        test('Large Dataset Query - Performance Test', async ({ page }) => {
-            console.log('⚡ Testing Database Query Performance...');
-
-            try {
-                const startTime = Date.now();
-
-                const response = await page.request.get(`${BASE_URL}/api/health`, {
-                    timeout: 30000
-                });
-
-                const queryTime = Date.now() - startTime;
-                console.log(`   Large Query Time: ${queryTime}ms`);
-
-                if (response.status() === 200) {
-                    expect(queryTime).toBeLessThan(5000); // Should complete within 5 seconds
-                    console.log('   ✅ Query performance acceptable');
-                }
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ⚠️ Query test completed (auth-protected)');
-            }
+      try {
+        const response = await page.request.get(`${BASE_URL}/api/insights`, {
+          timeout: 20000,
         });
 
-        test('Batch Operations - Write Performance', async ({ page }) => {
-            console.log('📝 Testing Batch Write Performance...');
+        console.log(`   Analytics Access Status: ${response.status()}`);
 
-            try {
-                const startTime = Date.now();
+        // Should require proper authentication and authorization
+        expect([200, 401, 403]).toContain(response.status());
+        console.log("   ✅ Analytics data access controlled");
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ✅ Analytics data properly secured");
+      }
+    });
+  });
 
-                const response = await page.request.get(`${BASE_URL}/api/test`, {
-                    timeout: 25000
-                });
+  test.describe("Database Performance - Query Optimization", () => {
+    test("Large Dataset Query - Performance Test", async ({ page }) => {
+      console.log("⚡ Testing Database Query Performance...");
 
-                const batchTime = Date.now() - startTime;
-                console.log(`   Batch Write Time: ${batchTime}ms`);
+      try {
+        const startTime = Date.now();
 
-                if (response.status() === 200) {
-                    expect(batchTime).toBeLessThan(10000); // Should complete within 10 seconds
-                    console.log('   ✅ Batch write performance acceptable');
-                }
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ⚠️ Batch write test completed (auth-protected)');
-            }
+        const response = await page.request.get(`${BASE_URL}/api/health`, {
+          timeout: 30000,
         });
 
-        test('Real-time Subscriptions - Connection Test', async ({ page }) => {
-            console.log('🔄 Testing Real-time Database Connections...');
+        const queryTime = Date.now() - startTime;
+        console.log(`   Large Query Time: ${queryTime}ms`);
 
-            try {
-                const response = await page.request.get(`${BASE_URL}/api/health`, {
-                    timeout: 15000
-                });
-
-                console.log(`   Real-time Subscription Status: ${response.status()}`);
-
-                // Should establish connection or show auth requirement
-                expect([200, 401, 403]).toContain(response.status());
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ⚠️ Real-time connection test completed');
-            }
-        });
+        if (response.status() === 200) {
+          expect(queryTime).toBeLessThan(5000); // Should complete within 5 seconds
+          console.log("   ✅ Query performance acceptable");
+        }
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ⚠️ Query test completed (auth-protected)");
+      }
     });
 
-    test.describe('Data Integrity - Validation Tests', () => {
+    test("Batch Operations - Write Performance", async ({ page }) => {
+      console.log("📝 Testing Batch Write Performance...");
 
-        test('Schema Validation - Invalid Data Rejection', async ({ page }) => {
-            console.log('🛡️ Testing Data Schema Validation...');
+      try {
+        const startTime = Date.now();
 
-            const invalidDataTests = [
-                {
-                    name: 'Missing Required Fields',
-                    data: { name: 'Test Project' } // Missing required userId
-                },
-                {
-                    name: 'Invalid Data Types',
-                    data: {
-                        userId: 'test-user',
-                        name: 123, // Should be string
-                        created_at: 'invalid-date'
-                    }
-                },
-                {
-                    name: 'Exceeding Field Limits',
-                    data: {
-                        userId: 'test-user',
-                        name: 'A'.repeat(1000), // Extremely long name
-                        description: 'B'.repeat(10000) // Very long description
-                    }
-                }
-            ];
-
-            for (const testCase of invalidDataTests) {
-                try {
-                    const response = await page.request.get(`${BASE_URL}/api/test`, {
-                        timeout: 15000
-                    });
-
-                    console.log(`   ${testCase.name}: ${response.status()}`);
-
-                    // Should reject invalid data
-                    expect([200, 400, 401, 403, 422]).toContain(response.status());
-
-                } catch (error) {
-                    pushDiagnostic(error);
-                    console.log(`   ${testCase.name}: Properly rejected`);
-                }
-            }
+        const response = await page.request.get(`${BASE_URL}/api/test`, {
+          timeout: 25000,
         });
 
-        test('Duplicate Data Prevention', async ({ page }) => {
-            console.log('🔍 Testing Duplicate Data Prevention...');
+        const batchTime = Date.now() - startTime;
+        console.log(`   Batch Write Time: ${batchTime}ms`);
 
-            const testData = {
-                userId: 'test-user-duplicate',
-                projectId: 'unique-project-123',
-                name: 'Duplicate Prevention Test'
-            };
-
-            try {
-                // First creation attempt
-                const response1 = await page.request.get(`${BASE_URL}/api/test`, {
-                    timeout: 15000
-                });
-
-                console.log(`   First Creation: ${response1.status()}`);
-
-                // Second creation attempt (should be prevented)
-                const response2 = await page.request.get(`${BASE_URL}/api/test`, {
-                    timeout: 15000
-                });
-
-                console.log(`   Second Creation: ${response2.status()}`);
-
-                // Should prevent duplicates
-                if (response1.status() === 200) {
-                    expect([200, 400, 409, 422]).toContain(response2.status());
-                    console.log('   ✅ Duplicate prevention working');
-                }
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ⚠️ Duplicate prevention test completed');
-            }
-        });
+        if (response.status() === 200) {
+          expect(batchTime).toBeLessThan(10000); // Should complete within 10 seconds
+          console.log("   ✅ Batch write performance acceptable");
+        }
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ⚠️ Batch write test completed (auth-protected)");
+      }
     });
+
+    test("Real-time Subscriptions - Connection Test", async ({ page }) => {
+      console.log("🔄 Testing Real-time Database Connections...");
+
+      try {
+        const response = await page.request.get(`${BASE_URL}/api/health`, {
+          timeout: 15000,
+        });
+
+        console.log(`   Real-time Subscription Status: ${response.status()}`);
+
+        // Should establish connection or show auth requirement
+        expect([200, 401, 403]).toContain(response.status());
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ⚠️ Real-time connection test completed");
+      }
+    });
+  });
+
+  test.describe("Data Integrity - Validation Tests", () => {
+    test("Schema Validation - Invalid Data Rejection", async ({ page }) => {
+      console.log("🛡️ Testing Data Schema Validation...");
+
+      const invalidDataTests = [
+        {
+          name: "Missing Required Fields",
+          data: { name: "Test Project" }, // Missing required userId
+        },
+        {
+          name: "Invalid Data Types",
+          data: {
+            userId: "test-user",
+            name: 123, // Should be string
+            created_at: "invalid-date",
+          },
+        },
+        {
+          name: "Exceeding Field Limits",
+          data: {
+            userId: "test-user",
+            name: "A".repeat(1000), // Extremely long name
+            description: "B".repeat(10000), // Very long description
+          },
+        },
+      ];
+
+      for (const testCase of invalidDataTests) {
+        try {
+          const response = await page.request.get(`${BASE_URL}/api/test`, {
+            timeout: 15000,
+          });
+
+          console.log(`   ${testCase.name}: ${response.status()}`);
+
+          // Should reject invalid data
+          expect([200, 400, 401, 403, 422]).toContain(response.status());
+        } catch (error) {
+          pushDiagnostic(error);
+          console.log(`   ${testCase.name}: Properly rejected`);
+        }
+      }
+    });
+
+    test("Duplicate Data Prevention", async ({ page }) => {
+      console.log("🔍 Testing Duplicate Data Prevention...");
+
+      const testData = {
+        userId: "test-user-duplicate",
+        projectId: "unique-project-123",
+        name: "Duplicate Prevention Test",
+      };
+
+      try {
+        // First creation attempt
+        const response1 = await page.request.get(`${BASE_URL}/api/test`, {
+          timeout: 15000,
+        });
+
+        console.log(`   First Creation: ${response1.status()}`);
+
+        // Second creation attempt (should be prevented)
+        const response2 = await page.request.get(`${BASE_URL}/api/test`, {
+          timeout: 15000,
+        });
+
+        console.log(`   Second Creation: ${response2.status()}`);
+
+        // Should prevent duplicates
+        if (response1.status() === 200) {
+          expect([200, 400, 409, 422]).toContain(response2.status());
+          console.log("   ✅ Duplicate prevention working");
+        }
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ⚠️ Duplicate prevention test completed");
+      }
+    });
+  });
 });
 
-test.describe('RankPilot Security Protocol Tests', () => {
+test.describe("RankPilot Security Protocol Tests", () => {
+  test.describe("Authentication & Authorization", () => {
+    test("JWT Token Validation", async ({ page }) => {
+      console.log("🔑 Testing JWT Token Security...");
 
-    test.describe('Authentication & Authorization', () => {
-
-        test('JWT Token Validation', async ({ page }) => {
-            console.log('🔑 Testing JWT Token Security...');
-
-            // Test with invalid JWT token
-            try {
-                const response = await page.request.get(`${BASE_URL}/api/user`, {
-                    headers: {
-                        'Authorization': 'Bearer invalid-jwt-token-123'
-                    },
-                    timeout: 15000
-                });
-
-                console.log(`   Invalid JWT Status: ${response.status()}`);
-
-                // Should reject invalid tokens
-                expect([401, 403]).toContain(response.status());
-                console.log('   ✅ Invalid JWT properly rejected');
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ✅ JWT validation working');
-            }
+      // Test with invalid JWT token
+      try {
+        const response = await page.request.get(`${BASE_URL}/api/user`, {
+          headers: {
+            Authorization: "Bearer invalid-jwt-token-123",
+          },
+          timeout: 15000,
         });
 
-        test('Session Management - Timeout Handling', async ({ page }) => {
-            console.log('⏰ Testing Session Timeout Handling...');
+        console.log(`   Invalid JWT Status: ${response.status()}`);
 
-            // Test with expired session simulation
-            try {
-                const response = await page.request.get(`${BASE_URL}/api/health`, {
-                    timeout: 15000
-                });
-
-                console.log(`   Expired Session Status: ${response.status()}`);
-
-                // Should handle expired sessions
-                expect([200, 401, 403, 440]).toContain(response.status());
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ✅ Session timeout properly handled');
-            }
-        });
-
-        test('Role-Based Access Control (RBAC)', async ({ page }) => {
-            console.log('👥 Testing Role-Based Access Control...');
-
-            const roleTests = [
-                { role: 'admin', endpoint: '/api/user', expectedAccess: true },
-                { role: 'user', endpoint: '/api/user', expectedAccess: false },
-                { role: 'enterprise', endpoint: '/api/dashboard', expectedAccess: true },
-                { role: 'free', endpoint: '/api/dashboard', expectedAccess: false }
-            ];
-
-            for (const roleTest of roleTests) {
-                try {
-                    const response = await page.request.get(`${BASE_URL}${roleTest.endpoint}`, {
-                        timeout: 15000
-                    });
-
-                    console.log(`   ${roleTest.role} → ${roleTest.endpoint}: ${response.status()}`);
-
-                    if (roleTest.expectedAccess) {
-                        expect([200, 401]).toContain(response.status()); // 401 for auth, 200 for authorized access
-                    } else {
-                        expect([401, 403]).toContain(response.status()); // Should be denied
-                    }
-
-                } catch (error) {
-                    pushDiagnostic(error);
-                    console.log(`   ${roleTest.role} access: Properly controlled`);
-                }
-            }
-        });
+        // Should reject invalid tokens
+        expect([401, 403]).toContain(response.status());
+        console.log("   ✅ Invalid JWT properly rejected");
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ✅ JWT validation working");
+      }
     });
 
-    test.describe('Input Validation & Sanitization', () => {
+    test("Session Management - Timeout Handling", async ({ page }) => {
+      console.log("⏰ Testing Session Timeout Handling...");
 
-        test('SQL Injection Prevention', async ({ page }) => {
-            console.log('🛡️ Testing SQL Injection Prevention...');
-
-            const sqlInjectionAttempts = [
-                "'; DROP TABLE users; --",
-                "1' OR '1'='1",
-                "'; UPDATE users SET password='hacked'; --",
-                "admin'/**/OR/**/1=1/**/--"
-            ];
-
-            for (const injection of sqlInjectionAttempts) {
-                try {
-                    const response = await page.request.get(`${BASE_URL}/api/test`, {
-                        timeout: 15000
-                    });
-
-                    console.log(`   SQL Injection Test: ${response.status()}`);
-
-                    // Should sanitize and reject malicious input
-                    expect([400, 401, 403, 422]).toContain(response.status());
-
-                } catch (error) {
-                    pushDiagnostic(error);
-                    console.log('   ✅ SQL Injection properly prevented');
-                }
-            }
+      // Test with expired session simulation
+      try {
+        const response = await page.request.get(`${BASE_URL}/api/health`, {
+          timeout: 15000,
         });
 
-        test('XSS Prevention - Script Injection', async ({ page }) => {
-            console.log('🚫 Testing XSS Prevention...');
+        console.log(`   Expired Session Status: ${response.status()}`);
 
-            const xssAttempts = [
-                "<script>alert('XSS')</script>",
-                "javascript:alert('XSS')",
-                "<img src=x onerror=alert('XSS')>",
-                "<svg onload=alert('XSS')>"
-            ];
-
-            for (const xss of xssAttempts) {
-                try {
-                    const response = await page.request.get(`${BASE_URL}/api/test`, {
-                        timeout: 15000
-                    });
-
-                    console.log(`   XSS Prevention Test: ${response.status()}`);
-
-                    // Should sanitize malicious scripts
-                    expect([200, 400, 401, 403, 422]).toContain(response.status());
-
-                } catch (error) {
-                    pushDiagnostic(error);
-                    console.log('   ✅ XSS properly prevented');
-                }
-            }
-        });
-
-        test('CSRF Protection', async ({ page }) => {
-            console.log('🔐 Testing CSRF Protection...');
-
-            try {
-                // Attempt state-changing operation without proper CSRF token
-                const response = await page.request.get(`${BASE_URL}/api/test`, {
-                    headers: {
-                        'Origin': 'https://malicious-site.com'
-                    },
-                    timeout: 15000
-                });
-
-                console.log(`   CSRF Protection Status: ${response.status()}`);
-
-                // Should reject cross-origin state-changing requests
-                expect([401, 403, 405]).toContain(response.status());
-                console.log('   ✅ CSRF protection active');
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ✅ CSRF properly prevented');
-            }
-        });
+        // Should handle expired sessions
+        expect([200, 401, 403, 440]).toContain(response.status());
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ✅ Session timeout properly handled");
+      }
     });
 
-    test.describe('Data Privacy & Compliance', () => {
+    test("Role-Based Access Control (RBAC)", async ({ page }) => {
+      console.log("👥 Testing Role-Based Access Control...");
 
-        test('Personal Data Access Logging', async ({ page }) => {
-            console.log('📝 Testing Data Access Logging...');
+      const roleTests = [
+        { role: "admin", endpoint: "/api/user", expectedAccess: true },
+        { role: "user", endpoint: "/api/user", expectedAccess: false },
+        {
+          role: "enterprise",
+          endpoint: "/api/dashboard",
+          expectedAccess: true,
+        },
+        { role: "free", endpoint: "/api/dashboard", expectedAccess: false },
+      ];
 
-            try {
-                const response = await page.request.get(`${BASE_URL}/api/user`, {
-                    timeout: 20000
-                });
-
-                console.log(`   Personal Data Access: ${response.status()}`);
-
-                // Should log access attempts
-                expect([200, 401, 403]).toContain(response.status());
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ✅ Personal data access properly controlled');
+      for (const roleTest of roleTests) {
+        try {
+          const response = await page.request.get(
+            `${BASE_URL}${roleTest.endpoint}`,
+            {
+              timeout: 15000,
             }
-        });
+          );
 
-        test('Data Retention Compliance', async ({ page }) => {
-            console.log('🗄️ Testing Data Retention Policies...');
+          console.log(
+            `   ${roleTest.role} → ${roleTest.endpoint}: ${response.status()}`
+          );
 
-            try {
-                const response = await page.request.get(`${BASE_URL}/api/test`, {
-                    timeout: 20000
-                });
+          if (roleTest.expectedAccess) {
+            expect([200, 401]).toContain(response.status()); // 401 for auth, 200 for authorized access
+          } else {
+            expect([401, 403]).toContain(response.status()); // Should be denied
+          }
+        } catch (error) {
+          pushDiagnostic(error);
+          console.log(`   ${roleTest.role} access: Properly controlled`);
+        }
+      }
+    });
+  });
 
-                console.log(`   Data Deletion Request: ${response.status()}`);
+  test.describe("Input Validation & Sanitization", () => {
+    test("SQL Injection Prevention", async ({ page }) => {
+      console.log("🛡️ Testing SQL Injection Prevention...");
 
-                // Should handle deletion requests properly
-                expect([200, 202, 401, 403]).toContain(response.status());
+      const sqlInjectionAttempts = [
+        "'; DROP TABLE users; --",
+        "1' OR '1'='1",
+        "'; UPDATE users SET password='hacked'; --",
+        "admin'/**/OR/**/1=1/**/--",
+      ];
 
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ✅ Data deletion properly handled');
-            }
-        });
+      for (const injection of sqlInjectionAttempts) {
+        try {
+          const response = await page.request.get(`${BASE_URL}/api/test`, {
+            timeout: 15000,
+          });
 
-        test('Audit Trail Generation', async ({ page }) => {
-            console.log('📋 Testing Audit Trail Generation...');
+          console.log(`   SQL Injection Test: ${response.status()}`);
 
-            try {
-                const response = await page.request.get(`${BASE_URL}/api/health`, {
-                    timeout: 20000
-                });
-
-                console.log(`   Audit Log Access: ${response.status()}`);
-
-                // Should provide audit capabilities
-                expect([200, 401, 403]).toContain(response.status());
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ✅ Audit trail properly secured');
-            }
-        });
+          // Should sanitize and reject malicious input
+          expect([400, 401, 403, 422]).toContain(response.status());
+        } catch (error) {
+          pushDiagnostic(error);
+          console.log("   ✅ SQL Injection properly prevented");
+        }
+      }
     });
 
-    test.describe('Infrastructure Security', () => {
+    test("XSS Prevention - Script Injection", async ({ page }) => {
+      console.log("🚫 Testing XSS Prevention...");
 
-        test('HTTPS Enforcement', async ({ page }) => {
-            console.log('🔒 Testing HTTPS Enforcement...');
+      const xssAttempts = [
+        "<script>alert('XSS')</script>",
+        "javascript:alert('XSS')",
+        "<img src=x onerror=alert('XSS')>",
+        "<svg onload=alert('XSS')>",
+      ];
 
-            // Check if HTTP redirects to HTTPS
-            try {
-                const httpUrl = RANKPILOT_APP_URL.replace('https://', 'http://');
-                const response = await page.request.get(httpUrl, { timeout: 15000 });
+      for (const xss of xssAttempts) {
+        try {
+          const response = await page.request.get(`${BASE_URL}/api/test`, {
+            timeout: 15000,
+          });
 
-                console.log(`   HTTP Redirect Status: ${response.status()}`);
+          console.log(`   XSS Prevention Test: ${response.status()}`);
 
-                // Should redirect to HTTPS or be blocked
-                expect([301, 302, 403, 404]).toContain(response.status());
-                console.log('   ✅ HTTPS enforcement active');
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ✅ HTTP properly blocked/redirected');
-            }
-        });
-
-        test('Security Headers Validation', async ({ page }) => {
-            console.log('🛡️ Testing Security Headers...');
-
-            const response = await page.request.get(RANKPILOT_APP_URL);
-            const headers = response.headers();
-
-            const securityHeaders = [
-                'strict-transport-security',
-                'x-frame-options',
-                'x-content-type-options',
-                'x-xss-protection',
-                'content-security-policy'
-            ];
-
-            for (const header of securityHeaders) {
-                const hasHeader = headers[header] !== undefined;
-                console.log(`   ${header}: ${hasHeader ? '✅' : '⚠️'}`);
-            }
-
-            // Should have at least some security headers
-            const securityHeaderCount = securityHeaders.filter(h => headers[h]).length;
-            expect(securityHeaderCount).toBeGreaterThan(2);
-        });
-
-        test('Rate Limiting - DDoS Protection', async ({ page }) => {
-            console.log('🚦 Testing Rate Limiting...');
-
-            const rapidRequests = 100;
-            const promises: Promise<APIResponse>[] = [];
-
-            for (let i = 0; i < rapidRequests; i++) {
-                const promise = page.request.get(`${RANKPILOT_APP_URL}/api/health`, {
-                    timeout: 5000
-                });
-                promises.push(promise);
-            }
-
-            try {
-                const responses = await Promise.allSettled(promises);
-
-                const completed = responses.filter(r => r.status === 'fulfilled').length;
-                const rateLimited = responses.filter(r => r.status === 'rejected').length;
-
-                console.log(`   Completed Requests: ${completed}`);
-                console.log(`   Rate Limited/Failed: ${rateLimited}`);
-
-                // Should have some form of rate limiting
-                expect(rateLimited).toBeGreaterThan(rapidRequests * 0.1); // At least 10% should be limited
-
-            } catch (error) {
-                pushDiagnostic(error);
-                console.log('   ✅ Rate limiting active (requests blocked)');
-            }
-        });
+          // Should sanitize malicious scripts
+          expect([200, 400, 401, 403, 422]).toContain(response.status());
+        } catch (error) {
+          pushDiagnostic(error);
+          console.log("   ✅ XSS properly prevented");
+        }
+      }
     });
+
+    test("CSRF Protection", async ({ page }) => {
+      console.log("🔐 Testing CSRF Protection...");
+
+      try {
+        // Attempt state-changing operation without proper CSRF token
+        const response = await page.request.get(`${BASE_URL}/api/test`, {
+          headers: {
+            Origin: "https://malicious-site.com",
+          },
+          timeout: 15000,
+        });
+
+        console.log(`   CSRF Protection Status: ${response.status()}`);
+
+        // Should reject cross-origin state-changing requests
+        expect([401, 403, 405]).toContain(response.status());
+        console.log("   ✅ CSRF protection active");
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ✅ CSRF properly prevented");
+      }
+    });
+  });
+
+  test.describe("Data Privacy & Compliance", () => {
+    test("Personal Data Access Logging", async ({ page }) => {
+      console.log("📝 Testing Data Access Logging...");
+
+      try {
+        const response = await page.request.get(`${BASE_URL}/api/user`, {
+          timeout: 20000,
+        });
+
+        console.log(`   Personal Data Access: ${response.status()}`);
+
+        // Should log access attempts
+        expect([200, 401, 403]).toContain(response.status());
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ✅ Personal data access properly controlled");
+      }
+    });
+
+    test("Data Retention Compliance", async ({ page }) => {
+      console.log("🗄️ Testing Data Retention Policies...");
+
+      try {
+        const response = await page.request.get(`${BASE_URL}/api/test`, {
+          timeout: 20000,
+        });
+
+        console.log(`   Data Deletion Request: ${response.status()}`);
+
+        // Should handle deletion requests properly
+        expect([200, 202, 401, 403]).toContain(response.status());
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ✅ Data deletion properly handled");
+      }
+    });
+
+    test("Audit Trail Generation", async ({ page }) => {
+      console.log("📋 Testing Audit Trail Generation...");
+
+      try {
+        const response = await page.request.get(`${BASE_URL}/api/health`, {
+          timeout: 20000,
+        });
+
+        console.log(`   Audit Log Access: ${response.status()}`);
+
+        // Should provide audit capabilities
+        expect([200, 401, 403]).toContain(response.status());
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ✅ Audit trail properly secured");
+      }
+    });
+  });
+
+  test.describe("Infrastructure Security", () => {
+    test("HTTPS Enforcement", async ({ page }) => {
+      console.log("🔒 Testing HTTPS Enforcement...");
+
+      // Check if HTTP redirects to HTTPS
+      try {
+        const httpUrl = RANKPILOT_APP_URL.replace("https://", "http://");
+        const response = await page.request.get(httpUrl, { timeout: 15000 });
+
+        console.log(`   HTTP Redirect Status: ${response.status()}`);
+
+        // Should redirect to HTTPS or be blocked
+        expect([301, 302, 403, 404]).toContain(response.status());
+        console.log("   ✅ HTTPS enforcement active");
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ✅ HTTP properly blocked/redirected");
+      }
+    });
+
+    test("Security Headers Validation", async ({ page }) => {
+      console.log("🛡️ Testing Security Headers...");
+
+      const response = await page.request.get(RANKPILOT_APP_URL);
+      const headers = response.headers();
+
+      const securityHeaders = [
+        "strict-transport-security",
+        "x-frame-options",
+        "x-content-type-options",
+        "x-xss-protection",
+        "content-security-policy",
+      ];
+
+      for (const header of securityHeaders) {
+        const hasHeader = headers[header] !== undefined;
+        console.log(`   ${header}: ${hasHeader ? "✅" : "⚠️"}`);
+      }
+
+      // Should have at least some security headers
+      const securityHeaderCount = securityHeaders.filter(
+        (h) => headers[h]
+      ).length;
+      expect(securityHeaderCount).toBeGreaterThan(2);
+    });
+
+    test("Rate Limiting - DDoS Protection", async ({ page }) => {
+      console.log("🚦 Testing Rate Limiting...");
+
+      const rapidRequests = 100;
+      const promises: Promise<APIResponse>[] = [];
+
+      for (let i = 0; i < rapidRequests; i++) {
+        const promise = page.request.get(`${RANKPILOT_APP_URL}/api/health`, {
+          timeout: 5000,
+        });
+        promises.push(promise);
+      }
+
+      try {
+        const responses = await Promise.allSettled(promises);
+
+        const completed = responses.filter(
+          (r) => r.status === "fulfilled"
+        ).length;
+        const rateLimited = responses.filter(
+          (r) => r.status === "rejected"
+        ).length;
+
+        console.log(`   Completed Requests: ${completed}`);
+        console.log(`   Rate Limited/Failed: ${rateLimited}`);
+
+        // Should have some form of rate limiting
+        expect(rateLimited).toBeGreaterThan(rapidRequests * 0.1); // At least 10% should be limited
+      } catch (error) {
+        pushDiagnostic(error);
+        console.log("   ✅ Rate limiting active (requests blocked)");
+      }
+    });
+  });
 });

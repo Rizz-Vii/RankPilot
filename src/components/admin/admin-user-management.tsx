@@ -66,7 +66,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-interface TimestampLike { toDate: () => Date }
+interface TimestampLike {
+  toDate: () => Date;
+}
 
 type UserDoc = {
   email?: unknown;
@@ -115,22 +117,41 @@ export default function AdminUserManagement(): JSX.Element {
     const fetchUsers = async (): Promise<void> => {
       try {
         setLoading(true);
-        const qy = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(200));
+        const qy = query(
+          collection(db, "users"),
+          orderBy("createdAt", "desc"),
+          limit(200)
+        );
         const snap = await getDocs(qy);
         const list: User[] = snap.docs.map((d) => {
           const data = d.data() as UserDoc;
           const subRaw = data.subscription as unknown;
-          const subObj = (subRaw && typeof subRaw === 'object') ? subRaw as { status?: unknown; tier?: unknown } : {};
+          const subObj =
+            subRaw && typeof subRaw === "object"
+              ? (subRaw as { status?: unknown; tier?: unknown })
+              : {};
           return {
             id: d.id,
             email: typeof data.email === "string" ? data.email : "",
-            displayName: typeof data.displayName === "string" ? data.displayName : undefined,
+            displayName:
+              typeof data.displayName === "string"
+                ? data.displayName
+                : undefined,
             role: typeof data.role === "string" ? data.role : "user",
-            createdAt: isTimestampLike(data.createdAt) ? data.createdAt : undefined,
-            lastSignIn: isTimestampLike(data.lastSignIn) ? data.lastSignIn : undefined,
-            subscriptionStatus: typeof subObj.status === 'string' ? subObj.status : undefined,
-            subscriptionTier: typeof subObj.tier === 'string' ? subObj.tier : undefined,
-            activityCount: typeof data.activityCount === "number" ? data.activityCount : undefined,
+            createdAt: isTimestampLike(data.createdAt)
+              ? data.createdAt
+              : undefined,
+            lastSignIn: isTimestampLike(data.lastSignIn)
+              ? data.lastSignIn
+              : undefined,
+            subscriptionStatus:
+              typeof subObj.status === "string" ? subObj.status : undefined,
+            subscriptionTier:
+              typeof subObj.tier === "string" ? subObj.tier : undefined,
+            activityCount:
+              typeof data.activityCount === "number"
+                ? data.activityCount
+                : undefined,
           };
         });
         if (mounted) setUsers(list);
@@ -149,7 +170,9 @@ export default function AdminUserManagement(): JSX.Element {
 
     void fetchUsers();
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [toast]);
 
   const handleUserAction = async (): Promise<void> => {
@@ -197,12 +220,11 @@ export default function AdminUserManagement(): JSX.Element {
   };
 
   const filteredUsers = users.filter((user) => {
-    const email = typeof user.email === 'string' ? user.email : '';
-    const name = typeof user.displayName === 'string' ? user.displayName : '';
+    const email = typeof user.email === "string" ? user.email : "";
+    const name = typeof user.displayName === "string" ? user.displayName : "";
     const term = searchTerm.toLowerCase();
     const matchesSearch =
-      email.toLowerCase().includes(term) ||
-      name.toLowerCase().includes(term);
+      email.toLowerCase().includes(term) || name.toLowerCase().includes(term);
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -216,7 +238,7 @@ export default function AdminUserManagement(): JSX.Element {
             Admin
           </Badge>
         );
-  case "agency":
+      case "agency":
         return (
           <Badge className="bg-accent/10 text-accent">
             <Crown className="h-3 w-3 mr-1" />
@@ -233,7 +255,7 @@ export default function AdminUserManagement(): JSX.Element {
   const getSubscriptionBadge = (status?: string, tier?: string) => {
     if (status === "active") {
       return (
-  <Badge className="bg-success/15 text-success">
+        <Badge className="bg-success/15 text-success">
           {tier || "Enterprise"}
         </Badge>
       );
@@ -415,14 +437,18 @@ export default function AdminUserManagement(): JSX.Element {
                       <div className="text-sm flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {isTimestampLike(user.createdAt)
-                          ? formatDistanceToNow(user.createdAt.toDate(), { addSuffix: true })
+                          ? formatDistanceToNow(user.createdAt.toDate(), {
+                              addSuffix: true,
+                            })
                           : "Unknown"}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
                         {isTimestampLike(user.lastSignIn)
-                          ? formatDistanceToNow(user.lastSignIn.toDate(), { addSuffix: true })
+                          ? formatDistanceToNow(user.lastSignIn.toDate(), {
+                              addSuffix: true,
+                            })
                           : "Never"}
                       </div>
                     </TableCell>
@@ -513,7 +539,11 @@ export default function AdminUserManagement(): JSX.Element {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { void handleUserAction(); }}>
+            <AlertDialogAction
+              onClick={() => {
+                void handleUserAction();
+              }}
+            >
               {actionType === "promote"
                 ? "Promote"
                 : actionType === "demote"

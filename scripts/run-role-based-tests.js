@@ -33,8 +33,10 @@ class RoleBasedTestRunner {
     if (typeof error === "string") return error;
     if (typeof error === "object") {
       const maybe = error;
-      if ("message" in maybe && typeof maybe.message === "string") return maybe.message;
-      if ("stack" in maybe && typeof maybe.stack === "string") return maybe.stack.split("\n")[0];
+      if ("message" in maybe && typeof maybe.message === "string")
+        return maybe.message;
+      if ("stack" in maybe && typeof maybe.stack === "string")
+        return maybe.stack.split("\n")[0];
     }
     return String(error);
   }
@@ -111,7 +113,10 @@ class RoleBasedTestRunner {
     } catch (error) {
       this.testResults.freeTier.status = "failed";
       this.testResults.freeTier.errors.push(this.getErrorMessage(error));
-      this.log(`❌ Free Tier Tests failed: ${this.getErrorMessage(error)}`, "ERROR");
+      this.log(
+        `❌ Free Tier Tests failed: ${this.getErrorMessage(error)}`,
+        "ERROR"
+      );
       throw error;
     } finally {
       this.testResults.freeTier.duration = Date.now() - startTime;
@@ -145,7 +150,10 @@ class RoleBasedTestRunner {
     } catch (error) {
       this.testResults.enterpriseTier.status = "failed";
       this.testResults.enterpriseTier.errors.push(this.getErrorMessage(error));
-      this.log(`❌ Enterprise Tier Tests failed: ${this.getErrorMessage(error)}`, "ERROR");
+      this.log(
+        `❌ Enterprise Tier Tests failed: ${this.getErrorMessage(error)}`,
+        "ERROR"
+      );
       throw error;
     } finally {
       this.testResults.enterpriseTier.duration = Date.now() - startTime;
@@ -172,9 +180,12 @@ class RoleBasedTestRunner {
         });
       }
 
-    this.log("✅ Mobile Tests completed successfully");
-  } catch (error) {
-    this.log(`⚠️ Mobile Tests had issues: ${this.getErrorMessage(error)}`, "WARN");
+      this.log("✅ Mobile Tests completed successfully");
+    } catch (error) {
+      this.log(
+        `⚠️ Mobile Tests had issues: ${this.getErrorMessage(error)}`,
+        "WARN"
+      );
       // Don't fail the entire test run for mobile issues
     }
   }
@@ -193,7 +204,10 @@ class RoleBasedTestRunner {
 
       this.log("✅ Compatibility Tests completed successfully");
     } catch (error) {
-      this.log(`⚠️ Compatibility Tests had issues: ${this.getErrorMessage(error)}`, "WARN");
+      this.log(
+        `⚠️ Compatibility Tests had issues: ${this.getErrorMessage(error)}`,
+        "WARN"
+      );
       // Don't fail the entire test run for compatibility issues
     }
   }
@@ -264,7 +278,10 @@ class RoleBasedTestRunner {
       this.log("🎉 All role-based tests completed successfully!");
     } catch (error) {
       this.testResults.overall.status = "failed";
-      this.log(`💥 Test execution failed: ${this.getErrorMessage(error)}`, "ERROR");
+      this.log(
+        `💥 Test execution failed: ${this.getErrorMessage(error)}`,
+        "ERROR"
+      );
       throw error;
     } finally {
       this.testResults.overall.endTime = new Date().toISOString();

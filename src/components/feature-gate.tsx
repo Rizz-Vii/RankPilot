@@ -1,6 +1,10 @@
 "use client";
 import React from "react";
-import { FeatureGate as BaseFeatureGate, withFeatureGate, useFeatureAccess } from "./ui/feature-gate";
+import {
+  FeatureGate as BaseFeatureGate,
+  withFeatureGate,
+  useFeatureAccess,
+} from "./ui/feature-gate";
 
 // Shim to maintain legacy prop compatibility (requiredTier is optional and ignored here,
 // since BaseFeatureGate uses central FEATURE_ACCESS for gating)

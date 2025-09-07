@@ -36,7 +36,8 @@ export function SecureRegisterForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    if (!email) return setErrors((err) => ({ ...err, email: "Email required" }));
+    if (!email)
+      return setErrors((err) => ({ ...err, email: "Email required" }));
     if (!password)
       return setErrors((err) => ({ ...err, password: "Password required" }));
     if (password !== confirmPassword)
@@ -69,7 +70,9 @@ export function SecureRegisterForm({
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-  {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+        {errors.email && (
+          <p className="text-xs text-destructive">{errors.email}</p>
+        )}
       </div>
       <div className="relative">
         <label htmlFor="password">Password</label>

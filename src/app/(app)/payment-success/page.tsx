@@ -47,7 +47,6 @@ export default function PaymentSuccess() {
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
 
-
   const searchParams = useSearchParams();
 
   const plan = searchParams?.get("plan") || "agency";
@@ -386,4 +385,3 @@ export default function PaymentSuccess() {
     </div>
   );
 }
-

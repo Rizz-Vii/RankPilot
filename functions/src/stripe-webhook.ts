@@ -7,7 +7,7 @@ import {
   recordProcessedEvent,
   writeEvidence,
 } from "./lib/billing/idempotency.js";
-import { upsertFinanceInvoice } from './lib/billing/invoice-upsert.js';
+import { upsertFinanceInvoice } from "./lib/billing/invoice-upsert.js";
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
@@ -253,20 +253,29 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     type: "invoice_payment_succeeded",
     invoiceId: invoice.id,
     subscriptionId: ((): string | undefined => {
-      const sub = (invoice as unknown as { subscription?: unknown }).subscription;
-      if (typeof sub === 'string') return sub;
-      if (sub && typeof sub === 'object' && 'id' in (sub as Record<string, unknown>)) {
+      const sub = (invoice as unknown as { subscription?: unknown })
+        .subscription;
+      if (typeof sub === "string") return sub;
+      if (
+        sub &&
+        typeof sub === "object" &&
+        "id" in (sub as Record<string, unknown>)
+      ) {
         const id = (sub as Record<string, unknown>).id;
-        return typeof id === 'string' ? id : undefined;
+        return typeof id === "string" ? id : undefined;
       }
       return undefined;
     })(),
     customerId: ((): string | undefined => {
       const cust = (invoice as unknown as { customer?: unknown }).customer;
-      if (typeof cust === 'string') return cust;
-      if (cust && typeof cust === 'object' && 'id' in (cust as Record<string, unknown>)) {
+      if (typeof cust === "string") return cust;
+      if (
+        cust &&
+        typeof cust === "object" &&
+        "id" in (cust as Record<string, unknown>)
+      ) {
         const id = (cust as Record<string, unknown>).id;
-        return typeof id === 'string' ? id : undefined;
+        return typeof id === "string" ? id : undefined;
       }
       return undefined;
     })(),
@@ -283,20 +292,29 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     type: "invoice_payment_failed",
     invoiceId: invoice.id,
     subscriptionId: ((): string | undefined => {
-      const sub = (invoice as unknown as { subscription?: unknown }).subscription;
-      if (typeof sub === 'string') return sub;
-      if (sub && typeof sub === 'object' && 'id' in (sub as Record<string, unknown>)) {
+      const sub = (invoice as unknown as { subscription?: unknown })
+        .subscription;
+      if (typeof sub === "string") return sub;
+      if (
+        sub &&
+        typeof sub === "object" &&
+        "id" in (sub as Record<string, unknown>)
+      ) {
         const id = (sub as Record<string, unknown>).id;
-        return typeof id === 'string' ? id : undefined;
+        return typeof id === "string" ? id : undefined;
       }
       return undefined;
     })(),
     customerId: ((): string | undefined => {
       const cust = (invoice as unknown as { customer?: unknown }).customer;
-      if (typeof cust === 'string') return cust;
-      if (cust && typeof cust === 'object' && 'id' in (cust as Record<string, unknown>)) {
+      if (typeof cust === "string") return cust;
+      if (
+        cust &&
+        typeof cust === "object" &&
+        "id" in (cust as Record<string, unknown>)
+      ) {
         const id = (cust as Record<string, unknown>).id;
-        return typeof id === 'string' ? id : undefined;
+        return typeof id === "string" ? id : undefined;
       }
       return undefined;
     })(),
@@ -320,9 +338,9 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     currentPeriodEnd: ((): Date => {
       const sub = subscription as unknown as { current_period_end?: unknown };
       const cpe = sub.current_period_end;
-      if (typeof cpe === 'number') return new Date(cpe * 1000);
+      if (typeof cpe === "number") return new Date(cpe * 1000);
       // If API type changed, attempt to read from "current_period_end" string/Date or default now
-      if (typeof cpe === 'string') {
+      if (typeof cpe === "string") {
         const d = new Date(cpe);
         if (!isNaN(d.getTime())) return d;
       }
@@ -347,8 +365,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     currentPeriodEnd: ((): Date => {
       const sub = subscription as unknown as { current_period_end?: unknown };
       const cpe = sub.current_period_end;
-      if (typeof cpe === 'number') return new Date(cpe * 1000);
-      if (typeof cpe === 'string') {
+      if (typeof cpe === "number") return new Date(cpe * 1000);
+      if (typeof cpe === "string") {
         const d = new Date(cpe);
         if (!isNaN(d.getTime())) return d;
       }

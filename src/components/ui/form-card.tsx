@@ -9,18 +9,23 @@ type FormCardProps = {
   className?: string;
 };
 
-export function FormCard({ title, description, children, className }: FormCardProps) {
+export function FormCard({
+  title,
+  description,
+  children,
+  className,
+}: FormCardProps) {
   return (
     <Card className={cn("bg-card text-card-foreground border", className)}>
       {(title || description) && (
         <CardHeader>
           {title && <CardTitle className="font-headline">{title}</CardTitle>}
-          {description && <div className="text-sm text-muted-foreground">{description}</div>}
+          {description && (
+            <div className="text-sm text-muted-foreground">{description}</div>
+          )}
         </CardHeader>
       )}
-      <CardContent className="space-y-4">
-        {children}
-      </CardContent>
+      <CardContent className="space-y-4">{children}</CardContent>
     </Card>
   );
 }

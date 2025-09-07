@@ -56,14 +56,16 @@ async function listExistingUsers() {
       );
     }
   } catch (error: unknown) {
-    const msg = (error && typeof error === 'object' && 'message' in error)
-      ? String((error as { message?: unknown }).message)
-      : String(error);
+    const msg =
+      error && typeof error === "object" && "message" in error
+        ? String((error as { message?: unknown }).message)
+        : String(error);
     console.error("❌ Error listing users:", msg);
 
-    const code = (error && typeof error === 'object' && 'code' in error)
-      ? String((error as { code?: unknown }).code)
-      : undefined;
+    const code =
+      error && typeof error === "object" && "code" in error
+        ? String((error as { code?: unknown }).code)
+        : undefined;
     if (code === "auth/insufficient-permission") {
       console.log(
         "💡 Suggestion: Check Firebase Admin permissions or create users manually in Firebase Console"

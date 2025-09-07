@@ -7,50 +7,59 @@ import { UNIFIED_TEST_USERS } from "./unified-test-users";
  * Tests ab-testing functionality
  */
 
-test.describe('Feature - ab-testing', () => {
-    let auth: EnhancedAuth;
+test.describe("Feature - ab-testing", () => {
+  let auth: EnhancedAuth;
 
-    test.beforeEach(async ({ page }) => {
-        test.setTimeout(60000);
-        auth = new EnhancedAuth(page);
+  test.beforeEach(async ({ page }) => {
+    test.setTimeout(60000);
+    auth = new EnhancedAuth(page);
 
-        try {
-            const testUser = UNIFIED_TEST_USERS.agency;
-            await auth.loginAndGoToDashboard(testUser);
-        } catch (error: unknown) {
-            const message = (error && typeof error === 'object' && 'message' in error)
-                ? (error as { message: string }).message
-                : String(error);
-            console.warn('Login failed, using fallback:', message);
-            await page.goto('/dashboard');
-            await page.waitForTimeout(2000);
-        }
-    });
+    try {
+      const testUser = UNIFIED_TEST_USERS.agency;
+      await auth.loginAndGoToDashboard(testUser);
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === "object" && "message" in error
+          ? (error as { message: string }).message
+          : String(error);
+      console.warn("Login failed, using fallback:", message);
+      await page.goto("/dashboard");
+      await page.waitForTimeout(2000);
+    }
+  });
 
-    test('should load ab-testing interface', async ({ page }) => {
-        await page.goto('/ab-testing');
-        await expect(page.locator('[data-testid="ab-testing-container"]')).toBeVisible();
-    });
+  test("should load ab-testing interface", async ({ page }) => {
+    await page.goto("/ab-testing");
+    await expect(
+      page.locator('[data-testid="ab-testing-container"]')
+    ).toBeVisible();
+  });
 
-    test('should handle ab-testing actions', async ({ page }) => {
-        await page.goto('/ab-testing');
-        await expect(page.locator('[data-testid="ab-testing-actions"]')).toBeVisible();
-    });
+  test("should handle ab-testing actions", async ({ page }) => {
+    await page.goto("/ab-testing");
+    await expect(
+      page.locator('[data-testid="ab-testing-actions"]')
+    ).toBeVisible();
+  });
 
-    test('should validate ab-testing data', async ({ page }) => {
-        await page.goto('/ab-testing');
-        await expect(page.locator('[data-testid="ab-testing-data"]')).toBeVisible();
-    });
+  test("should validate ab-testing data", async ({ page }) => {
+    await page.goto("/ab-testing");
+    await expect(page.locator('[data-testid="ab-testing-data"]')).toBeVisible();
+  });
 
-    test('should display ab-testing correctly on mobile', async ({ page }) => {
-        await page.setViewportSize({ width: 375, height: 667 });
-        await page.goto('/ab-testing');
-        await expect(page.locator('[data-testid="ab-testing-mobile"]')).toBeVisible();
-    });
+  test("should display ab-testing correctly on mobile", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/ab-testing");
+    await expect(
+      page.locator('[data-testid="ab-testing-mobile"]')
+    ).toBeVisible();
+  });
 
-    test('should handle ab-testing errors gracefully', async ({ page }) => {
-        await page.goto('/ab-testing');
-        // Simulate error condition
-        await expect(page.locator('[data-testid="ab-testing-error-fallback"]')).toBeVisible();
-    });
+  test("should handle ab-testing errors gracefully", async ({ page }) => {
+    await page.goto("/ab-testing");
+    // Simulate error condition
+    await expect(
+      page.locator('[data-testid="ab-testing-error-fallback"]')
+    ).toBeVisible();
+  });
 });

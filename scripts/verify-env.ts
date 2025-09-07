@@ -1,4 +1,4 @@
-import { extractErrorMessage } from '@/lib/errors/extract-error-message';
+import { extractErrorMessage } from "@/lib/errors/extract-error-message";
 import * as dotenv from "dotenv";
 import * as admin from "firebase-admin";
 import fetch from "node-fetch";

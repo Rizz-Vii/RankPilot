@@ -26,14 +26,34 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { fetchSSE } from "@/lib/sse/adapter";
 import { motion } from "framer-motion";
-import { AlertTriangle, ArrowRight, Lightbulb, Radio, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Lightbulb,
+  Radio,
+  RefreshCw,
+} from "lucide-react";
 import Link from "next/link";
 import styles from "./insights.module.css";
 
 // Activity & preview interfaces (narrow, avoids unknown property accesses)
-interface ActivityDetails { keywords?: string[] | string; url?: string; urls?: string[]; [k: string]: unknown }
-interface UserActivity { type: string; tool: string; details: ActivityDetails; resultsSummary?: string }
-interface PreviewActivity { tool: string; type: string; [k: string]: unknown }
+interface ActivityDetails {
+  keywords?: string[] | string;
+  url?: string;
+  urls?: string[];
+  [k: string]: unknown;
+}
+interface UserActivity {
+  type: string;
+  tool: string;
+  details: ActivityDetails;
+  resultsSummary?: string;
+}
+interface PreviewActivity {
+  tool: string;
+  type: string;
+  [k: string]: unknown;
+}
 
 export default function InsightsPage() {
   const { user, activities, loading: authLoading, profile } = useAuth();
@@ -54,47 +74,70 @@ export default function InsightsPage() {
   const [showStreamPanel, setShowStreamPanel] = useState(true);
 
   // Tier-based max insights & cache TTL
-  const tier = (profile?.subscriptionTier || profile?.role || 'free').toLowerCase();
-  const tierLimits: Record<string, number> = { free: 3, starter: 5, agency: 8, enterprise: 12, admin: 12 };
+  const tier = (
+    profile?.subscriptionTier ||
+    profile?.role ||
+    "free"
+  ).toLowerCase();
+  const tierLimits: Record<string, number> = {
+    free: 3,
+    starter: 5,
+    agency: 8,
+    enterprise: 12,
+    admin: 12,
+  };
   const maxInsights = tierLimits[tier] ?? 3;
   const cacheKey = `insights-cache-${user?.uid}`;
   const cacheTTLms = 10 * 60 * 1000; // 10 min
 
-  const simplifiedActivities = useMemo<UserActivity[]>(() => activities.map((a: unknown) => {
-    const act = a as Record<string, unknown>;
-    const detailsRaw = act['details'];
-    const details = detailsRaw && typeof detailsRaw === 'object' ? (detailsRaw as ActivityDetails) : {};
-    return {
-      type: String(act['type'] || ''),
-      tool: String(act['tool'] || ''),
-      details,
-      resultsSummary: act['resultsSummary'] ? String(act['resultsSummary']) : undefined,
-    };
-  }), [activities]);
+  const simplifiedActivities = useMemo<UserActivity[]>(
+    () =>
+      activities.map((a: unknown) => {
+        const act = a as Record<string, unknown>;
+        const detailsRaw = act["details"];
+        const details =
+          detailsRaw && typeof detailsRaw === "object"
+            ? (detailsRaw as ActivityDetails)
+            : {};
+        return {
+          type: String(act["type"] || ""),
+          tool: String(act["tool"] || ""),
+          details,
+          resultsSummary: act["resultsSummary"]
+            ? String(act["resultsSummary"])
+            : undefined,
+        };
+      }),
+    [activities]
+  );
 
   const _derivedKeywords = useMemo(() => {
     const kwSet = new Set<string>();
-    simplifiedActivities.forEach(a => {
+    simplifiedActivities.forEach((a) => {
       if (a.details?.keywords) {
-        (Array.isArray(a.details.keywords) ? a.details.keywords : [a.details.keywords]).forEach((k: string) => kwSet.add(String(k).toLowerCase()));
+        (Array.isArray(a.details.keywords)
+          ? a.details.keywords
+          : [a.details.keywords]
+        ).forEach((k: string) => kwSet.add(String(k).toLowerCase()));
       }
       if (a.resultsSummary) {
         const matches = String(a.resultsSummary).match(/#[a-z0-9-]+/gi) || [];
-        matches.forEach(m => kwSet.add(m.replace('#','')));
+        matches.forEach((m) => kwSet.add(m.replace("#", "")));
       }
     });
     const list = Array.from(kwSet).slice(0, 15);
-    return list.length ? list : ['seo','content','optimization'];
+    return list.length ? list : ["seo", "content", "optimization"];
   }, [simplifiedActivities]);
 
   const _derivedUrls = useMemo(() => {
     const urlSet = new Set<string>();
-    simplifiedActivities.forEach(a => {
+    simplifiedActivities.forEach((a) => {
       if (a.details?.url) urlSet.add(a.details.url);
-      if (Array.isArray(a.details?.urls)) (a.details.urls as string[]).forEach(u => urlSet.add(u));
+      if (Array.isArray(a.details?.urls))
+        (a.details.urls as string[]).forEach((u) => urlSet.add(u));
     });
     const list = Array.from(urlSet).slice(0, 5);
-    return list.length ? list : ['https://example.com'];
+    return list.length ? list : ["https://example.com"];
   }, [simplifiedActivities]);
 
   // cache helpers moved into fetchInsights to avoid stale dependency warnings for
@@ -104,118 +147,190 @@ export default function InsightsPage() {
   const _saveCache = (data: GenerateInsightsOutput) => {
     try {
       if (!user) return;
-      localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+      localStorage.setItem(
+        cacheKey,
+        JSON.stringify({ timestamp: Date.now(), data })
+      );
     } catch {}
   };
 
   const memoCacheKey = useMemo(() => cacheKey, [cacheKey]);
-  const fetchInsights = useCallback(async (opts: { force?: boolean } = {}) => {
-    const loadFromCacheLocal = () => {
-      try {
-        if (!user) return false;
-        const raw = localStorage.getItem(memoCacheKey);
-        if (!raw) return false;
-        const parsed = JSON.parse(raw);
-        if (Date.now() - parsed.timestamp > cacheTTLms) return false;
-        setInsights(parsed.data.insights.slice(0, maxInsights));
-        setLastGenerated(new Date(parsed.timestamp));
-        return true;
-      } catch { return false; }
-    };
-    const saveCacheLocal = (data: GenerateInsightsOutput) => {
-      try {
-        if (!user) return;
-        localStorage.setItem(memoCacheKey, JSON.stringify({ timestamp: Date.now(), data }));
-      } catch {}
-    };
-    if (authLoading || !user) { setIsLoading(false); return; }
-    setError(null);
-    if (!opts.force && loadFromCacheLocal()) { setIsLoading(false); return; }
-    if (simplifiedActivities.length === 0) { setInsights([]); setIsLoading(false); return; }
-    setIsLoading(true);
-    try {
-      let result: GenerateInsightsOutput | null = null;
-      try {
-        const token = await user.getIdToken();
-        const resp = await fetch('/api/insights/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ activities: simplifiedActivities })
-        });
-        if (!resp.ok) {
-          throw new Error(`HTTP ${resp.status}`);
+  const fetchInsights = useCallback(
+    async (opts: { force?: boolean } = {}) => {
+      const loadFromCacheLocal = () => {
+        try {
+          if (!user) return false;
+          const raw = localStorage.getItem(memoCacheKey);
+          if (!raw) return false;
+          const parsed = JSON.parse(raw);
+          if (Date.now() - parsed.timestamp > cacheTTLms) return false;
+          setInsights(parsed.data.insights.slice(0, maxInsights));
+          setLastGenerated(new Date(parsed.timestamp));
+          return true;
+        } catch {
+          return false;
         }
-        const aiResult = await resp.json();
-        // Normalize to expected GenerateInsightsOutput shape (if API returns partial)
-        const raw = aiResult as Record<string, unknown> | null | undefined;
-        const rawInsights = Array.isArray(raw?.insights) ? (raw.insights as unknown[]) : [];
-        const normalizedInsights: GenerateInsightsOutput['insights'] = rawInsights.map((val: unknown) => {
-          const i = (val && typeof val === 'object') ? val as Record<string, unknown> : {};
-          const typeAllowed = ['warning', 'success', 'opportunity'] as const;
-          const impactAllowed = ['high', 'medium', 'low'] as const;
-          const type = typeAllowed.includes(i['type'] as unknown as typeof typeAllowed[number]) ? (i['type'] as unknown as typeof typeAllowed[number]) : 'opportunity';
-          const impact = impactAllowed.includes(i['impact'] as unknown as typeof impactAllowed[number]) ? (i['impact'] as unknown as typeof impactAllowed[number]) : 'low';
-          return {
-            id: String(i['id'] ?? Math.random().toString(36).slice(2)),
-            title: String(i['title'] ?? 'Untitled Insight'),
-            description: String(i['description'] ?? ''),
-            category: String(i['category'] ?? 'general'),
-            priority: (['high', 'medium', 'low'] as const).includes(i['priority'] as unknown as 'high' | 'medium' | 'low') ? (i['priority'] as unknown as 'high' | 'medium' | 'low') : 'low',
-            type,
-            impact,
-            // Normalize estimatedImpact to string to satisfy current output contract (was number causing TS mismatch)
-            estimatedImpact: typeof i['estimatedImpact'] === 'string'
-              ? i['estimatedImpact'] as string
-              : (typeof i['estimatedImpact'] === 'number' ? String(i['estimatedImpact']) : '0'),
-            actionItems: Array.isArray(i['actionItems']) ? (i['actionItems'] as unknown[]).map(x => String(x)) : [],
-            metrics: (() => {
-              const rawM = i['metrics'];
-              if (rawM && typeof rawM === 'object') {
-                const out: Record<string, number> = {};
-                Object.entries(rawM as Record<string, unknown>).forEach(([k, v]) => {
-                  if (typeof v === 'number' && isFinite(v)) out[k] = v;
-                });
-                return out;
-              }
-              return {} as Record<string, number>;
-            })(),
-            actionLink: typeof i['actionLink'] === 'string' ? i['actionLink'] as string : undefined,
-            actionText: typeof i['actionText'] === 'string' ? i['actionText'] as string : undefined,
-          };
-        });
-        const normalized: GenerateInsightsOutput = {
-          insights: normalizedInsights,
-          summary: (raw && typeof raw.summary === 'string') ? raw.summary as string : `Generated ${normalizedInsights.length} insights`,
-          score: (raw && typeof raw.score === 'number') ? raw.score as number : 0,
-        };
-        result = normalized;
-      } catch (e) {
-        console.warn('AI flow failed', e);
-      }
-      if (!result) {
-        setInsights([]);
-        setLastGenerated(new Date());
+      };
+      const saveCacheLocal = (data: GenerateInsightsOutput) => {
+        try {
+          if (!user) return;
+          localStorage.setItem(
+            memoCacheKey,
+            JSON.stringify({ timestamp: Date.now(), data })
+          );
+        } catch {}
+      };
+      if (authLoading || !user) {
+        setIsLoading(false);
         return;
       }
-      saveCacheLocal(result);
-      setInsights(result.insights.slice(0, maxInsights));
-      setLastGenerated(new Date());
-    } catch (e: unknown) {
-      const msg = e instanceof Error
-        ? e.message
-        : (typeof e === 'object' && e !== null && typeof (e as Record<string, unknown>)['message'] === 'string'
-          ? (e as Record<string, unknown>)['message'] as string
-          : 'Failed to generate insights');
-      setError(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [authLoading, user, simplifiedActivities, maxInsights, cacheTTLms, memoCacheKey]);
+      setError(null);
+      if (!opts.force && loadFromCacheLocal()) {
+        setIsLoading(false);
+        return;
+      }
+      if (simplifiedActivities.length === 0) {
+        setInsights([]);
+        setIsLoading(false);
+        return;
+      }
+      setIsLoading(true);
+      try {
+        let result: GenerateInsightsOutput | null = null;
+        try {
+          const token = await user.getIdToken();
+          const resp = await fetch("/api/insights/generate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ activities: simplifiedActivities }),
+          });
+          if (!resp.ok) {
+            throw new Error(`HTTP ${resp.status}`);
+          }
+          const aiResult = await resp.json();
+          // Normalize to expected GenerateInsightsOutput shape (if API returns partial)
+          const raw = aiResult as Record<string, unknown> | null | undefined;
+          const rawInsights = Array.isArray(raw?.insights)
+            ? (raw.insights as unknown[])
+            : [];
+          const normalizedInsights: GenerateInsightsOutput["insights"] =
+            rawInsights.map((val: unknown) => {
+              const i =
+                val && typeof val === "object"
+                  ? (val as Record<string, unknown>)
+                  : {};
+              const typeAllowed = [
+                "warning",
+                "success",
+                "opportunity",
+              ] as const;
+              const impactAllowed = ["high", "medium", "low"] as const;
+              const type = typeAllowed.includes(
+                i["type"] as unknown as (typeof typeAllowed)[number]
+              )
+                ? (i["type"] as unknown as (typeof typeAllowed)[number])
+                : "opportunity";
+              const impact = impactAllowed.includes(
+                i["impact"] as unknown as (typeof impactAllowed)[number]
+              )
+                ? (i["impact"] as unknown as (typeof impactAllowed)[number])
+                : "low";
+              return {
+                id: String(i["id"] ?? Math.random().toString(36).slice(2)),
+                title: String(i["title"] ?? "Untitled Insight"),
+                description: String(i["description"] ?? ""),
+                category: String(i["category"] ?? "general"),
+                priority: (["high", "medium", "low"] as const).includes(
+                  i["priority"] as unknown as "high" | "medium" | "low"
+                )
+                  ? (i["priority"] as unknown as "high" | "medium" | "low")
+                  : "low",
+                type,
+                impact,
+                // Normalize estimatedImpact to string to satisfy current output contract (was number causing TS mismatch)
+                estimatedImpact:
+                  typeof i["estimatedImpact"] === "string"
+                    ? (i["estimatedImpact"] as string)
+                    : typeof i["estimatedImpact"] === "number"
+                      ? String(i["estimatedImpact"])
+                      : "0",
+                actionItems: Array.isArray(i["actionItems"])
+                  ? (i["actionItems"] as unknown[]).map((x) => String(x))
+                  : [],
+                metrics: (() => {
+                  const rawM = i["metrics"];
+                  if (rawM && typeof rawM === "object") {
+                    const out: Record<string, number> = {};
+                    Object.entries(rawM as Record<string, unknown>).forEach(
+                      ([k, v]) => {
+                        if (typeof v === "number" && isFinite(v)) out[k] = v;
+                      }
+                    );
+                    return out;
+                  }
+                  return {} as Record<string, number>;
+                })(),
+                actionLink:
+                  typeof i["actionLink"] === "string"
+                    ? (i["actionLink"] as string)
+                    : undefined,
+                actionText:
+                  typeof i["actionText"] === "string"
+                    ? (i["actionText"] as string)
+                    : undefined,
+              };
+            });
+          const normalized: GenerateInsightsOutput = {
+            insights: normalizedInsights,
+            summary:
+              raw && typeof raw.summary === "string"
+                ? (raw.summary as string)
+                : `Generated ${normalizedInsights.length} insights`,
+            score:
+              raw && typeof raw.score === "number" ? (raw.score as number) : 0,
+          };
+          result = normalized;
+        } catch (e) {
+          console.warn("AI flow failed", e);
+        }
+        if (!result) {
+          setInsights([]);
+          setLastGenerated(new Date());
+          return;
+        }
+        saveCacheLocal(result);
+        setInsights(result.insights.slice(0, maxInsights));
+        setLastGenerated(new Date());
+      } catch (e: unknown) {
+        const msg =
+          e instanceof Error
+            ? e.message
+            : typeof e === "object" &&
+                e !== null &&
+                typeof (e as Record<string, unknown>)["message"] === "string"
+              ? ((e as Record<string, unknown>)["message"] as string)
+              : "Failed to generate insights";
+        setError(msg);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      authLoading,
+      user,
+      simplifiedActivities,
+      maxInsights,
+      cacheTTLms,
+      memoCacheKey,
+    ]
+  );
 
-  useEffect(() => { void fetchInsights(); }, [fetchInsights]);
+  useEffect(() => {
+    void fetchInsights();
+  }, [fetchInsights]);
 
   const priorityColors: Record<string, string> = {
     high: "bg-destructive",
@@ -226,78 +341,131 @@ export default function InsightsPage() {
   const relativeGenerated = useMemo(() => {
     if (!lastGenerated) return null;
     const diff = Date.now() - lastGenerated.getTime();
-    const mins = Math.floor(diff/60000);
-    if (mins < 1) return 'just now';
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
     if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins/60); if (hrs < 24) return `${hrs}h ago`;
-    const days = Math.floor(hrs/24); return `${days}d ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
   }, [lastGenerated]);
 
-  const handleRefresh = async () => { setRefreshing(true); await fetchInsights({ force: true }); setRefreshing(false); };
-  const abortRef = (typeof window !== 'undefined') ? ((window as unknown as Record<string, unknown>)['_insightsAbortRef'] as { current: AbortController | null } | undefined) || { current: null as AbortController | null } : { current: null as AbortController | null };
-  if (typeof window !== 'undefined') (window as unknown as Record<string, unknown>)['_insightsAbortRef'] = abortRef;
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchInsights({ force: true });
+    setRefreshing(false);
+  };
+  const abortRef =
+    typeof window !== "undefined"
+      ? ((window as unknown as Record<string, unknown>)["_insightsAbortRef"] as
+          | { current: AbortController | null }
+          | undefined) || { current: null as AbortController | null }
+      : { current: null as AbortController | null };
+  if (typeof window !== "undefined")
+    (window as unknown as Record<string, unknown>)["_insightsAbortRef"] =
+      abortRef;
 
   const startStream = async () => {
     if (!user) return;
-    if (abortRef.current) { abortRef.current.abort(); }
-    setStreaming(true); setError(null); setInsights([]);
-  setActivityPreview([]); setTotalActivities(0); setStreamedActivities(0); setStreamedInsights(0); setExpectedInsights(null);
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    setStreaming(true);
+    setError(null);
+    setInsights([]);
+    setActivityPreview([]);
+    setTotalActivities(0);
+    setStreamedActivities(0);
+    setStreamedInsights(0);
+    setExpectedInsights(null);
     const controller = new AbortController();
     abortRef.current = controller;
     try {
       const token = await user.getIdToken();
       // Use hardened SSE adapter (timeout + merged abort signal)
-      const resp = await fetchSSE('/api/insights/stream', {
-        headers: { 'Authorization': `Bearer ${token}` },
+      const resp = await fetchSSE("/api/insights/stream", {
+        headers: { Authorization: `Bearer ${token}` },
         signal: controller.signal,
         timeoutMs: 45000,
       });
-      if (!resp.ok || !resp.body) { throw new Error('Stream init failed'); }
+      if (!resp.ok || !resp.body) {
+        throw new Error("Stream init failed");
+      }
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
-      let buf = '';
-  const newInsights: Insight[] = [];
+      let buf = "";
+      const newInsights: Insight[] = [];
       const push = () => setInsights([...newInsights].slice(0, maxInsights));
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buf += decoder.decode(value, { stream: true });
-        const parts = buf.split('\n\n');
-        buf = parts.pop() || '';
+        const parts = buf.split("\n\n");
+        buf = parts.pop() || "";
         for (const raw of parts) {
-          if (!raw.startsWith('data:')) continue;
-            const dataStr = raw.replace(/^data:\s*/, '');
-            if (dataStr === '[DONE]') { break; }
-            try {
-              const evt = JSON.parse(dataStr) as Record<string, unknown>;
-              const type = typeof evt['type'] === 'string' ? (evt['type'] as string) : undefined;
-              if (type === 'init') {
-                setTotalActivities(typeof evt['activityCount'] === 'number' ? (evt['activityCount'] as number) : 0);
-              } else if (type === 'activity_batch' && Array.isArray(evt['batch'])) {
-                const batch = evt['batch'] as unknown[];
-                setStreamedActivities(prev => prev + batch.length);
-                setActivityPreview(prev => [...prev, ...(batch as PreviewActivity[])].slice(0, 8));
-              } else if (type === 'insight' && evt['insight']) {
-                newInsights.push(evt['insight'] as Insight); push();
-                setStreamedInsights(prev => prev + 1);
-              } else if (type === 'final') {
-                if (typeof evt['total'] === 'number') setExpectedInsights(evt['total'] as number);
-              } else if (type === 'error') {
-                setError(typeof evt['message'] === 'string' ? (evt['message'] as string) : 'Stream error');
-              }
-            } catch { /* ignore parse */ }
+          if (!raw.startsWith("data:")) continue;
+          const dataStr = raw.replace(/^data:\s*/, "");
+          if (dataStr === "[DONE]") {
+            break;
+          }
+          try {
+            const evt = JSON.parse(dataStr) as Record<string, unknown>;
+            const type =
+              typeof evt["type"] === "string"
+                ? (evt["type"] as string)
+                : undefined;
+            if (type === "init") {
+              setTotalActivities(
+                typeof evt["activityCount"] === "number"
+                  ? (evt["activityCount"] as number)
+                  : 0
+              );
+            } else if (
+              type === "activity_batch" &&
+              Array.isArray(evt["batch"])
+            ) {
+              const batch = evt["batch"] as unknown[];
+              setStreamedActivities((prev) => prev + batch.length);
+              setActivityPreview((prev) =>
+                [...prev, ...(batch as PreviewActivity[])].slice(0, 8)
+              );
+            } else if (type === "insight" && evt["insight"]) {
+              newInsights.push(evt["insight"] as Insight);
+              push();
+              setStreamedInsights((prev) => prev + 1);
+            } else if (type === "final") {
+              if (typeof evt["total"] === "number")
+                setExpectedInsights(evt["total"] as number);
+            } else if (type === "error") {
+              setError(
+                typeof evt["message"] === "string"
+                  ? (evt["message"] as string)
+                  : "Stream error"
+              );
+            }
+          } catch {
+            /* ignore parse */
+          }
         }
       }
     } catch (e: unknown) {
       const errObj = e as Record<string, unknown> | undefined;
-      if (errObj && errObj['name'] !== 'AbortError') {
-        const msg = typeof errObj['message'] === 'string' ? (errObj['message'] as string) : 'Streaming failed';
+      if (errObj && errObj["name"] !== "AbortError") {
+        const msg =
+          typeof errObj["message"] === "string"
+            ? (errObj["message"] as string)
+            : "Streaming failed";
         setError(msg);
         setStreamSupported(false);
       }
-    } finally { setStreaming(false); }
+    } finally {
+      setStreaming(false);
+    }
   };
-  const stopStream = () => { if (abortRef.current) abortRef.current.abort(); setStreaming(false); };
+  const stopStream = () => {
+    if (abortRef.current) abortRef.current.abort();
+    setStreaming(false);
+  };
 
   const containerVariants = {
     hidden: { opacity: 1 },
@@ -319,81 +487,190 @@ export default function InsightsPage() {
 
   const streamProgressPct = useMemo(() => {
     if (!streaming && !streamedActivities && !streamedInsights) return 0;
-    const ingestFrac = totalActivities ? Math.min(1, streamedActivities / totalActivities) : 0;
-    const insightFrac = expectedInsights ? Math.min(1, streamedInsights / expectedInsights) : (streamedInsights ? 0.5 : 0);
-    const combined = (ingestFrac * 0.4) + (insightFrac * 0.6);
+    const ingestFrac = totalActivities
+      ? Math.min(1, streamedActivities / totalActivities)
+      : 0;
+    const insightFrac = expectedInsights
+      ? Math.min(1, streamedInsights / expectedInsights)
+      : streamedInsights
+        ? 0.5
+        : 0;
+    const combined = ingestFrac * 0.4 + insightFrac * 0.6;
     return Math.min(100, Math.round(combined * 100));
-  }, [streaming, streamedActivities, totalActivities, streamedInsights, expectedInsights]);
+  }, [
+    streaming,
+    streamedActivities,
+    totalActivities,
+    streamedInsights,
+    expectedInsights,
+  ]);
 
   return (
-    <main className="container mx-auto py-6 max-w-4xl" data-testid="insights-page">
+    <main
+      className="container mx-auto py-6 max-w-4xl"
+      data-testid="insights-page"
+    >
       <ToolPageHeader
         title="Actionable Insights"
         description="AI-generated recommendations based on your recent activity."
-        badges={[{ label: "AI", variant: "outline", className: "text-primary border-primary/40" }]}
+        badges={[
+          {
+            label: "AI",
+            variant: "outline",
+            className: "text-primary border-primary/40",
+          },
+        ]}
         showBreadcrumb
       />
 
-  <div className="flex items-center justify-between mb-4" aria-live="polite">
+      <div
+        className="flex items-center justify-between mb-4"
+        aria-live="polite"
+      >
         <div className="text-xs text-muted-foreground">
-          {relativeGenerated ? `Last generated ${relativeGenerated}` : isLoading ? 'Generating…' : 'Ready'}
+          {relativeGenerated
+            ? `Last generated ${relativeGenerated}`
+            : isLoading
+              ? "Generating…"
+              : "Ready"}
           {` • Showing up to ${maxInsights} insights (tier: ${tier})`}
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" disabled={isLoading || refreshing} onClick={() => void handleRefresh()} data-testid="refresh-insights">
-            <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Refreshing' : 'Refresh'}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isLoading || refreshing}
+            onClick={() => void handleRefresh()}
+            data-testid="refresh-insights"
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-1 ${refreshing ? "animate-spin" : ""}`}
+            />
+            {refreshing ? "Refreshing" : "Refresh"}
           </Button>
           {streamSupported && (
-    <Button size="sm" variant={streaming ? 'destructive' : 'secondary'} aria-pressed={streaming} onClick={streaming ? stopStream : () => void startStream()} data-testid="stream-toggle">
-  <Radio className={`h-4 w-4 mr-1 ${streaming ? 'animate-pulse text-destructive-foreground motion-safe:animate-pulse' : ''}`} aria-hidden="true" />
-              {streaming ? 'Stop Stream' : 'Live Stream'}
+            <Button
+              size="sm"
+              variant={streaming ? "destructive" : "secondary"}
+              aria-pressed={streaming}
+              onClick={streaming ? stopStream : () => void startStream()}
+              data-testid="stream-toggle"
+            >
+              <Radio
+                className={`h-4 w-4 mr-1 ${streaming ? "animate-pulse text-destructive-foreground motion-safe:animate-pulse" : ""}`}
+                aria-hidden="true"
+              />
+              {streaming ? "Stop Stream" : "Live Stream"}
             </Button>
           )}
         </div>
       </div>
 
       {streaming && (
-        <div className="mb-6" data-testid="stream-progress" aria-live="polite" aria-busy={streaming}>
+        <div
+          className="mb-6"
+          data-testid="stream-progress"
+          aria-live="polite"
+          aria-busy={streaming}
+        >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium tracking-wide" role="status" aria-live="polite">LIVE</span>
-              <span className="text-xs text-muted-foreground" id="stream-status">Generating insights… {streamProgressPct}% complete</span>
+              <span
+                className="text-[11px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium tracking-wide"
+                role="status"
+                aria-live="polite"
+              >
+                LIVE
+              </span>
+              <span
+                className="text-xs text-muted-foreground"
+                id="stream-status"
+              >
+                Generating insights… {streamProgressPct}% complete
+              </span>
             </div>
-            <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={() => setShowStreamPanel(v => !v)} data-testid="toggle-stream-panel">
-              {showStreamPanel ? 'Hide' : 'Show'}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-[11px]"
+              onClick={() => setShowStreamPanel((v) => !v)}
+              data-testid="toggle-stream-panel"
+            >
+              {showStreamPanel ? "Hide" : "Show"}
             </Button>
           </div>
-          <div className="h-2 w-full rounded bg-muted overflow-hidden mb-3" role="progressbar" aria-label="Streaming insight generation progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={streamProgressPct} aria-describedby="stream-status">
-            <div className={`h-full transition-all motion-safe:duration-700 ${styles.animatedBar}`} style={{ width: `${streamProgressPct}%` }} />
+          <div
+            className="h-2 w-full rounded bg-muted overflow-hidden mb-3"
+            role="progressbar"
+            aria-label="Streaming insight generation progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={streamProgressPct}
+            aria-describedby="stream-status"
+          >
+            <div
+              className={`h-full transition-all motion-safe:duration-700 ${styles.animatedBar}`}
+              style={{ width: `${streamProgressPct}%` }}
+            />
           </div>
           {showStreamPanel && (
             <div className="space-y-3 p-3 rounded-md border border-border/60 bg-background/60 backdrop-blur-sm transition-all ${styles.collapsibleShadow}">
               <div className="grid grid-cols-3 gap-2 text-[10px]">
-                <div className="rounded bg-muted/40 px-2 py-1 flex flex-col" data-testid="stat-activities">
-                  <span className="text-muted-foreground uppercase tracking-wide">Activities</span>
-                  <span className="font-medium tabular-nums">{streamedActivities}/{totalActivities || '—'}</span>
+                <div
+                  className="rounded bg-muted/40 px-2 py-1 flex flex-col"
+                  data-testid="stat-activities"
+                >
+                  <span className="text-muted-foreground uppercase tracking-wide">
+                    Activities
+                  </span>
+                  <span className="font-medium tabular-nums">
+                    {streamedActivities}/{totalActivities || "—"}
+                  </span>
                 </div>
-                <div className="rounded bg-muted/40 px-2 py-1 flex flex-col" data-testid="stat-insights">
-                  <span className="text-muted-foreground uppercase tracking-wide">Insights</span>
-                  <span className="font-medium tabular-nums">{streamedInsights}{expectedInsights !== null ? `/${expectedInsights}` : ''}</span>
+                <div
+                  className="rounded bg-muted/40 px-2 py-1 flex flex-col"
+                  data-testid="stat-insights"
+                >
+                  <span className="text-muted-foreground uppercase tracking-wide">
+                    Insights
+                  </span>
+                  <span className="font-medium tabular-nums">
+                    {streamedInsights}
+                    {expectedInsights !== null ? `/${expectedInsights}` : ""}
+                  </span>
                 </div>
-                <div className="rounded bg-muted/40 px-2 py-1 flex flex-col" data-testid="stat-phase">
-                  <span className="text-muted-foreground uppercase tracking-wide">Phase</span>
-                  <span className="font-medium">{streamedActivities < totalActivities ? 'Ingesting' : 'Generating'}</span>
+                <div
+                  className="rounded bg-muted/40 px-2 py-1 flex flex-col"
+                  data-testid="stat-phase"
+                >
+                  <span className="text-muted-foreground uppercase tracking-wide">
+                    Phase
+                  </span>
+                  <span className="font-medium">
+                    {streamedActivities < totalActivities
+                      ? "Ingesting"
+                      : "Generating"}
+                  </span>
                 </div>
               </div>
               {activityPreview.length > 0 && (
-                <div className="rounded border border-border/40 p-3 bg-background/50" data-testid="activity-preview">
+                <div
+                  className="rounded border border-border/40 p-3 bg-background/50"
+                  data-testid="activity-preview"
+                >
                   <p className="text-[11px] font-medium mb-2 text-muted-foreground flex items-center justify-between">
                     <span>Recent Activity Context</span>
-                    <span className="text-[10px]">{activityPreview.length} shown</span>
+                    <span className="text-[10px]">
+                      {activityPreview.length} shown
+                    </span>
                   </p>
                   <ul className="space-y-1 max-h-28 overflow-auto text-[11px] pr-1">
-                    {activityPreview.map((a,i) => (
+                    {activityPreview.map((a, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <span className="inline-flex h-1.5 w-1.5 rounded-full bg-primary/70 flex-shrink-0" />
-                        <span className="truncate"><strong>{a.tool}</strong>: {a.type}</span>
+                        <span className="truncate">
+                          <strong>{a.tool}</strong>: {a.type}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -424,13 +701,20 @@ export default function InsightsPage() {
             <div>
               <h3 className="text-xl font-headline mb-1">No Insights Yet</h3>
               <p className="font-body text-muted-foreground text-sm max-w-md mx-auto">
-                Run a keyword analysis, content brief, or competitor scan. We need at least one activity to build context.
+                Run a keyword analysis, content brief, or competitor scan. We
+                need at least one activity to build context.
               </p>
             </div>
             <div className="flex flex-wrap justify-center gap-2">
-              <Button asChild size="sm" variant="secondary"><Link href="/keyword-tool">Keyword Tool</Link></Button>
-              <Button asChild size="sm" variant="secondary"><Link href="/content-brief">Content Brief</Link></Button>
-              <Button asChild size="sm" variant="secondary"><Link href="/competitors">Competitors</Link></Button>
+              <Button asChild size="sm" variant="secondary">
+                <Link href="/keyword-tool">Keyword Tool</Link>
+              </Button>
+              <Button asChild size="sm" variant="secondary">
+                <Link href="/content-brief">Content Brief</Link>
+              </Button>
+              <Button asChild size="sm" variant="secondary">
+                <Link href="/competitors">Competitors</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -444,7 +728,11 @@ export default function InsightsPage() {
           animate="visible"
         >
           {insights.map((insight, idx) => (
-            <motion.div key={insight.id} variants={itemVariants} data-testid={`insight-${idx}`}>
+            <motion.div
+              key={insight.id}
+              variants={itemVariants}
+              data-testid={`insight-${idx}`}
+            >
               <Card>
                 <CardHeader>
                   <div className="flex justify-between items-start">
@@ -455,11 +743,14 @@ export default function InsightsPage() {
                       <Tooltip>
                         <TooltipTrigger>
                           <div
-                            className={`h-3 w-3 rounded-full ${priorityColors[insight.priority.toLowerCase()] || 'bg-muted'}`}
+                            className={`h-3 w-3 rounded-full ${priorityColors[insight.priority.toLowerCase()] || "bg-muted"}`}
                           ></div>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{insight.priority} Priority • Impact {insight.estimatedImpact}</p>
+                          <p>
+                            {insight.priority} Priority • Impact{" "}
+                            {insight.estimatedImpact}
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -477,15 +768,28 @@ export default function InsightsPage() {
                     {insight.description}
                   </p>
                   {insight.actionItems && insight.actionItems.length > 0 && (
-                    <ul className="mt-4 space-y-1 text-xs list-disc pl-4" data-testid={`insight-${idx}-actions`}>
-                      {insight.actionItems.map(ai => <li key={ai}>{ai}</li>)}
+                    <ul
+                      className="mt-4 space-y-1 text-xs list-disc pl-4"
+                      data-testid={`insight-${idx}-actions`}
+                    >
+                      {insight.actionItems.map((ai) => (
+                        <li key={ai}>{ai}</li>
+                      ))}
                     </ul>
                   )}
                   {insight.metrics && (
-                    <div className="mt-4 grid grid-cols-2 gap-2 text-[11px]" data-testid={`insight-${idx}-metrics`}>
-                      {Object.entries(insight.metrics).map(([k,v]) => (
-                        <div key={k} className="flex justify-between rounded bg-muted/50 px-2 py-1">
-                          <span className="uppercase tracking-wide text-muted-foreground">{k}</span>
+                    <div
+                      className="mt-4 grid grid-cols-2 gap-2 text-[11px]"
+                      data-testid={`insight-${idx}-metrics`}
+                    >
+                      {Object.entries(insight.metrics).map(([k, v]) => (
+                        <div
+                          key={k}
+                          className="flex justify-between rounded bg-muted/50 px-2 py-1"
+                        >
+                          <span className="uppercase tracking-wide text-muted-foreground">
+                            {k}
+                          </span>
                           <span className="font-medium">{String(v)}</span>
                         </div>
                       ))}
@@ -508,8 +812,12 @@ export default function InsightsPage() {
         </motion.div>
       )}
       {isLoading && (
-        <div className="space-y-3" data-testid="insights-skeletons" aria-label="Loading insights">
-          {Array.from({ length: 4 }).map((_,i) => (
+        <div
+          className="space-y-3"
+          data-testid="insights-skeletons"
+          aria-label="Loading insights"
+        >
+          {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} shimmer className="h-32 w-full" />
           ))}
         </div>

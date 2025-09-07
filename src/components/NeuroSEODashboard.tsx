@@ -44,7 +44,7 @@ import {
   Shield,
   Target,
   TrendingUp,
-  Zap
+  Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkline } from "./charts/Sparkline";
@@ -59,7 +59,12 @@ export default function NeuroSEODashboard({
   const { user } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
-  interface UsageStats { used: number; limit: number; periodStart?: string; periodEnd?: string }
+  interface UsageStats {
+    used: number;
+    limit: number;
+    periodStart?: string;
+    periodEnd?: string;
+  }
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
@@ -91,24 +96,35 @@ export default function NeuroSEODashboard({
       if (response.ok) {
         // API responses are provenance-wrapped: { success, data, __provenance }
         const raw = await response.json();
-        const unwrapped: unknown = raw && typeof raw === 'object' && 'data' in (raw as Record<string, unknown>)
-          ? (raw as { data?: unknown }).data
-          : raw;
+        const unwrapped: unknown =
+          raw &&
+          typeof raw === "object" &&
+          "data" in (raw as Record<string, unknown>)
+            ? (raw as { data?: unknown }).data
+            : raw;
         let stats: UsageStats | null = null;
-        if (unwrapped && typeof unwrapped === 'object') {
+        if (unwrapped && typeof unwrapped === "object") {
           type Dict = Record<string, unknown>;
           const root = unwrapped as Dict;
           const usage = root.usage as unknown;
-          if (usage && typeof usage === 'object') {
+          if (usage && typeof usage === "object") {
             const current = (usage as Dict).current_period as unknown;
-            if (current && typeof current === 'object') {
-              interface Current { analyses_used?: number | string; analyses_limit?: number | string }
+            if (current && typeof current === "object") {
+              interface Current {
+                analyses_used?: number | string;
+                analyses_limit?: number | string;
+              }
               const cur = current as Current;
               const usedRaw = cur.analyses_used;
               const limitRaw = cur.analyses_limit;
-              const used = typeof usedRaw === 'number' ? usedRaw : Number(usedRaw ?? 0);
-              const limit = typeof limitRaw === 'number' ? limitRaw : Number(limitRaw ?? 0);
-              stats = { used: Number.isFinite(used) ? used : 0, limit: Number.isFinite(limit) ? limit : 0 };
+              const used =
+                typeof usedRaw === "number" ? usedRaw : Number(usedRaw ?? 0);
+              const limit =
+                typeof limitRaw === "number" ? limitRaw : Number(limitRaw ?? 0);
+              stats = {
+                used: Number.isFinite(used) ? used : 0,
+                limit: Number.isFinite(limit) ? limit : 0,
+              };
             }
           }
         }
@@ -179,7 +195,7 @@ export default function NeuroSEODashboard({
       return;
     }
 
-  setIsAnalyzing(true);
+    setIsAnalyzing(true);
     setError(null);
     setLoadingProgress(5); // Start progress indicator
 
@@ -199,7 +215,9 @@ export default function NeuroSEODashboard({
           : undefined,
         analysisType,
         // Narrow subscription tier without pervasive any – treat unknown extra property with optional chaining
-        userPlan: (user as unknown as { subscriptionTier?: string })?.subscriptionTier || 'free',
+        userPlan:
+          (user as unknown as { subscriptionTier?: string })
+            ?.subscriptionTier || "free",
         userId: user.uid,
       };
 
@@ -233,7 +251,8 @@ export default function NeuroSEODashboard({
           let errorMessage = "Analysis failed";
           try {
             const errorData = await response.json();
-            errorMessage = (errorData as { error?: string })?.error || errorMessage;
+            errorMessage =
+              (errorData as { error?: string })?.error || errorMessage;
           } catch (err) {
             const parsed = err instanceof Error ? err.message : String(err);
             errorMessage = `HTTP Error ${response.status}: ${response.statusText} (${parsed})`;
@@ -243,27 +262,40 @@ export default function NeuroSEODashboard({
 
         setLoadingProgress(98); // Almost done
         const raw = await response.json();
-        const analysisReport = raw && typeof raw === 'object' && 'data' in raw ? (raw as { data?: unknown }).data : raw;
+        const analysisReport =
+          raw && typeof raw === "object" && "data" in raw
+            ? (raw as { data?: unknown }).data
+            : raw;
         setLoadingProgress(100); // Complete
         return analysisReport;
       };
 
       const { mode, result } = await submitOrQueue({
-        isOnline: () => typeof navigator !== 'undefined' ? navigator.onLine : true,
+        isOnline: () =>
+          typeof navigator !== "undefined" ? navigator.onLine : true,
         submit,
         fallbackQueue: () => queueAnalysisRequest(analysisRequest),
       });
 
-      if (mode === 'queued') {
-        setError("You're offline. Request queued and will run automatically when you're back online.");
-        toast({ title: 'Request queued', description: 'Your NeuroSEO analysis will run when you\'re back online.' });
+      if (mode === "queued") {
+        setError(
+          "You're offline. Request queued and will run automatically when you're back online."
+        );
+        toast({
+          title: "Request queued",
+          description:
+            "Your NeuroSEO analysis will run when you're back online.",
+        });
         setIsAnalyzing(false);
         return;
       }
 
       // Result is provenance-unwrapped above; conform to NeuroSEOReport shape
       setReport(result as NeuroSEOReport);
-      toast({ title: 'Analysis complete', description: 'NeuroSEO report is ready.' });
+      toast({
+        title: "Analysis complete",
+        description: "NeuroSEO report is ready.",
+      });
       void loadUsageStats(); // Refresh usage stats (fire-and-forget)
 
       // Announce completion for screen readers
@@ -315,7 +347,9 @@ export default function NeuroSEODashboard({
     }
   };
 
-  const handleRunClick = () => { void runAnalysis(); };
+  const handleRunClick = () => {
+    void runAnalysis();
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-success";
@@ -346,7 +380,9 @@ export default function NeuroSEODashboard({
         {usageStats && (
           <Card className="w-64">
             <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">Usage This Month</div>
+              <div className="text-sm text-muted-foreground">
+                Usage This Month
+              </div>
               <div className="text-2xl font-bold">
                 {usageStats.used}/{usageStats.limit}
               </div>
@@ -436,7 +472,11 @@ export default function NeuroSEODashboard({
               </Label>
               <Select
                 value={analysisType}
-                onValueChange={(value) => setAnalysisType(value as NeuroSEOAnalysisRequest['analysisType'])}
+                onValueChange={(value) =>
+                  setAnalysisType(
+                    value as NeuroSEOAnalysisRequest["analysisType"]
+                  )
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -487,7 +527,9 @@ export default function NeuroSEODashboard({
       {isAnalyzing && (
         <div>
           <Progress value={loadingProgress} className="h-2" />
-          <p className="text-xs text-muted-foreground mt-1">Analyzing... {Math.round(loadingProgress)}%</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Analyzing... {Math.round(loadingProgress)}%
+          </p>
         </div>
       )}
 
@@ -515,34 +557,50 @@ export default function NeuroSEODashboard({
                   <Badge variant="outline" className="uppercase tracking-wide">
                     {report.trustMeta.modelTag}
                   </Badge>
-                  <Badge variant={report.trustMeta.dataIntegrity === 'simulated' ? 'secondary' : 'default'}>
-                    {report.trustMeta.dataIntegrity === 'simulated' ? 'Simulated Phase 0' : 'Measured'}
+                  <Badge
+                    variant={
+                      report.trustMeta.dataIntegrity === "simulated"
+                        ? "secondary"
+                        : "default"
+                    }
+                  >
+                    {report.trustMeta.dataIntegrity === "simulated"
+                      ? "Simulated Phase 0"
+                      : "Measured"}
                   </Badge>
                   {report.trustMeta.deterministic && (
                     <Badge variant="outline">Deterministic</Badge>
                   )}
                   <span className="text-muted-foreground">
-                    {report.trustMeta.dataIntegrity === 'simulated'
-                      ? 'Values are heuristic & deterministic placeholders pending real signal integration.'
-                      : 'Values derived from measured signals.'}
+                    {report.trustMeta.dataIntegrity === "simulated"
+                      ? "Values are heuristic & deterministic placeholders pending real signal integration."
+                      : "Values derived from measured signals."}
                   </span>
                 </div>
               )}
               {report.trends && (
                 <div className="mt-4 grid gap-4 md:grid-cols-5 sm:grid-cols-3 grid-cols-2">
-                  {([
-                    ['Overall', report.trends.overallScore],
-                    ['SEO', report.trends.seoAvg],
-                    ['Visibility', report.trends.visibilityAvg],
-                    ['Trust', report.trends.trustAvg],
-                    ['Engagement', report.trends.engagementAvg],
-                  ] as const).map(([label, arr]) => (
+                  {(
+                    [
+                      ["Overall", report.trends.overallScore],
+                      ["SEO", report.trends.seoAvg],
+                      ["Visibility", report.trends.visibilityAvg],
+                      ["Trust", report.trends.trustAvg],
+                      ["Engagement", report.trends.engagementAvg],
+                    ] as const
+                  ).map(([label, arr]) => (
                     <div key={label} className="rounded border p-2 bg-muted/30">
                       <div className="flex items-center justify-between text-[11px] font-medium mb-1">
                         <span>{label}</span>
-                        <span className="text-muted-foreground">{Array.isArray(arr) && arr.length ? arr[arr.length-1] : '—'}</span>
+                        <span className="text-muted-foreground">
+                          {Array.isArray(arr) && arr.length
+                            ? arr[arr.length - 1]
+                            : "—"}
+                        </span>
                       </div>
-                      {Array.isArray(arr) && arr.length ? <Sparkline data={arr} /> : null}
+                      {Array.isArray(arr) && arr.length ? (
+                        <Sparkline data={arr} />
+                      ) : null}
                     </div>
                   ))}
                 </div>
@@ -562,10 +620,7 @@ export default function NeuroSEODashboard({
               <CardContent>
                 <div className="space-y-4">
                   {report.keyInsights.map((insight, index) => (
-                    <div
-                      key={index}
-                      className="border-l-4 border-primary pl-4"
-                    >
+                    <div key={index} className="border-l-4 border-primary pl-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge
                           variant={
@@ -673,34 +728,59 @@ export default function NeuroSEODashboard({
             </TabsContent>
 
             <TabsContent value="engagement" className="space-y-4">
-              {report.engagementAnalysis && report.engagementAnalysis.map((ea, i) => (
-                <Card key={i}>
-                  <CardHeader>
-                    <CardTitle className="text-sm font-medium truncate">{ea.url}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <div className="text-muted-foreground">Engagement</div>
-                        <div className={`font-semibold ${getScoreColor(ea.engagementScore)}`}>{ea.engagementScore}/100</div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground">Lead Potential</div>
-                        <div className={`font-semibold ${getScoreColor(ea.leadPotentialScore)}`}>{ea.leadPotentialScore}/100</div>
-                      </div>
-                      <div className="col-span-2 md:col-span-2">
-                        <div className="text-muted-foreground">Factors</div>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {ea.factors.slice(0,6).map(f => (
-                            <Badge key={f} variant="outline" className="text-[10px] uppercase tracking-wide">{f}</Badge>
-                          ))}
-                          {ea.factors.length === 0 && <span className="text-xs text-muted-foreground">No penalties detected</span>}
+              {report.engagementAnalysis &&
+                report.engagementAnalysis.map((ea, i) => (
+                  <Card key={i}>
+                    <CardHeader>
+                      <CardTitle className="text-sm font-medium truncate">
+                        {ea.url}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <div className="text-muted-foreground">
+                            Engagement
+                          </div>
+                          <div
+                            className={`font-semibold ${getScoreColor(ea.engagementScore)}`}
+                          >
+                            {ea.engagementScore}/100
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">
+                            Lead Potential
+                          </div>
+                          <div
+                            className={`font-semibold ${getScoreColor(ea.leadPotentialScore)}`}
+                          >
+                            {ea.leadPotentialScore}/100
+                          </div>
+                        </div>
+                        <div className="col-span-2 md:col-span-2">
+                          <div className="text-muted-foreground">Factors</div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {ea.factors.slice(0, 6).map((f) => (
+                              <Badge
+                                key={f}
+                                variant="outline"
+                                className="text-[10px] uppercase tracking-wide"
+                              >
+                                {f}
+                              </Badge>
+                            ))}
+                            {ea.factors.length === 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                No penalties detected
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
             </TabsContent>
 
             <TabsContent value="seo" className="space-y-4">
@@ -712,7 +792,9 @@ export default function NeuroSEODashboard({
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
-                        <div className="text-sm text-muted-foreground">Overall SEO</div>
+                        <div className="text-sm text-muted-foreground">
+                          Overall SEO
+                        </div>
                         <div
                           className={`text-xl font-bold ${getScoreColor(result.seoMetrics?.overallScore || 0)}`}
                         >
@@ -720,7 +802,9 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Technical</div>
+                        <div className="text-sm text-muted-foreground">
+                          Technical
+                        </div>
                         <div
                           className={`text-xl font-bold ${getScoreColor(result.seoMetrics?.technicalScore || 0)}`}
                         >
@@ -728,7 +812,9 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Content</div>
+                        <div className="text-sm text-muted-foreground">
+                          Content
+                        </div>
                         <div
                           className={`text-xl font-bold ${getScoreColor(result.seoMetrics?.contentScore || 0)}`}
                         >
@@ -736,7 +822,9 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Performance</div>
+                        <div className="text-sm text-muted-foreground">
+                          Performance
+                        </div>
                         <div
                           className={`text-xl font-bold ${getScoreColor(result.performance?.overallScore || 0)}`}
                         >
@@ -748,26 +836,46 @@ export default function NeuroSEODashboard({
                       <div className="mt-4 border-t pt-4">
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                           <div>
-                            <div className="text-muted-foreground">Load Time</div>
-                            <div className="font-medium">{result.technicalData.loadTime} ms</div>
+                            <div className="text-muted-foreground">
+                              Load Time
+                            </div>
+                            <div className="font-medium">
+                              {result.technicalData.loadTime} ms
+                            </div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Word Count</div>
-                            <div className="font-medium">{result.technicalData.wordCount}</div>
+                            <div className="text-muted-foreground">
+                              Word Count
+                            </div>
+                            <div className="font-medium">
+                              {result.technicalData.wordCount}
+                            </div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Title Len</div>
-                            <div className="font-medium">{result.technicalData.titleLength}</div>
+                            <div className="text-muted-foreground">
+                              Title Len
+                            </div>
+                            <div className="font-medium">
+                              {result.technicalData.titleLength}
+                            </div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Meta Desc Len</div>
-                            <div className="font-medium">{result.technicalData.metaDescriptionLength}</div>
+                            <div className="text-muted-foreground">
+                              Meta Desc Len
+                            </div>
+                            <div className="font-medium">
+                              {result.technicalData.metaDescriptionLength}
+                            </div>
                           </div>
                           <div className="flex items-center gap-2">
                             {result.technicalData.canonicalMismatch ? (
-                              <Badge variant="destructive" className="text-xs">Canonical Mismatch</Badge>
+                              <Badge variant="destructive" className="text-xs">
+                                Canonical Mismatch
+                              </Badge>
                             ) : (
-                              <Badge variant="outline" className="text-xs">Canonical OK</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Canonical OK
+                              </Badge>
                             )}
                           </div>
                         </div>
@@ -828,7 +936,9 @@ export default function NeuroSEODashboard({
                   <CardContent>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <div className="text-sm text-muted-foreground">Expertise</div>
+                        <div className="text-sm text-muted-foreground">
+                          Expertise
+                        </div>
                         <div
                           className={`text-xl font-bold ${getScoreColor(trust.metrics.expertiseScore)}`}
                         >
@@ -836,7 +946,9 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Authority</div>
+                        <div className="text-sm text-muted-foreground">
+                          Authority
+                        </div>
                         <div
                           className={`text-xl font-bold ${getScoreColor(trust.metrics.authoritativeness)}`}
                         >
@@ -844,7 +956,9 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Trust</div>
+                        <div className="text-sm text-muted-foreground">
+                          Trust
+                        </div>
                         <div
                           className={`text-xl font-bold ${getScoreColor(trust.metrics.trustworthiness)}`}
                         >
@@ -933,33 +1047,70 @@ export default function NeuroSEODashboard({
                     </div>
                     {report.competitivePositioning.keywordGap && (
                       <div className="mt-6 space-y-4">
-                        <h4 className="font-medium mb-1">Keyword Gap (Phase 1)</h4>
+                        <h4 className="font-medium mb-1">
+                          Keyword Gap (Phase 1)
+                        </h4>
                         <div className="text-xs text-muted-foreground mb-2">
                           High-value competitor terms you haven't covered yet.
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {report.competitivePositioning.keywordGap.missingKeywords.map(k => (
-                            <Badge key={k} variant="outline" className="text-xs">
-                              {k}
-                            </Badge>
-                          ))}
-                          {report.competitivePositioning.keywordGap.missingKeywords.length === 0 && (
-                            <span className="text-sm text-success">No immediate keyword gaps detected.</span>
+                          {report.competitivePositioning.keywordGap.missingKeywords.map(
+                            (k) => (
+                              <Badge
+                                key={k}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {k}
+                              </Badge>
+                            )
+                          )}
+                          {report.competitivePositioning.keywordGap
+                            .missingKeywords.length === 0 && (
+                            <span className="text-sm text-success">
+                              No immediate keyword gaps detected.
+                            </span>
                           )}
                         </div>
-                        {report.competitivePositioning.keywordGap.opportunities && (
+                        {report.competitivePositioning.keywordGap
+                          .opportunities && (
                           <div className="space-y-2">
-                            <h5 className="text-sm font-medium mt-4">Top Opportunities</h5>
+                            <h5 className="text-sm font-medium mt-4">
+                              Top Opportunities
+                            </h5>
                             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                              {report.competitivePositioning.keywordGap.opportunities.slice(0,9).map(o => (
-                                <div key={o.term} className="border rounded-md px-2 py-1 flex items-center justify-between text-xs">
-                                  <span className="truncate mr-2" title={o.term}>{o.term}</span>
-                                  <span className="flex items-center gap-1">
-                                    <Badge variant={o.category === 'core' ? 'default' : o.category === 'emerging' ? 'secondary' : 'outline'} className="text-[10px] px-1 py-0.5 capitalize">{o.category}</Badge>
-                                    <span className="text-muted-foreground">{o.opportunityScore}</span>
-                                  </span>
-                                </div>
-                              ))}
+                              {report.competitivePositioning.keywordGap.opportunities
+                                .slice(0, 9)
+                                .map((o) => (
+                                  <div
+                                    key={o.term}
+                                    className="border rounded-md px-2 py-1 flex items-center justify-between text-xs"
+                                  >
+                                    <span
+                                      className="truncate mr-2"
+                                      title={o.term}
+                                    >
+                                      {o.term}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Badge
+                                        variant={
+                                          o.category === "core"
+                                            ? "default"
+                                            : o.category === "emerging"
+                                              ? "secondary"
+                                              : "outline"
+                                        }
+                                        className="text-[10px] px-1 py-0.5 capitalize"
+                                      >
+                                        {o.category}
+                                      </Badge>
+                                      <span className="text-muted-foreground">
+                                        {o.opportunityScore}
+                                      </span>
+                                    </span>
+                                  </div>
+                                ))}
                             </div>
                           </div>
                         )}

@@ -355,7 +355,10 @@ export class GamificationEngine {
 
       case "insights_shared":
         // Would track this separately in real implementation
-        return ((metadata as { totalShares?: number }).totalShares || 0) >= criteria.threshold;
+        return (
+          ((metadata as { totalShares?: number }).totalShares || 0) >=
+          criteria.threshold
+        );
 
       default:
         return false;
@@ -426,7 +429,10 @@ export class GamificationEngine {
 export const useGamification = (userId: string) => {
   const stats = GamificationEngine.getUserStats(userId);
 
-  const trackAction = (action: string, metadata: Record<string, unknown> = {}) => {
+  const trackAction = (
+    action: string,
+    metadata: Record<string, unknown> = {}
+  ) => {
     return GamificationEngine.trackAction(userId, action, metadata);
   };
 

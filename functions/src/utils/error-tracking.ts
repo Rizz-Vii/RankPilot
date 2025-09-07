@@ -36,10 +36,10 @@ export function logError(error: Error | ErrorDetails, context?: ErrorContext) {
     error:
       error instanceof Error
         ? {
-          message: error.message,
-          stack: error.stack,
-          ...context,
-        }
+            message: error.message,
+            stack: error.stack,
+            ...context,
+          }
         : error,
     context,
   });

@@ -1,21 +1,25 @@
 "use client";
 // Enterprise Marketing - Lead Generation
-import { LazyDataTable } from '@/components/metrics/LazyDataTable';
-import { MetricCard } from '@/components/metrics/MetricCard';
-import { PeriodSelector } from '@/components/metrics/PeriodSelector';
-import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { ActionCard } from '@/components/shared/ActionCard';
-import { SkeletonOverlay } from '@/components/shared/SkeletonOverlay';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { useMarketingCampaignMetrics } from '@/hooks/useMarketingCampaignMetrics';
-import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
-import { useProvenance } from '@/hooks/useProvenance';
-import { importLeads, routeLeads, scoreLeads } from '@/lib/ai/marketing-automation';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
-import React, { useEffect, useState } from 'react';
+import { LazyDataTable } from "@/components/metrics/LazyDataTable";
+import { MetricCard } from "@/components/metrics/MetricCard";
+import { PeriodSelector } from "@/components/metrics/PeriodSelector";
+import { TrendSparkline } from "@/components/metrics/TrendSparkline";
+import { ActionCard } from "@/components/shared/ActionCard";
+import { SkeletonOverlay } from "@/components/shared/SkeletonOverlay";
+import { FeatureGate } from "@/components/subscription/FeatureGate";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { useMarketingCampaignMetrics } from "@/hooks/useMarketingCampaignMetrics";
+import { useMockDomainMetrics } from "@/hooks/useMockDomainMetrics";
+import { useProvenance } from "@/hooks/useProvenance";
+import {
+  importLeads,
+  routeLeads,
+  scoreLeads,
+} from "@/lib/ai/marketing-automation";
+import { trackDashboardView } from "@/lib/domain/dashboardAnalytics";
+import React, { useEffect, useState } from "react";
 
 interface ImportDialogProps {
   open: boolean;
@@ -23,23 +27,45 @@ interface ImportDialogProps {
   onImport: (raw: string) => Promise<void>;
   loading: boolean;
 }
-function ImportDialog({ open, onClose, onImport, loading }: ImportDialogProps){
-  const [raw,setRaw] = useState('Acme Corp\nGlobex\nInitech');
-  if(!open) return null;
+function ImportDialog({ open, onClose, onImport, loading }: ImportDialogProps) {
+  const [raw, setRaw] = useState("Acme Corp\nGlobex\nInitech");
+  if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
       <div className="w-full max-w-lg rounded-xl border bg-card p-6 space-y-4 shadow-xl relative">
         <SkeletonOverlay active={loading} label="Importing" />
-        <header className="space-y-1"><h3 className="font-semibold text-lg">Import Leads</h3><p className="text-xs text-muted-foreground">Paste newline separated company or contact names (max 500).</p></header>
+        <header className="space-y-1">
+          <h3 className="font-semibold text-lg">Import Leads</h3>
+          <p className="text-xs text-muted-foreground">
+            Paste newline separated company or contact names (max 500).
+          </p>
+        </header>
         <Textarea
           value={raw}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRaw(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+            setRaw(e.target.value)
+          }
           rows={8}
           className="text-xs"
         />
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>Cancel</Button>
-          <Button size="sm" onClick={() => { void onImport(raw); }} disabled={loading}>{loading ? 'Importing…' : 'Import'}</Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              void onImport(raw);
+            }}
+            disabled={loading}
+          >
+            {loading ? "Importing…" : "Import"}
+          </Button>
         </div>
       </div>
     </div>
@@ -49,24 +75,63 @@ function ImportDialog({ open, onClose, onImport, loading }: ImportDialogProps){
 export default function LeadGenerationPage() {
   const [months, setMonths] = useState(6);
   const live = useMarketingCampaignMetrics(months);
-  const { data: mock } = useMockDomainMetrics('marketing', true);
-  interface MarketingMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
-  interface MarketingRow { id: string; period: string; name?: string; channel?: string; impressions?: number; clicks?: number; leads?: number; spend?: number; revenue?: number; __provenance?: string;[k: string]: unknown }
-  interface MarketingLive { kpis: MarketingMetric[]; rows: MarketingRow[]; loading: boolean; addOptimistic?: (row: MarketingRow) => void }
-  const data: MarketingLive = (live.kpis.length ? live : { kpis: (mock?.kpis || []), rows: [], loading:false, addOptimistic: live.addOptimistic }) as MarketingLive;
-  useEffect(() => { trackDashboardView('marketing'); }, []);
+  const { data: mock } = useMockDomainMetrics("marketing", true);
+  interface MarketingMetric {
+    key: string;
+    label: string;
+    value: number;
+    delta: number;
+    trend: number[];
+    intent?: string;
+  }
+  interface MarketingRow {
+    id: string;
+    period: string;
+    name?: string;
+    channel?: string;
+    impressions?: number;
+    clicks?: number;
+    leads?: number;
+    spend?: number;
+    revenue?: number;
+    __provenance?: string;
+    [k: string]: unknown;
+  }
+  interface MarketingLive {
+    kpis: MarketingMetric[];
+    rows: MarketingRow[];
+    loading: boolean;
+    addOptimistic?: (row: MarketingRow) => void;
+  }
+  const data: MarketingLive = (
+    live.kpis.length
+      ? live
+      : {
+          kpis: mock?.kpis || [],
+          rows: [],
+          loading: false,
+          addOptimistic: live.addOptimistic,
+        }
+  ) as MarketingLive;
+  useEffect(() => {
+    trackDashboardView("marketing");
+  }, []);
   const { toast } = useToast();
   // Auth scoping placeholder – assume hook exists globally. Fallback to anon if not present.
-  const userId = 'dev-user';
+  const userId = "dev-user";
   const teamId = undefined;
   const [importOpen, setImportOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
-  useEffect(() => { if(live.loading) return; if(live.kpis.length) markLive(); else markFallback(); }, [live.loading, live.kpis, markLive, markFallback]);
+  useEffect(() => {
+    if (live.loading) return;
+    if (live.kpis.length) markLive();
+    else markFallback();
+  }, [live.loading, live.kpis, markLive, markFallback]);
 
   async function handleImport(raw: string): Promise<void> {
     try {
-      setBusy('import');
+      setBusy("import");
       const countPromise = importLeads(raw, userId, teamId);
       // optimistic synthetic row (approx leads count estimated by lines)
       const est = raw
@@ -74,32 +139,32 @@ export default function LeadGenerationPage() {
         .map((l) => l.trim())
         .filter(Boolean).length;
       if (est) {
-        live.addOptimistic(
-          {
-            id: `tmp-${Date.now()}`,
-            period: new Date().toISOString().slice(0, 7),
-            name: `Lead Import (${est})`,
-            channel: 'lead-gen',
-            impressions: 0,
-            clicks: 0,
-            leads: est,
-            spend: 0,
-            revenue: 0,
-            __provenance: 'optimistic',
-          }
-        );
+        live.addOptimistic({
+          id: `tmp-${Date.now()}`,
+          period: new Date().toISOString().slice(0, 7),
+          name: `Lead Import (${est})`,
+          channel: "lead-gen",
+          impressions: 0,
+          clicks: 0,
+          leads: est,
+          spend: 0,
+          revenue: 0,
+          __provenance: "optimistic",
+        });
       }
       await countPromise;
       toast({
-        title: 'Leads imported',
-        description: 'Your leads were added and will appear in metrics shortly.',
+        title: "Leads imported",
+        description:
+          "Your leads were added and will appear in metrics shortly.",
       });
       setImportOpen(false);
     } catch (e: unknown) {
       toast({
-        title: 'Import failed',
-        description: (e instanceof Error ? e.message : String(e)) || 'Unknown error',
-        variant: 'destructive',
+        title: "Import failed",
+        description:
+          (e instanceof Error ? e.message : String(e)) || "Unknown error",
+        variant: "destructive",
       });
     } finally {
       setBusy(null);
@@ -107,28 +172,30 @@ export default function LeadGenerationPage() {
   }
   async function handleScore(): Promise<void> {
     try {
-      setBusy('score');
-      live.addOptimistic(
-        {
-          id: `tmp-${Date.now()}`,
-          period: new Date().toISOString().slice(0, 7),
-          name: 'Lead Score',
-          channel: 'lead-gen',
-          impressions: 0,
-          clicks: 0,
-          leads: 0,
-          spend: 0,
-          revenue: 0,
-          __provenance: 'optimistic',
-        }
-      );
+      setBusy("score");
+      live.addOptimistic({
+        id: `tmp-${Date.now()}`,
+        period: new Date().toISOString().slice(0, 7),
+        name: "Lead Score",
+        channel: "lead-gen",
+        impressions: 0,
+        clicks: 0,
+        leads: 0,
+        spend: 0,
+        revenue: 0,
+        __provenance: "optimistic",
+      });
       const res = await scoreLeads(userId, teamId);
-      toast({ title: 'Scoring complete', description: `Updated ${res.updated} leads.` });
+      toast({
+        title: "Scoring complete",
+        description: `Updated ${res.updated} leads.`,
+      });
     } catch (e: unknown) {
       toast({
-        title: 'Scoring failed',
-        description: (e instanceof Error ? e.message : String(e)) || 'Unknown error',
-        variant: 'destructive',
+        title: "Scoring failed",
+        description:
+          (e instanceof Error ? e.message : String(e)) || "Unknown error",
+        variant: "destructive",
       });
     } finally {
       setBusy(null);
@@ -136,42 +203,50 @@ export default function LeadGenerationPage() {
   }
   async function handleRoute(): Promise<void> {
     try {
-      setBusy('route');
-      live.addOptimistic(
-        {
-          id: `tmp-${Date.now()}`,
-          period: new Date().toISOString().slice(0, 7),
-          name: 'Lead Route',
-          channel: 'lead-gen',
-          impressions: 0,
-          clicks: 0,
-          leads: 0,
-          spend: 0,
-          revenue: 0,
-          __provenance: 'optimistic',
-        }
-      );
+      setBusy("route");
+      live.addOptimistic({
+        id: `tmp-${Date.now()}`,
+        period: new Date().toISOString().slice(0, 7),
+        name: "Lead Route",
+        channel: "lead-gen",
+        impressions: 0,
+        clicks: 0,
+        leads: 0,
+        spend: 0,
+        revenue: 0,
+        __provenance: "optimistic",
+      });
       const res = await routeLeads(userId, teamId);
-      toast({ title: 'Routing complete', description: `Routed ${res.routed} leads.` });
+      toast({
+        title: "Routing complete",
+        description: `Routed ${res.routed} leads.`,
+      });
     } catch (e: unknown) {
       toast({
-        title: 'Routing failed',
-        description: (e instanceof Error ? e.message : String(e)) || 'Unknown error',
-        variant: 'destructive',
+        title: "Routing failed",
+        description:
+          (e instanceof Error ? e.message : String(e)) || "Unknown error",
+        variant: "destructive",
       });
     } finally {
       setBusy(null);
     }
   }
   return (
-    <FeatureGate feature="marketing_lead_generation" requiredTier="enterprise" showUpgrade>
+    <FeatureGate
+      feature="marketing_lead_generation"
+      requiredTier="enterprise"
+      showUpgrade
+    >
       <div className="space-y-8 p-6">
         <header className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">Lead Generation</h1>
-          <p className="text-muted-foreground max-w-3xl">Capture, enrichment & qualification flows with AI automation.</p>
+          <p className="text-muted-foreground max-w-3xl">
+            Capture, enrichment & qualification flows with AI automation.
+          </p>
           <PeriodSelector value={months} onChange={setMonths} />
         </header>
-  <ProvenanceLegend />
+        <ProvenanceLegend />
         <section className="grid gap-4 md:grid-cols-4">
           {data.kpis.map((k) => (
             <MetricCard
@@ -181,28 +256,73 @@ export default function LeadGenerationPage() {
               delta={k.delta}
               deltaLabel="vs last period"
               trend={<TrendSparkline data={k.trend} />}
-              intent={(k.intent ?? 'neutral') as 'neutral'|'success'|'warning'|'danger'|'accent'}
+              intent={
+                (k.intent ?? "neutral") as
+                  | "neutral"
+                  | "success"
+                  | "warning"
+                  | "danger"
+                  | "accent"
+              }
             />
           ))}
         </section>
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Campaigns</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Recent Campaigns
+          </h2>
           <LazyDataTable
-            columns={[{ key:'name', header:'Name' }, { key:'channel', header:'Channel' }, { key:'impressions', header:'Impr.' }, { key:'ctr', header:'CTR %' }, { key:'leads', header:'Leads' }, { key:'roi', header:'ROI %' }]}
+            columns={[
+              { key: "name", header: "Name" },
+              { key: "channel", header: "Channel" },
+              { key: "impressions", header: "Impr." },
+              { key: "ctr", header: "CTR %" },
+              { key: "leads", header: "Leads" },
+              { key: "roi", header: "ROI %" },
+            ]}
             rows={live.rows}
             loading={live.loading}
             empty="No campaign data"
           />
         </section>
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Lead Actions</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Lead Actions
+          </h2>
           <div className="grid gap-4 md:grid-cols-3">
-            <ActionCard title="Import List" desc="Bulk import + enrich leads." action={()=> setImportOpen(true)} label={busy==='import'? 'Working…':'Import'} disabled={!!busy} />
-            <ActionCard title="Score Leads" desc="Run AI scoring model." action={() => { void handleScore(); }} label={busy === 'score' ? 'Scoring…' : 'Score'} disabled={!!busy} />
-            <ActionCard title="Route Leads" desc="Distribute to sales teams." action={() => { void handleRoute(); }} label={busy === 'route' ? 'Routing…' : 'Route'} disabled={!!busy} />
+            <ActionCard
+              title="Import List"
+              desc="Bulk import + enrich leads."
+              action={() => setImportOpen(true)}
+              label={busy === "import" ? "Working…" : "Import"}
+              disabled={!!busy}
+            />
+            <ActionCard
+              title="Score Leads"
+              desc="Run AI scoring model."
+              action={() => {
+                void handleScore();
+              }}
+              label={busy === "score" ? "Scoring…" : "Score"}
+              disabled={!!busy}
+            />
+            <ActionCard
+              title="Route Leads"
+              desc="Distribute to sales teams."
+              action={() => {
+                void handleRoute();
+              }}
+              label={busy === "route" ? "Routing…" : "Route"}
+              disabled={!!busy}
+            />
           </div>
         </section>
-        <ImportDialog open={importOpen} onClose={()=> setImportOpen(false)} onImport={handleImport} loading={busy==='import'} />
+        <ImportDialog
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          onImport={handleImport}
+          loading={busy === "import"}
+        />
       </div>
     </FeatureGate>
   );

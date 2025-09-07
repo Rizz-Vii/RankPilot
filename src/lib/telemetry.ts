@@ -75,7 +75,7 @@ export async function initTelemetry(): Promise<TelemetryProvider> {
       // Dynamically import the server-side telemetry module.
       // This ensures that the heavy OpenTelemetry SDK dependencies are only loaded
       // on the server where they are needed.
-      const serverTelemetry = await import("./server-telemetry.js");
+      const serverTelemetry = await import("./server-telemetry");
 
       // Check if the createTelemetryProvider function exists and is callable.
       if (
@@ -123,9 +123,16 @@ export function createSpan<T>(name: string, fn: () => T): T {
 
   try {
     const provider = getTelemetryProvider();
-    type SpanLike = { end: () => void; recordException: (err: unknown) => void };
-    type TracerLike = { startActiveSpan: (n: string, f: (s: SpanLike) => T) => T };
-    const tracer = provider.getTracer ? (provider.getTracer() as unknown as TracerLike) : undefined;
+    type SpanLike = {
+      end: () => void;
+      recordException: (err: unknown) => void;
+    };
+    type TracerLike = {
+      startActiveSpan: (n: string, f: (s: SpanLike) => T) => T;
+    };
+    const tracer = provider.getTracer
+      ? (provider.getTracer() as unknown as TracerLike)
+      : undefined;
 
     if (tracer) {
       // If a tracer is available, start an active span.

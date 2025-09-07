@@ -10,14 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  BookOpen,
-  Play,
-  Clock,
-  Crown,
-  Zap,
-  CheckCircle,
-} from "lucide-react";
+import { BookOpen, Play, Clock, Crown, Zap, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 interface TutorialSummaryProps {

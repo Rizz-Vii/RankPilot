@@ -1,5 +1,5 @@
 // src/components/profile-form.tsx
- "use client";
+"use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { User } from "firebase/auth";
@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
- import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -59,9 +59,15 @@ const formSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof formSchema>;
 
-interface ProfileFormProps { user: User; profile: unknown; }
+interface ProfileFormProps {
+  user: User;
+  profile: unknown;
+}
 
-export default function ProfileForm({ user, profile }: ProfileFormProps): JSX.Element {
+export default function ProfileForm({
+  user,
+  profile,
+}: ProfileFormProps): JSX.Element {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const prof: UserProfile | undefined = asUserProfile(profile);
@@ -121,7 +127,9 @@ export default function ProfileForm({ user, profile }: ProfileFormProps): JSX.El
       </CardHeader>
       <Form {...form}>
         <form
-          onSubmit={(e) => { void form.handleSubmit(handleFormSubmit)(e); }}
+          onSubmit={(e) => {
+            void form.handleSubmit(handleFormSubmit)(e);
+          }}
           className="space-y-8"
         >
           <CardContent className="space-y-4">

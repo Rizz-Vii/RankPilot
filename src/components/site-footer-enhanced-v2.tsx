@@ -173,7 +173,9 @@ export default function SiteFooter() {
             delivered to your inbox.
           </p>
           <form
-            onSubmit={(e) => { void handleNewsletterSubmit(e); }}
+            onSubmit={(e) => {
+              void handleNewsletterSubmit(e);
+            }}
             className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
             aria-label="Newsletter subscription"
           >

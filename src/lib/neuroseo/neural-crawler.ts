@@ -3,10 +3,10 @@
  * Part of the NeuroSEO™ Suite for RankPilot
  */
 
-import type { Browser, Page } from '@playwright/test';
-import { chromium } from '@playwright/test';
+import type { Browser, Page } from "@playwright/test";
+import { chromium } from "@playwright/test";
 import * as urlMod from "url";
-import type { CrawlerTask } from './types';
+import type { CrawlerTask } from "./types";
 
 export interface CrawlResult {
   url: string;
@@ -95,13 +95,21 @@ export interface CrawlOptions {
 
 export class NeuralCrawler {
   private browser: Browser | null = null;
-  private cache: Map<string, { timestamp: number; result: CrawlResult; ttl: number; }> = new Map();
+  private cache: Map<
+    string,
+    { timestamp: number; result: CrawlResult; ttl: number }
+  > = new Map();
   // made public (was private) so prototype augmentation / interface merge can reference it safely
-  public robotsCache: Map<string, { fetched: number; rules: RobotsRules; }> = new Map();
+  public robotsCache: Map<string, { fetched: number; rules: RobotsRules }> =
+    new Map();
   private static DEFAULT_CACHE_TTL = 10 * 60 * 1000; // 10 min
   static ROBOTS_TTL = 60 * 60 * 1000; // 1 hour (public for helper access)
   // Lightweight task queue for background crawling
-  private queue: Array<{ task: CrawlerTask; resolve: (r: CrawlResult) => void; reject: (e: unknown) => void }> = [];
+  private queue: Array<{
+    task: CrawlerTask;
+    resolve: (r: CrawlResult) => void;
+    reject: (e: unknown) => void;
+  }> = [];
   private active = 0;
   private readonly maxConcurrent = 2;
   private queuedUrls = new Set<string>();
@@ -121,37 +129,62 @@ export class NeuralCrawler {
     // Cache lookup
     const ttl = options.cacheTtlMs ?? NeuralCrawler.DEFAULT_CACHE_TTL;
     const cached = this.cache.get(url);
-    if (cached && (Date.now() - cached.timestamp) < cached.ttl) {
+    if (cached && Date.now() - cached.timestamp < cached.ttl) {
       return { ...cached.result, fromCache: true };
     }
 
     // Robots.txt compliance
     if (options.respectRobots !== false) {
       try {
-        const allowed = await this.isAllowedByRobots(url, options.userAgent || 'RankPilot-NeuralCrawler/1.0');
+        const allowed = await this.isAllowedByRobots(
+          url,
+          options.userAgent || "RankPilot-NeuralCrawler/1.0"
+        );
         if (!allowed) {
           const placeholder: CrawlResult = {
             url,
-            title: 'Robots Disallowed',
-            content: '',
+            title: "Robots Disallowed",
+            content: "",
             metadata: {},
             technicalData: {
-              loadTime: 0, pageSize: 0, headings: {}, images: [], links: [], schema: [],
-              wordCount: 0, titleLength: 0, metaDescriptionLength: 0, canonicalMismatch: false
+              loadTime: 0,
+              pageSize: 0,
+              headings: {},
+              images: [],
+              links: [],
+              schema: [],
+              wordCount: 0,
+              titleLength: 0,
+              metaDescriptionLength: 0,
+              canonicalMismatch: false,
             },
             authorshipSignals: this.getDefaultAuthorshipSignals(),
-            semanticClassification: { contentType: 'unknown', topicCategories: [], keyEntities: [], readingLevel: 0, contentDepth: 'surface' },
+            semanticClassification: {
+              contentType: "unknown",
+              topicCategories: [],
+              keyEntities: [],
+              readingLevel: 0,
+              contentDepth: "surface",
+            },
             robotsAllowed: false,
-            fromCache: false
+            fromCache: false,
           };
-          this.cache.set(url, { timestamp: Date.now(), result: placeholder, ttl });
+          this.cache.set(url, {
+            timestamp: Date.now(),
+            result: placeholder,
+            ttl,
+          });
           return placeholder;
         }
       } catch (e) {
         // Silent degradation; track error stats locally
-        const msg = typeof e === "object" && e && "message" in (e as Record<string, unknown>) && typeof (e as { message?: unknown }).message === "string"
-          ? (e as { message: string }).message
-          : String(e);
+        const msg =
+          typeof e === "object" &&
+          e &&
+          "message" in (e as Record<string, unknown>) &&
+          typeof (e as { message?: unknown }).message === "string"
+            ? (e as { message: string }).message
+            : String(e);
         crawlerErrorStats.count++;
         crawlerErrorStats.lastMessage = msg;
       }
@@ -207,23 +240,38 @@ export class NeuralCrawler {
         technicalData,
         authorshipSignals,
         semanticClassification,
-        seoMetrics: deriveSeoMetrics(technicalData, content, headingsWordCount(content)),
+        seoMetrics: deriveSeoMetrics(
+          technicalData,
+          content,
+          headingsWordCount(content)
+        ),
         performance: derivePerformanceMetrics(technicalData),
         robotsAllowed: true,
         fromCache: false,
         provenance: {
-          firstH1: Array.isArray(technicalData.headings?.h1) && technicalData.headings.h1.length > 0
-            ? technicalData.headings.h1[0]
-            : undefined,
+          firstH1:
+            Array.isArray(technicalData.headings?.h1) &&
+            technicalData.headings.h1.length > 0
+              ? technicalData.headings.h1[0]
+              : undefined,
           externalAnchors: (technicalData.links || [])
-            .filter((l: { href: string; text: string; isExternal: boolean }) => l.isExternal && /^https?:\/\//.test(l.href))
+            .filter(
+              (l: { href: string; text: string; isExternal: boolean }) =>
+                l.isExternal && /^https?:\/\//.test(l.href)
+            )
             .slice(0, 12)
-            .map((l: { href: string; text: string }) => ({ href: l.href, text: l.text })),
+            .map((l: { href: string; text: string }) => ({
+              href: l.href,
+              text: l.text,
+            })),
           missingAltSamples: (technicalData.images || [])
-            .filter((img: { src: string; alt: string }) => !img.alt || img.alt.trim().length === 0)
+            .filter(
+              (img: { src: string; alt: string }) =>
+                !img.alt || img.alt.trim().length === 0
+            )
             .slice(0, 5)
             .map((img: { src: string }) => img.src),
-        }
+        },
       };
       this.cache.set(url, { timestamp: Date.now(), result, ttl });
       return result;
@@ -312,31 +360,78 @@ export class NeuralCrawler {
           schemaData.push(data);
         } catch (e) {
           // Ignore invalid JSON; record local error count (narrow unknown safely)
-          const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string')
-            ? (e as { message: string }).message
-            : String(e);
-          (window as unknown as { __crawlerErrorStats?: { count: number; lastMessage: string | null } }).__crawlerErrorStats =
-            (window as unknown as { __crawlerErrorStats?: { count: number; lastMessage: string | null } }).__crawlerErrorStats || { count: 0, lastMessage: null };
-          (window as unknown as { __crawlerErrorStats: { count: number; lastMessage: string | null } }).__crawlerErrorStats.count++;
-          (window as unknown as { __crawlerErrorStats: { count: number; lastMessage: string | null } }).__crawlerErrorStats.lastMessage = msg;
+          const msg =
+            e &&
+            typeof e === "object" &&
+            "message" in e &&
+            typeof (e as { message?: unknown }).message === "string"
+              ? (e as { message: string }).message
+              : String(e);
+          (
+            window as unknown as {
+              __crawlerErrorStats?: {
+                count: number;
+                lastMessage: string | null;
+              };
+            }
+          ).__crawlerErrorStats = (
+            window as unknown as {
+              __crawlerErrorStats?: {
+                count: number;
+                lastMessage: string | null;
+              };
+            }
+          ).__crawlerErrorStats || { count: 0, lastMessage: null };
+          (
+            window as unknown as {
+              __crawlerErrorStats: {
+                count: number;
+                lastMessage: string | null;
+              };
+            }
+          ).__crawlerErrorStats.count++;
+          (
+            window as unknown as {
+              __crawlerErrorStats: {
+                count: number;
+                lastMessage: string | null;
+              };
+            }
+          ).__crawlerErrorStats.lastMessage = msg;
         }
       });
 
       return schemaData;
     });
 
-    const wordCount = await page.evaluate(() => (document.body.innerText || '').split(/\s+/).filter(Boolean).length);
+    const wordCount = await page.evaluate(
+      () => (document.body.innerText || "").split(/\s+/).filter(Boolean).length
+    );
     const titleLength = (await page.title())?.length || 0;
-    const metaDescriptionLength = (metadata => (metadata || '').length)(await page.evaluate(() => document.querySelector('meta[name="description"]')?.getAttribute('content') || ''));
-    const canonicalUrl = await page.evaluate(() => document.querySelector('link[rel="canonical"]')?.getAttribute('href') || '');
+    const metaDescriptionLength = ((metadata) => (metadata || "").length)(
+      await page.evaluate(
+        () =>
+          document
+            .querySelector('meta[name="description"]')
+            ?.getAttribute("content") || ""
+      )
+    );
+    const canonicalUrl = await page.evaluate(
+      () =>
+        document.querySelector('link[rel="canonical"]')?.getAttribute("href") ||
+        ""
+    );
     let canonicalMismatch = false;
     try {
       if (canonicalUrl) {
         const parsedOriginal = new URL(page.url());
         const parsedCanonical = new URL(canonicalUrl, page.url());
-        canonicalMismatch = parsedOriginal.hostname !== parsedCanonical.hostname;
+        canonicalMismatch =
+          parsedOriginal.hostname !== parsedCanonical.hostname;
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return {
       loadTime,
       pageSize,
@@ -547,7 +642,13 @@ export class NeuralCrawler {
       void this.drainQueue();
     });
     // Fire-and-forget until consumers adopt the promise
-    void p.then(() => { /* noop */ }).catch(() => { /* noop */ });
+    void p
+      .then(() => {
+        /* noop */
+      })
+      .catch(() => {
+        /* noop */
+      });
   }
 
   private async drainQueue() {
@@ -556,7 +657,9 @@ export class NeuralCrawler {
       if (!item) break;
       this.active++;
       try {
-        const result = await this.crawl(item.task.url, { cacheTtlMs: NeuralCrawler.DEFAULT_CACHE_TTL });
+        const result = await this.crawl(item.task.url, {
+          cacheTtlMs: NeuralCrawler.DEFAULT_CACHE_TTL,
+        });
         item.resolve(result);
       } catch (e) {
         item.reject(e);
@@ -566,7 +669,6 @@ export class NeuralCrawler {
       }
     }
   }
-
 }
 
 // ---------------- Derived Heuristic Metric Helpers (Phase 0) ----------------
@@ -574,53 +676,72 @@ function headingsWordCount(content: string): number {
   return content.split(/\s+/).length;
 }
 
-function clampScore(v: number) { return Math.max(0, Math.min(100, Math.round(v))); }
+function clampScore(v: number) {
+  return Math.max(0, Math.min(100, Math.round(v)));
+}
 
-function deriveSeoMetrics(tech: CrawlResult['technicalData'], content: string, wc: number) {
+function deriveSeoMetrics(
+  tech: CrawlResult["technicalData"],
+  content: string,
+  wc: number
+) {
   // Simple heuristic blend: word count depth, title/meta lengths, heading richness
   const depthScore = wc >= 1200 ? 100 : wc >= 800 ? 85 : wc >= 400 ? 65 : 40;
   const titleScore = tech.titleLength > 15 && tech.titleLength < 65 ? 90 : 60;
-  const metaScore = tech.metaDescriptionLength > 70 && tech.metaDescriptionLength < 165 ? 90 : 55;
+  const metaScore =
+    tech.metaDescriptionLength > 70 && tech.metaDescriptionLength < 165
+      ? 90
+      : 55;
   const headingVariety = Object.keys(tech.headings).length;
   const headingScore = headingVariety >= 4 ? 90 : headingVariety >= 2 ? 70 : 45;
-  const technicalScore = clampScore((titleScore * 0.4 + metaScore * 0.4 + (tech.canonicalMismatch ? 40 : 85)) / 1.6);
-  const contentScore = clampScore((depthScore * 0.6 + headingScore * 0.4));
+  const technicalScore = clampScore(
+    (titleScore * 0.4 + metaScore * 0.4 + (tech.canonicalMismatch ? 40 : 85)) /
+      1.6
+  );
+  const contentScore = clampScore(depthScore * 0.6 + headingScore * 0.4);
   const overallScore = clampScore(technicalScore * 0.5 + contentScore * 0.5);
   return { overallScore, technicalScore, contentScore };
 }
 
-function derivePerformanceMetrics(tech: CrawlResult['technicalData']) {
+function derivePerformanceMetrics(tech: CrawlResult["technicalData"]) {
   // Penalize high load time & large page size heuristically
   const load = tech.loadTime; // ms
   const sizeKb = tech.pageSize / 1024;
   let score = 100;
-  if (load > 4000) score -= 35; else if (load > 2500) score -= 20; else if (load > 1500) score -= 10;
-  if (sizeKb > 3000) score -= 25; else if (sizeKb > 1500) score -= 15; else if (sizeKb > 800) score -= 5;
+  if (load > 4000) score -= 35;
+  else if (load > 2500) score -= 20;
+  else if (load > 1500) score -= 10;
+  if (sizeKb > 3000) score -= 25;
+  else if (sizeKb > 1500) score -= 15;
+  else if (sizeKb > 800) score -= 5;
   if (tech.canonicalMismatch) score -= 5;
   return { overallScore: clampScore(score) };
 }
 
-
 // ---------------- Robots.txt Minimal Parser -----------------
-interface RobotsRules { disallow: string[]; allow: string[]; }
+interface RobotsRules {
+  disallow: string[];
+  allow: string[];
+}
 
 function parseRobots(content: string, ua: string): RobotsRules {
   const lines = content.split(/\r?\n/);
-  let active = false; const rules: RobotsRules = { disallow: [], allow: [] };
+  let active = false;
+  const rules: RobotsRules = { disallow: [], allow: [] };
   const uaLower = ua.toLowerCase();
   for (const raw of lines) {
     const line = raw.trim();
-    if (!line || line.startsWith('#')) continue;
-    const [fieldRaw, valueRaw] = line.split(':', 2);
+    if (!line || line.startsWith("#")) continue;
+    const [fieldRaw, valueRaw] = line.split(":", 2);
     if (!valueRaw) continue;
     const field = fieldRaw.toLowerCase();
     const value = valueRaw.trim();
-    if (field === 'user-agent') {
+    if (field === "user-agent") {
       const target = value.toLowerCase();
-      active = (target === '*' || uaLower.includes(target));
-    } else if (active && field === 'disallow') {
+      active = target === "*" || uaLower.includes(target);
+    } else if (active && field === "disallow") {
       if (value) rules.disallow.push(value);
-    } else if (active && field === 'allow') {
+    } else if (active && field === "allow") {
       if (value) rules.allow.push(value);
     }
   }
@@ -628,29 +749,43 @@ function parseRobots(content: string, ua: string): RobotsRules {
 }
 
 function pathMatches(path: string, pattern: string): boolean {
-  if (pattern === '/') return true;
+  if (pattern === "/") return true;
   // Convert simple * wildcard
-  const regex = new RegExp('^' + pattern.split('*').map(p => p.replace(/[-/\\^$+?.()|[\]{}]/g, r => '\\' + r)).join('.*'));
+  const regex = new RegExp(
+    "^" +
+      pattern
+        .split("*")
+        .map((p) => p.replace(/[-/\\^$+?.()|[\]{}]/g, (r) => "\\" + r))
+        .join(".*")
+  );
   return regex.test(path);
 }
 
 async function fetchRobots(domain: string): Promise<string | null> {
   try {
-    const res = await fetch(domain + '/robots.txt', { method: 'GET' });
+    const res = await fetch(domain + "/robots.txt", { method: "GET" });
     if (!res.ok) return null;
     return await res.text();
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 // Augment instance type for the dynamically attached method (declaration merging approach)
-export interface NeuralCrawler { isAllowedByRobots(url: string, ua: string): Promise<boolean>; }
+export interface NeuralCrawler {
+  isAllowedByRobots(url: string, ua: string): Promise<boolean>;
+}
 // Define the method on the prototype (no any / safe typing)
-NeuralCrawler.prototype.isAllowedByRobots = async function (this: NeuralCrawler, url: string, ua: string): Promise<boolean> {
+NeuralCrawler.prototype.isAllowedByRobots = async function (
+  this: NeuralCrawler,
+  url: string,
+  ua: string
+): Promise<boolean> {
   try {
     const parsed = new URL(url);
     const origin = parsed.origin;
     const cached = this.robotsCache.get(origin);
-    if (cached && (Date.now() - cached.fetched) < NeuralCrawler.ROBOTS_TTL) {
+    if (cached && Date.now() - cached.fetched < NeuralCrawler.ROBOTS_TTL) {
       return evaluateRules(cached.rules, parsed.pathname);
     }
     const txt = await fetchRobots(origin);
@@ -658,7 +793,9 @@ NeuralCrawler.prototype.isAllowedByRobots = async function (this: NeuralCrawler,
     const rules = parseRobots(txt, ua);
     this.robotsCache.set(origin, { fetched: Date.now(), rules });
     return evaluateRules(rules, parsed.pathname);
-  } catch { return true; }
+  } catch {
+    return true;
+  }
 };
 
 function evaluateRules(rules: RobotsRules, path: string): boolean {
@@ -666,7 +803,8 @@ function evaluateRules(rules: RobotsRules, path: string): boolean {
   let disallowedMatch: string | null = null;
   for (const dis of rules.disallow) {
     if (pathMatches(path, dis)) {
-      if (!disallowedMatch || dis.length > disallowedMatch.length) disallowedMatch = dis;
+      if (!disallowedMatch || dis.length > disallowedMatch.length)
+        disallowedMatch = dis;
     }
   }
   let allowedMatch: string | null = null;

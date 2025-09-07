@@ -32,7 +32,7 @@
 # 1. Build the application to verify fix
 npm run build
 
-# 2. Test API endpoint locally  
+# 2. Test API endpoint locally
 npm run dev-no-turbopack
 
 # 3. Verify NeuroSEO API responds
@@ -116,7 +116,7 @@ firebase deploy --project rankpilot-h3jpc
 ### Short Term (24-48 Hours)
 
 1. **Component consolidation** (remove duplicates)
-2. **Navigation standardization** 
+2. **Navigation standardization**
 3. **Performance optimization**
 4. **Comprehensive testing cycle**
 

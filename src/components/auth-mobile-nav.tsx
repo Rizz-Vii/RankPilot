@@ -90,7 +90,7 @@ export default function AuthMobileNav() {
               className="fixed left-0 top-0 h-full w-80 bg-white z-50 md:hidden shadow-2xl"
               id="auth-mobile-drawer"
               data-testid="auth-drawer mobile-drawer"
-              data-state={isOpen ? 'open' : 'closed'}
+              data-state={isOpen ? "open" : "closed"}
               role="dialog"
               aria-modal="true"
               aria-label="Mobile navigation menu"

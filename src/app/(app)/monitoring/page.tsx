@@ -1,12 +1,14 @@
 // Production Monitoring Dashboard
-import React from 'react';
+import React from "react";
 export default function MonitoringDashboard() {
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">Production Monitoring</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="p-4 rounded-lg bg-success/10 border border-success/40">
-          <h3 className="font-semibold text-success-foreground">System Status</h3>
+          <h3 className="font-semibold text-success-foreground">
+            System Status
+          </h3>
           <p className="text-success-foreground">✅ Operational</p>
         </div>
         <div className="p-4 rounded-lg bg-primary/10 border border-primary/40">

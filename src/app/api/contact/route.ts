@@ -1,87 +1,101 @@
 import { adminDb } from "@/lib/firebase-admin";
-import { getLogger } from '@/lib/logging/app-logger';
+import { getLogger } from "@/lib/logging/app-logger";
 import * as admin from "firebase-admin";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { z } from "zod";
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const contactSchema = z.object({
-    name: z.string().min(2),
-    email: z.string().email(),
-    subject: z.string().min(5),
-    message: z.string().min(10),
-    category: z.string().min(1),
+  name: z.string().min(2),
+  email: z.string().email(),
+  subject: z.string().min(5),
+  message: z.string().min(10),
+  category: z.string().min(1),
 });
 
 function getTransport() {
-    const host = process.env.SMTP_HOST;
-    const port = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined;
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
+  const host = process.env.SMTP_HOST;
+  const port = process.env.SMTP_PORT
+    ? Number(process.env.SMTP_PORT)
+    : undefined;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
 
-    if (host && port && user && pass) {
-        return nodemailer.createTransport({
-            host,
-            port,
-            secure: port === 465, // true for 465, false for other ports
-            auth: { user, pass },
-        });
-    }
+  if (host && port && user && pass) {
+    return nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465, // true for 465, false for other ports
+      auth: { user, pass },
+    });
+  }
 
-    // Development fallback: log emails to console
-    return {
-        sendMail: async (opts: nodemailer.SendMailOptions) => {
-            getLogger('contact').warn('email.send.fallback', { to: opts?.to, subject: opts?.subject });
-            return { messageId: `dev-fallback-${Date.now()}` } as unknown as nodemailer.SentMessageInfo;
-        },
-    } as unknown as nodemailer.Transporter;
+  // Development fallback: log emails to console
+  return {
+    sendMail: async (opts: nodemailer.SendMailOptions) => {
+      getLogger("contact").warn("email.send.fallback", {
+        to: opts?.to,
+        subject: opts?.subject,
+      });
+      return {
+        messageId: `dev-fallback-${Date.now()}`,
+      } as unknown as nodemailer.SentMessageInfo;
+    },
+  } as unknown as nodemailer.Transporter;
 }
 
 export async function POST(req: NextRequest) {
-    try {
-        const body = await req.json();
-        const parsed = contactSchema.safeParse(body);
-        if (!parsed.success) {
-            return NextResponse.json(
-                { message: "Invalid input", errors: parsed.error.flatten() },
-                { status: 400 }
-            );
-        }
+  try {
+    const body = await req.json();
+    const parsed = contactSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { message: "Invalid input", errors: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
 
-        const { name, email, subject, message, category } = parsed.data;
+    const { name, email, subject, message, category } = parsed.data;
 
-        // Persist initial message for tracking
-        const headers = Object.fromEntries(req.headers.entries()) as Record<string, string>;
-        const ip = req.headers.get("x-forwarded-for") || headers["x-real-ip"] || "unknown";
-        const userAgent = req.headers.get("user-agent") || "unknown";
+    // Persist initial message for tracking
+    const headers = Object.fromEntries(req.headers.entries()) as Record<
+      string,
+      string
+    >;
+    const ip =
+      req.headers.get("x-forwarded-for") || headers["x-real-ip"] || "unknown";
+    const userAgent = req.headers.get("user-agent") || "unknown";
 
-        let docRef: { id: string } | null = null;
-        docRef = await adminDb.collection("supportMessages").add({
-            name,
-            email,
-            subject,
-            message,
-            category,
-            status: "received",
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            meta: { ip, userAgent, source: "public-contact-form" },
-        });
+    let docRef: { id: string } | null = null;
+    docRef = await adminDb.collection("supportMessages").add({
+      name,
+      email,
+      subject,
+      message,
+      category,
+      status: "received",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      meta: { ip, userAgent, source: "public-contact-form" },
+    });
 
-        const to = process.env.CONTACT_RECEIVER_EMAIL || "abba7254@gmail.com"; // requested recipient
-        const from = process.env.CONTACT_FROM_EMAIL || process.env.SMTP_USER || "no-reply@rankpilot.com";
+    const to = process.env.CONTACT_RECEIVER_EMAIL || "abba7254@gmail.com"; // requested recipient
+    const from =
+      process.env.CONTACT_FROM_EMAIL ||
+      process.env.SMTP_USER ||
+      "no-reply@rankpilot.com";
 
-        const transporter = getTransport();
-        const info = await transporter.sendMail({
-            from: `RankPilot Contact <${from}>`,
-            to,
-            replyTo: email,
-            subject: `[Contact - ${category}] ${subject}`,
-            text: `New contact message\n\nName: ${name}\nEmail: ${email}\nCategory: ${category}\nSubject: ${subject}\n\nMessage:\n${message}`,
-            html: `
+    const transporter = getTransport();
+    const info = await transporter.sendMail({
+      from: `RankPilot Contact <${from}>`,
+      to,
+      replyTo: email,
+      subject: `[Contact - ${category}] ${subject}`,
+      text: `New contact message\n\nName: ${name}\nEmail: ${email}\nCategory: ${category}\nSubject: ${subject}\n\nMessage:\n${message}`,
+      html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: rgb(17,17,17)">
           <h2>New Contact Message</h2>
           <p><strong>Name:</strong> ${name}</p>
@@ -92,22 +106,29 @@ export async function POST(req: NextRequest) {
           <p style="white-space: pre-wrap">${message}</p>
         </div>
       `,
-        });
-        // Update Firestore with send status
-        await adminDb.collection("supportMessages").doc(docRef!.id).update({
-            emailStatus: "sent",
-            emailMessageId: info.messageId,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+    });
+    // Update Firestore with send status
+    await adminDb.collection("supportMessages").doc(docRef!.id).update({
+      emailStatus: "sent",
+      emailMessageId: info.messageId,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
-        return NextResponse.json({ success: true, id: info.messageId, docId: docRef.id });
-    } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        getLogger('contact').error('contact.error', { error: errorMessage });
-        try {
-            // Best-effort: mark latest doc as failed if available from context (not tracked here)
-            // No-op: Without docRef, we can't update; in a more advanced setup, we'd correlate by timestamp
-        } catch { }
-        return NextResponse.json({ message: errorMessage || "Internal error" }, { status: 500 });
-    }
+    return NextResponse.json({
+      success: true,
+      id: info.messageId,
+      docId: docRef.id,
+    });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    getLogger("contact").error("contact.error", { error: errorMessage });
+    try {
+      // Best-effort: mark latest doc as failed if available from context (not tracked here)
+      // No-op: Without docRef, we can't update; in a more advanced setup, we'd correlate by timestamp
+    } catch {}
+    return NextResponse.json(
+      { message: errorMessage || "Internal error" },
+      { status: 500 }
+    );
+  }
 }

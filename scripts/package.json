@@ -1,7 +1,6 @@
 {
   "name": "database-migration-runner",
   "version": "1.0.0",
-  
   "scripts": {
     "fix-activities": "tsx scripts/fix-activity-schema-conflicts.ts",
     "fix-tiers": "tsx src/lib/user-tier-migration.ts",

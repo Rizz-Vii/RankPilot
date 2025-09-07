@@ -10,62 +10,130 @@
  * Safe to run idempotently.
  */
 // Using relative import to avoid ts-node path mapping issues in standalone script execution
-import { adminDb } from '../src/lib/firebase-admin';
-import { recordInviteMaintenance } from '../src/lib/metrics/unified-metrics';
+import { adminDb } from "../src/lib/firebase-admin";
+import { recordInviteMaintenance } from "../src/lib/metrics/unified-metrics";
 
-const ACCEPTED_RETENTION_DAYS = Number(process.env.INVITES_ACCEPTED_RETENTION_DAYS || 30);
-const EXPIRED_RETENTION_DAYS = Number(process.env.INVITES_EXPIRED_RETENTION_DAYS || 14);
+const ACCEPTED_RETENTION_DAYS = Number(
+  process.env.INVITES_ACCEPTED_RETENTION_DAYS || 30
+);
+const EXPIRED_RETENTION_DAYS = Number(
+  process.env.INVITES_EXPIRED_RETENTION_DAYS || 14
+);
 
-function days(ms: number) { return ms / (1000 * 60 * 60 * 24); }
-
-async function run() {
-    const now = Date.now();
-    let markedExpired = 0, deletedAccepted = 0, deletedExpired = 0, orphanIndexes = 0;
-    const teams = await adminDb.collection('teams').get();
-    for (const t of teams.docs) {
-        const invitesSnap = await adminDb.collection('teams').doc(t.id).collection('invites').get();
-        for (const inv of invitesSnap.docs) {
-            const data = inv.data() as Record<string, unknown>;
-            const expiresAt = (data.expiresAt && typeof data.expiresAt === 'object' && 'toDate' in (data.expiresAt as Record<string, unknown>) && typeof (data.expiresAt as { toDate?: unknown }).toDate === 'function')
-                ? (data.expiresAt as { toDate: () => Date }).toDate().getTime()
-                : (data.expiresAt instanceof Date ? data.expiresAt.getTime() : undefined);
-            if (data.status === 'pending' && expiresAt && expiresAt < now) {
-                await inv.ref.update({ status: 'expired', expiredAt: new Date() });
-                await adminDb.collection('invites_index').doc(inv.id).set({ status: 'expired', updatedAt: new Date() }, { merge: true });
-                markedExpired++;
-            }
-            if (data.status === 'accepted') {
-                const acceptedAt = (data.acceptedAt && typeof data.acceptedAt === 'object' && 'toDate' in (data.acceptedAt as Record<string, unknown>) && typeof (data.acceptedAt as { toDate?: unknown }).toDate === 'function')
-                    ? (data.acceptedAt as { toDate: () => Date }).toDate().getTime()
-                    : (data.acceptedAt instanceof Date ? data.acceptedAt.getTime() : 0);
-                if (acceptedAt && days(now - acceptedAt) > ACCEPTED_RETENTION_DAYS) {
-                    await inv.ref.delete();
-                    await adminDb.collection('invites_index').doc(inv.id).delete().catch(() => { });
-                    deletedAccepted++;
-                }
-            } else if (data.status === 'expired') {
-                const expiredAt = (data.expiredAt && typeof data.expiredAt === 'object' && 'toDate' in (data.expiredAt as Record<string, unknown>) && typeof (data.expiredAt as { toDate?: unknown }).toDate === 'function')
-                    ? (data.expiredAt as { toDate: () => Date }).toDate().getTime()
-                    : (data.expiredAt instanceof Date ? data.expiredAt.getTime() : (expiresAt || 0));
-                if (expiredAt && days(now - expiredAt) > EXPIRED_RETENTION_DAYS) {
-                    await inv.ref.delete();
-                    await adminDb.collection('invites_index').doc(inv.id).delete().catch(() => { });
-                    deletedExpired++;
-                }
-            }
-        }
-    }
-    // Orphan indexes
-    const indexSnap = await adminDb.collection('invites_index').get();
-    for (const idx of indexSnap.docs) {
-        const raw = idx.data() as Record<string, unknown>;
-        const teamId = typeof raw.teamId === 'string' ? raw.teamId : undefined;
-        if (!teamId) { orphanIndexes++; await idx.ref.delete().catch(() => { }); continue; }
-        const invDoc = await adminDb.collection('teams').doc(teamId).collection('invites').doc(idx.id).get();
-        if (!invDoc.exists) { await idx.ref.delete().catch(() => { }); orphanIndexes++; }
-    }
-    recordInviteMaintenance({ markedExpired, deletedAccepted, deletedExpired, orphanIndexes });
-    console.log(JSON.stringify({ markedExpired, deletedAccepted, deletedExpired, orphanIndexes }, null, 2));
+function days(ms: number) {
+  return ms / (1000 * 60 * 60 * 24);
 }
 
-run().catch(e => { console.error('cleanup-invites error', e); process.exit(1); });
+async function run() {
+  const now = Date.now();
+  let markedExpired = 0,
+    deletedAccepted = 0,
+    deletedExpired = 0,
+    orphanIndexes = 0;
+  const teams = await adminDb.collection("teams").get();
+  for (const t of teams.docs) {
+    const invitesSnap = await adminDb
+      .collection("teams")
+      .doc(t.id)
+      .collection("invites")
+      .get();
+    for (const inv of invitesSnap.docs) {
+      const data = inv.data() as Record<string, unknown>;
+      const expiresAt =
+        data.expiresAt &&
+        typeof data.expiresAt === "object" &&
+        "toDate" in (data.expiresAt as Record<string, unknown>) &&
+        typeof (data.expiresAt as { toDate?: unknown }).toDate === "function"
+          ? (data.expiresAt as { toDate: () => Date }).toDate().getTime()
+          : data.expiresAt instanceof Date
+            ? data.expiresAt.getTime()
+            : undefined;
+      if (data.status === "pending" && expiresAt && expiresAt < now) {
+        await inv.ref.update({ status: "expired", expiredAt: new Date() });
+        await adminDb
+          .collection("invites_index")
+          .doc(inv.id)
+          .set({ status: "expired", updatedAt: new Date() }, { merge: true });
+        markedExpired++;
+      }
+      if (data.status === "accepted") {
+        const acceptedAt =
+          data.acceptedAt &&
+          typeof data.acceptedAt === "object" &&
+          "toDate" in (data.acceptedAt as Record<string, unknown>) &&
+          typeof (data.acceptedAt as { toDate?: unknown }).toDate === "function"
+            ? (data.acceptedAt as { toDate: () => Date }).toDate().getTime()
+            : data.acceptedAt instanceof Date
+              ? data.acceptedAt.getTime()
+              : 0;
+        if (acceptedAt && days(now - acceptedAt) > ACCEPTED_RETENTION_DAYS) {
+          await inv.ref.delete();
+          await adminDb
+            .collection("invites_index")
+            .doc(inv.id)
+            .delete()
+            .catch(() => {});
+          deletedAccepted++;
+        }
+      } else if (data.status === "expired") {
+        const expiredAt =
+          data.expiredAt &&
+          typeof data.expiredAt === "object" &&
+          "toDate" in (data.expiredAt as Record<string, unknown>) &&
+          typeof (data.expiredAt as { toDate?: unknown }).toDate === "function"
+            ? (data.expiredAt as { toDate: () => Date }).toDate().getTime()
+            : data.expiredAt instanceof Date
+              ? data.expiredAt.getTime()
+              : expiresAt || 0;
+        if (expiredAt && days(now - expiredAt) > EXPIRED_RETENTION_DAYS) {
+          await inv.ref.delete();
+          await adminDb
+            .collection("invites_index")
+            .doc(inv.id)
+            .delete()
+            .catch(() => {});
+          deletedExpired++;
+        }
+      }
+    }
+  }
+  // Orphan indexes
+  const indexSnap = await adminDb.collection("invites_index").get();
+  for (const idx of indexSnap.docs) {
+    const raw = idx.data() as Record<string, unknown>;
+    const teamId = typeof raw.teamId === "string" ? raw.teamId : undefined;
+    if (!teamId) {
+      orphanIndexes++;
+      await idx.ref.delete().catch(() => {});
+      continue;
+    }
+    const invDoc = await adminDb
+      .collection("teams")
+      .doc(teamId)
+      .collection("invites")
+      .doc(idx.id)
+      .get();
+    if (!invDoc.exists) {
+      await idx.ref.delete().catch(() => {});
+      orphanIndexes++;
+    }
+  }
+  recordInviteMaintenance({
+    markedExpired,
+    deletedAccepted,
+    deletedExpired,
+    orphanIndexes,
+  });
+  console.log(
+    JSON.stringify(
+      { markedExpired, deletedAccepted, deletedExpired, orphanIndexes },
+      null,
+      2
+    )
+  );
+}
+
+run().catch((e) => {
+  console.error("cleanup-invites error", e);
+  process.exit(1);
+});

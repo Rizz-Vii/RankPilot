@@ -9,18 +9,21 @@ import { AIResponseCache } from "../lib/ai-response-cache.js";
 import { MetricsCollector } from "../lib/metrics-collector.js";
 import { StructuredLogger } from "../lib/structured-logger.js";
 
-type MockRequest = { auth?: { uid?: string }; data?: unknown; rawRequest?: { headers?: Record<string, string> } };
+type MockRequest = {
+  auth?: { uid?: string };
+  data?: unknown;
+  rawRequest?: { headers?: Record<string, string> };
+};
 
 describe("Firebase Functions Basic Test Suite", () => {
-
   describe("StructuredLogger", () => {
     it("should create trace with unique ID", () => {
       const mockRequest = {
         auth: { uid: "user123" },
         data: {},
         rawRequest: {
-          headers: { "user-agent": "test-agent" }
-        }
+          headers: { "user-agent": "test-agent" },
+        },
       } as unknown as MockRequest;
 
       const trace = StructuredLogger.startTrace(mockRequest, "test-function");
@@ -45,7 +48,7 @@ describe("Firebase Functions Basic Test Suite", () => {
       const mockRequest = {
         auth: { uid: "user123" },
         data: {},
-        rawRequest: { headers: {} }
+        rawRequest: { headers: {} },
       } as unknown as MockRequest;
 
       const trace = StructuredLogger.startTrace(mockRequest, "test-function");
@@ -54,7 +57,7 @@ describe("Firebase Functions Basic Test Suite", () => {
         StructuredLogger.completeTrace(trace.traceId, {
           success: true,
           duration: 1500,
-          memoryUsed: 128
+          memoryUsed: 128,
         });
       }).to.not.throw();
     });
@@ -66,7 +69,7 @@ describe("Firebase Functions Basic Test Suite", () => {
         _functionName: "test-function",
         executionTime: 1000,
         success: true,
-        memoryUsage: 64
+        memoryUsage: 64,
       };
 
       expect(() => {
@@ -101,7 +104,7 @@ describe("Firebase Functions Basic Test Suite", () => {
         aiModel: "gpt-4",
         promptHash: "test-hash",
         tokens: 100,
-        userTier: "starter" as const
+        userTier: "starter" as const,
       };
 
       expect(() => {
@@ -131,11 +134,14 @@ describe("Firebase Functions Basic Test Suite", () => {
       const mockRequest = {
         auth: { uid: "integration-user" },
         data: {},
-        rawRequest: { headers: {} }
+        rawRequest: { headers: {} },
       } as unknown as MockRequest;
 
       // Start trace
-      const trace = StructuredLogger.startTrace(mockRequest, "integration-test");
+      const trace = StructuredLogger.startTrace(
+        mockRequest,
+        "integration-test"
+      );
       expect(trace.traceId).to.be.a("string");
 
       // Record metrics
@@ -143,14 +149,14 @@ describe("Firebase Functions Basic Test Suite", () => {
         _functionName: "integration-test",
         executionTime: 1200,
         success: true,
-        memoryUsage: 96
+        memoryUsage: 96,
       });
 
       // Complete trace
       StructuredLogger.completeTrace(trace.traceId, {
         success: true,
         duration: 1200,
-        memoryUsed: 96
+        memoryUsed: 96,
       });
 
       // Get report

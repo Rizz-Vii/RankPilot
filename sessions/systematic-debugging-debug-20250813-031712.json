@@ -3,8 +3,6 @@
   "problem": "Pre-push validation for workshop/performance",
   "startTime": "Wed Aug 13 03:17:12 UTC 2025",
   "endTime": "Wed Aug 13 03:17:12 UTC 2025",
-  "completedSteps": [
-    ""
-  ],
+  "completedSteps": [""],
   "autoValidate": true
 }

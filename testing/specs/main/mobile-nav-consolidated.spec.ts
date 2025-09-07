@@ -58,10 +58,12 @@ test.describe("Mobile Navigation - Comprehensive Suite", () => {
             await page.waitForTimeout(800); // Animation time
             console.log(`✅ ${viewport.name}: Hamburger clicked successfully`);
           } catch {
-            console.log(`⚠️ ${viewport.name}: Click failed, trying alternative approach`);
+            console.log(
+              `⚠️ ${viewport.name}: Click failed, trying alternative approach`
+            );
             // Alternative: use keyboard activation
             await hamburger.focus();
-            await page.keyboard.press('Enter');
+            await page.keyboard.press("Enter");
             await page.waitForTimeout(800);
           }
 
@@ -131,7 +133,8 @@ test.describe("Mobile Navigation - Comprehensive Suite", () => {
         .or(page.locator('[data-testid="desktop-nav"]'))
         .or(page.locator(".navbar"));
 
-      const hamburgerDesktop = page.locator('[data-testid="public-mobile-menu"]')
+      const hamburgerDesktop = page
+        .locator('[data-testid="public-mobile-menu"]')
         .or(page.locator('[data-testid="mobile-menu"]'));
 
       if ((await desktopNav.count()) > 0) {
@@ -176,7 +179,9 @@ test.describe("Mobile Navigation - Comprehensive Suite", () => {
       await page.waitForTimeout(1000);
 
       // Use specific selector for auth pages to avoid multiple element conflicts
-      const hamburger = page.locator('[data-testid="auth-mobile-menu"]').first();
+      const hamburger = page
+        .locator('[data-testid="auth-mobile-menu"]')
+        .first();
 
       if ((await hamburger.count()) > 0) {
         console.log("✅ Mobile nav available on login page");
@@ -238,7 +243,9 @@ test.describe("Mobile Navigation - Comprehensive Suite", () => {
       await page.goto("/", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(1000);
 
-      const hamburger = page.locator('[data-testid="public-mobile-menu"]').first();
+      const hamburger = page
+        .locator('[data-testid="public-mobile-menu"]')
+        .first();
 
       if ((await hamburger.count()) > 0) {
         // Test keyboard focus with timeout and error handling
@@ -260,7 +267,8 @@ test.describe("Mobile Navigation - Comprehensive Suite", () => {
 
             // Test Tab navigation within drawer
             await page.keyboard.press("Tab");
-            const isFocusInDrawer = (await drawer.locator(":focus").count()) > 0;
+            const isFocusInDrawer =
+              (await drawer.locator(":focus").count()) > 0;
 
             if (isFocusInDrawer) {
               console.log("✅ Keyboard focus trapped in mobile drawer");
@@ -278,7 +286,10 @@ test.describe("Mobile Navigation - Comprehensive Suite", () => {
             }
           }
         } catch (error) {
-          console.log("⚠️ Keyboard navigation test failed:", error instanceof Error ? error.message : String(error));
+          console.log(
+            "⚠️ Keyboard navigation test failed:",
+            error instanceof Error ? error.message : String(error)
+          );
         }
       }
     });
@@ -289,7 +300,9 @@ test.describe("Mobile Navigation - Comprehensive Suite", () => {
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto("/", { waitUntil: "domcontentloaded" });
 
-      const hamburger = page.locator('[data-testid="public-mobile-menu"]').first();
+      const hamburger = page
+        .locator('[data-testid="public-mobile-menu"]')
+        .first();
 
       if ((await hamburger.count()) > 0) {
         // Check touch target size (should be at least 44x44px)
@@ -335,7 +348,11 @@ test.describe("Mobile Navigation - Comprehensive Suite", () => {
         await page.goto(pagePath, { waitUntil: "domcontentloaded" });
         await page.waitForTimeout(1000);
 
-        const hamburger = page.locator('[data-testid="public-mobile-menu"],[data-testid="auth-mobile-menu"]').first();
+        const hamburger = page
+          .locator(
+            '[data-testid="public-mobile-menu"],[data-testid="auth-mobile-menu"]'
+          )
+          .first();
 
         const hasHamburger = (await hamburger.count()) > 0;
 

@@ -1,1 +1,1 @@
-export { default } from './invoice-aging';
+export { default } from "./invoice-aging";

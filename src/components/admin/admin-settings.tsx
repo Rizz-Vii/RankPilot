@@ -106,7 +106,7 @@ export default function AdminSettings() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Status</span>
-                    <Badge className="bg-success/15 text-success">
+                  <Badge className="bg-success/15 text-success">
                     Connected
                   </Badge>
                 </div>
@@ -129,7 +129,7 @@ export default function AdminSettings() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Status</span>
-                    <Badge className="bg-success/15 text-success">Active</Badge>
+                  <Badge className="bg-success/15 text-success">Active</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Emails Sent Today</span>
@@ -150,11 +150,11 @@ export default function AdminSettings() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Auth Status</span>
-                    <Badge className="bg-success/15 text-success">Healthy</Badge>
+                  <Badge className="bg-success/15 text-success">Healthy</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Firestore Status</span>
-                    <Badge className="bg-success/15 text-success">Healthy</Badge>
+                  <Badge className="bg-success/15 text-success">Healthy</Badge>
                 </div>
                 <Button variant="outline" size="sm" className="w-full">
                   <ExternalLink className="h-4 w-4 mr-2" />
@@ -171,11 +171,11 @@ export default function AdminSettings() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">reCAPTCHA</span>
-                    <Badge className="bg-success/15 text-success">Active</Badge>
+                  <Badge className="bg-success/15 text-success">Active</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">DDoS Protection</span>
-                    <Badge className="bg-success/15 text-success">Active</Badge>
+                  <Badge className="bg-success/15 text-success">Active</Badge>
                 </div>
                 <Button variant="outline" size="sm" className="w-full">
                   <Shield className="h-4 w-4 mr-2" />
@@ -227,7 +227,9 @@ export default function AdminSettings() {
                   Multi-user editing features
                 </p>
               </div>
-              <Badge variant="outline" className="bg-success/15 text-success">Beta</Badge>
+              <Badge variant="outline" className="bg-success/15 text-success">
+                Beta
+              </Badge>
             </div>
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -237,7 +239,9 @@ export default function AdminSettings() {
                   Custom branding for agencies
                 </p>
               </div>
-              <Badge variant="secondary" className="bg-success/15 text-success">Coming Soon</Badge>
+              <Badge variant="secondary" className="bg-success/15 text-success">
+                Coming Soon
+              </Badge>
             </div>
           </div>
         </CardContent>

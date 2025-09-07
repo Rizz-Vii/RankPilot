@@ -1815,10 +1815,7 @@ commitPassiveMountOnFiber @ react-dom-client.development.js:14464
 recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14310Understand this error
 60page.tsx:144 Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
 
-
-
-
-*
+-
 
 below this line is are logs from the App we installed from the our project for offline access and such.
 
@@ -1833,7 +1830,7 @@ overrideMethod @ hook.js:608
 canAccessFeature @ access-control.ts:202
 canUseFeature @ useSubscription.ts:133
 TutorialAccess @ TutorialAccess.tsx:160
-react_stack_bottom_frame @ react-dom-client.development.js:23552
+react*stack_bottom_frame @ react-dom-client.development.js:23552
 renderWithHooks @ react-dom-client.development.js:6763
 updateFunctionComponent @ react-dom-client.development.js:9069
 beginWork @ react-dom-client.development.js:10679
@@ -3446,7 +3443,7 @@ dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276Understand this error
 dashboard-data.service.ts:79 📊 Fetching dashboard data for user: vGZSfZA7yPOOCgUGtAS2ywvwP8l1
 page.tsx:360 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3556,7 +3553,7 @@ batchedUpdates$1 @ react-dom-client.development.js:3312
 dispatchEventForPluginEventSystem @ react-dom-client.development.js:17125
 dispatchEvent @ react-dom-client.development.js:21308
 dispatchDiscreteEvent @ react-dom-client.development.js:21276Understand this warning
-page.tsx:360 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+page.tsx:360 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3680,14 +3677,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -3699,10 +3696,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -3741,14 +3738,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -3760,10 +3757,10 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
-ab @ webchannel_blob_es2018.js:39
+ab @ webchannel*blob_es2018.js:39
 F @ webchannel_blob_es2018.js:37
 Z.ta @ webchannel_blob_es2018.js:98
 Rb @ webchannel_blob_es2018.js:53
@@ -3802,14 +3799,14 @@ xu @ index.esm2017.js:17825
 next @ index.esm2017.js:17816
 La @ index.esm2017.js:16245
 Ca @ index.esm2017.js:16205
-__PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
-__PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
-await in __PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
-__PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
-await in __PRIVATE_syncEngineApplyRemoteEvent
-__PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
-__PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
-await in __PRIVATE_onWatchStreamChange
+**PRIVATE_eventManagerOnWatchChange @ index.esm2017.js:16147
+**PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore @ index.esm2017.js:17199
+await in **PRIVATE_syncEngineEmitNewSnapsAndNotifyLocalStore
+**PRIVATE_syncEngineApplyRemoteEvent @ index.esm2017.js:16964
+await in **PRIVATE_syncEngineApplyRemoteEvent
+**PRIVATE_raiseWatchSnapshot @ index.esm2017.js:15533
+**PRIVATE_onWatchStreamChange @ index.esm2017.js:15534
+await in **PRIVATE_onWatchStreamChange
 onNext @ index.esm2017.js:15037
 eval @ index.esm2017.js:14980
 eval @ index.esm2017.js:15003
@@ -3821,7 +3818,7 @@ enqueue @ index.esm2017.js:19230
 enqueueAndForget @ index.esm2017.js:19208
 eval @ index.esm2017.js:15003
 eval @ index.esm2017.js:14980
-a_ @ index.esm2017.js:14380
+a* @ index.esm2017.js:14380
 eval @ index.esm2017.js:14574
 eval @ index.esm2017.js:14523
 ab @ webchannel_blob_es2018.js:39
@@ -3851,7 +3848,7 @@ Nc @ webchannel_blob_es2018.js:69
 h.Pa @ webchannel_blob_es2018.js:69Understand this error
 use-dashboard-data.ts:45 📊 Dashboard data updated in real-time
 page.tsx:360 The width(356) and height(200) are both fixed numbers,
-       maybe you don't need to use a ResponsiveContainer.
+maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:608
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -3885,7 +3882,7 @@ renderRootSync @ react-dom-client.development.js:15477
 performWorkOnRoot @ react-dom-client.development.js:14941
 performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16766
 performWorkUntilDeadline @ scheduler.development.js:45Understand this warning
-page.tsx:360 The width(356) and height(200) are both fixed numbers,       maybe you don't need to use a ResponsiveContainer.
+page.tsx:360 The width(356) and height(200) are both fixed numbers, maybe you don't need to use a ResponsiveContainer.
 overrideMethod @ hook.js:600
 warn @ LogUtils.js:16
 ResponsiveContainer.useMemo[chartContent] @ ResponsiveContainer.js:91
@@ -4994,7 +4991,7 @@ performSyncWorkOnRoot @ react-dom-client.development.js:16781
 flushSyncWorkAcrossRoots_impl @ react-dom-client.development.js:16627
 processRootScheduleInMicrotask @ react-dom-client.development.js:16665
 eval @ react-dom-client.development.js:16800Understand this warning
-webchannel_blob_es2018.js:66  GET https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=6pcwhHEXmTLmretQy459SnCKu446n63f228AK3Ykbng&VER=8&database=projects%2Frankpilot-h3jpc%2Fdatabases%2F(default)&RID=rpc&SID=WHeq7T0dpXvpmN-i42vguA&AID=116&CI=0&TYPE=xmlhttp&zx=e0az2hgd2lqi&t=1 net::ERR_QUIC_PROTOCOL_ERROR 200 (OK)
+webchannel_blob_es2018.js:66 GET https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=6pcwhHEXmTLmretQy459SnCKu446n63f228AK3Ykbng&VER=8&database=projects%2Frankpilot-h3jpc%2Fdatabases%2F(default)&RID=rpc&SID=WHeq7T0dpXvpmN-i42vguA&AID=116&CI=0&TYPE=xmlhttp&zx=e0az2hgd2lqi&t=1 net::ERR_QUIC_PROTOCOL_ERROR 200 (OK)
 h.send @ webchannel_blob_es2018.js:66
 h.ea @ webchannel_blob_es2018.js:74
 Jb @ webchannel_blob_es2018.js:44
@@ -5875,18 +5872,18 @@ dN @ js?l=dataLayer&id=G-QJ7KKR4YZD:700
 (anonymous) @ js?l=dataLayer&id=G-QJ7KKR4YZD:708
 (anonymous) @ js?l=dataLayer&id=G-QJ7KKR4YZD:705
 NeuroSEODashboard.tsx:480 Uncaught TypeError: Cannot read properties of undefined (reading 'length')
-    at NeuroSEODashboard (NeuroSEODashboard.tsx:480:31)
-    at Object.react_stack_bottom_frame (react-dom-client.development.js:23552:1)
-    at renderWithHooks (react-dom-client.development.js:6763:1)
-    at updateFunctionComponent (react-dom-client.development.js:9069:1)
-    at beginWork (react-dom-client.development.js:10679:1)
-    at runWithFiberInDEV (react-dom-client.development.js:872:1)
-    at performUnitOfWork (react-dom-client.development.js:15677:1)
-    at workLoopSync (react-dom-client.development.js:15497:39)
-    at renderRootSync (react-dom-client.development.js:15477:1)
-    at performWorkOnRoot (react-dom-client.development.js:14984:1)
-    at performWorkOnRootViaSchedulerTask (react-dom-client.development.js:16766:1)
-    at MessagePort.performWorkUntilDeadline (scheduler.development.js:45:1)
+at NeuroSEODashboard (NeuroSEODashboard.tsx:480:31)
+at Object.react_stack_bottom_frame (react-dom-client.development.js:23552:1)
+at renderWithHooks (react-dom-client.development.js:6763:1)
+at updateFunctionComponent (react-dom-client.development.js:9069:1)
+at beginWork (react-dom-client.development.js:10679:1)
+at runWithFiberInDEV (react-dom-client.development.js:872:1)
+at performUnitOfWork (react-dom-client.development.js:15677:1)
+at workLoopSync (react-dom-client.development.js:15497:39)
+at renderRootSync (react-dom-client.development.js:15477:1)
+at performWorkOnRoot (react-dom-client.development.js:14984:1)
+at performWorkOnRootViaSchedulerTask (react-dom-client.development.js:16766:1)
+at MessagePort.performWorkUntilDeadline (scheduler.development.js:45:1)
 NeuroSEODashboard @ NeuroSEODashboard.tsx:480
 react_stack_bottom_frame @ react-dom-client.development.js:23552
 renderWithHooks @ react-dom-client.development.js:6763

@@ -14,12 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, CreditCard, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import type {
-  PlanType,
-  BillingInterval} from "@/lib/stripe";
-import getStripe, {
-  STRIPE_PLANS
-} from "@/lib/stripe";
+import type { PlanType, BillingInterval } from "@/lib/stripe";
+import getStripe, { STRIPE_PLANS } from "@/lib/stripe";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -108,7 +104,8 @@ export default function CheckoutPage() {
       toast({
         variant: "destructive",
         title: "Checkout Failed",
-        description: safeErrorMessage(error) || "Something went wrong. Please try again.",
+        description:
+          safeErrorMessage(error) || "Something went wrong. Please try again.",
       });
     } finally {
       setLoading(false);

@@ -9,10 +9,10 @@ Purpose: Brief, high‑signal instructions for AI coding assistants working in t
 
 Checklist before opening a PR:
 
-1) FeatureGate added to new pages/routes; server logic guarded with `canAccessFeature`.
-2) Inputs validated (Zod); typed responses; errors logged with `getLogger`.
-3) Metrics emitted (duration_ms, success, usage counters); update `/api/health` when adding new metrics.
-4) Tests updated (unit or targeted E2E); run `npm run quality:fast`.
-5) Diffs small; docs updated (`CHANGE_LOG.md`, related md files).
+1. FeatureGate added to new pages/routes; server logic guarded with `canAccessFeature`.
+2. Inputs validated (Zod); typed responses; errors logged with `getLogger`.
+3. Metrics emitted (duration_ms, success, usage counters); update `/api/health` when adding new metrics.
+4. Tests updated (unit or targeted E2E); run `npm run quality:fast`.
+5. Diffs small; docs updated (`CHANGE_LOG.md`, related md files).
 
 When in doubt, prefer minimal, verifiable changes and improve coverage.

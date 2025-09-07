@@ -6,43 +6,41 @@
  * Created: July 30, 2025
  */
 
-import { exec } from 'child_process';
-import * as fs from 'fs/promises';
-import { promisify } from 'util';
+import { exec } from "child_process";
+import * as fs from "fs/promises";
+import { promisify } from "util";
 
 const execAsync = promisify(exec);
 
 class AgentConflictResolver {
+  async disableAgents() {
+    console.log("🛡️ Disabling RankPilot AI Agents to prevent IDE conflicts...");
 
-    async disableAgents() {
-        console.log('🛡️ Disabling RankPilot AI Agents to prevent IDE conflicts...');
+    try {
+      // 1. Create agent-safe AgentImplementation.ts
+      await this.createAgentSafeImplementation();
 
-        try {
-            // 1. Create agent-safe AgentImplementation.ts
-            await this.createAgentSafeImplementation();
+      // 2. Disable autonomous agent startup in package.json
+      await this.disablePackageScripts();
 
-            // 2. Disable autonomous agent startup in package.json
-            await this.disablePackageScripts();
+      // 3. Create development environment config
+      await this.createDevelopmentConfig();
 
-            // 3. Create development environment config
-            await this.createDevelopmentConfig();
+      // 4. Restart TypeScript servers
+      await this.restartTypeScriptServers();
 
-            // 4. Restart TypeScript servers
-            await this.restartTypeScriptServers();
-
-            console.log('✅ Agent conflict resolution completed successfully!');
-            console.log('🔄 VS Code extensions should now work properly');
-
-        } catch (error) {
-            console.error('❌ Agent conflict resolution failed:', error);
-            throw error;
-        }
+      console.log("✅ Agent conflict resolution completed successfully!");
+      console.log("🔄 VS Code extensions should now work properly");
+    } catch (error) {
+      console.error("❌ Agent conflict resolution failed:", error);
+      throw error;
     }
+  }
 
-    async createAgentSafeImplementation() {
-        console.log('🔧 Creating agent-safe implementation...');
+  async createAgentSafeImplementation() {
+    console.log("🔧 Creating agent-safe implementation...");
 
-        const safeImplementation = `// 🤖 RankPilot Agent Implementation - DEVELOPMENT SAFE MODE
+    const safeImplementation = `// 🤖 RankPilot Agent Implementation - DEVELOPMENT SAFE MODE
 // Development mode: Agents disabled to prevent IDE extension conflicts
 // Implementation Date: July 30, 2025
 
@@ -155,30 +153,36 @@ export const AGENT_USAGE_EXAMPLES = {
 };
 `;
 
-        await fs.writeFile('/workspaces/studio/src/lib/agents/AgentImplementation.ts', safeImplementation);
-        console.log('✅ Created development-safe agent implementation');
-    }
+    await fs.writeFile(
+      "/workspaces/studio/src/lib/agents/AgentImplementation.ts",
+      safeImplementation
+    );
+    console.log("✅ Created development-safe agent implementation");
+  }
 
-    async disablePackageScripts() {
-        console.log('🔧 Disabling autonomous agent scripts...');
+  async disablePackageScripts() {
+    console.log("🔧 Disabling autonomous agent scripts...");
 
-        const packagePath = '/workspaces/studio/package.json';
-        const packageContent = await fs.readFile(packagePath, 'utf8');
-        const packageJson = JSON.parse(packageContent);
+    const packagePath = "/workspaces/studio/package.json";
+    const packageContent = await fs.readFile(packagePath, "utf8");
+    const packageJson = JSON.parse(packageContent);
 
-        // Add safe development scripts
-        packageJson.scripts['agents:disable'] = 'echo "🛡️ Agents disabled for development"';
-        packageJson.scripts['agents:enable'] = 'RANKPILOT_AGENTS_ENABLED=true npm run dev';
-        packageJson.scripts['dev:safe'] = 'RANKPILOT_AGENTS_ENABLED=false npm run dev-no-turbopack';
+    // Add safe development scripts
+    packageJson.scripts["agents:disable"] =
+      'echo "🛡️ Agents disabled for development"';
+    packageJson.scripts["agents:enable"] =
+      "RANKPILOT_AGENTS_ENABLED=true npm run dev";
+    packageJson.scripts["dev:safe"] =
+      "RANKPILOT_AGENTS_ENABLED=false npm run dev-no-turbopack";
 
-        await fs.writeFile(packagePath, JSON.stringify(packageJson, null, 2));
-        console.log('✅ Updated package.json with agent control scripts');
-    }
+    await fs.writeFile(packagePath, JSON.stringify(packageJson, null, 2));
+    console.log("✅ Updated package.json with agent control scripts");
+  }
 
-    async createDevelopmentConfig() {
-        console.log('🔧 Creating development environment configuration...');
+  async createDevelopmentConfig() {
+    console.log("🔧 Creating development environment configuration...");
 
-        const devConfig = `# 🛡️ RankPilot Development Mode - AI Agent Conflict Prevention
+    const devConfig = `# 🛡️ RankPilot Development Mode - AI Agent Conflict Prevention
 # Purpose: Prevent conflicts between RankPilot AI agents and VS Code extensions
 
 # Disable autonomous AI agents during development
@@ -208,36 +212,40 @@ TURBO_CACHE_DISABLED=true
 AGENT_CONFLICT_LOGGING=true
 VSCODE_EXTENSION_DEBUG=false`;
 
-        await fs.writeFile('/workspaces/studio/.env.development', devConfig);
-        console.log('✅ Created development environment configuration');
+    await fs.writeFile("/workspaces/studio/.env.development", devConfig);
+    console.log("✅ Created development environment configuration");
+  }
+
+  async restartTypeScriptServers() {
+    console.log("🔄 Restarting TypeScript servers...");
+
+    try {
+      // Kill existing TypeScript servers
+      await execAsync('pkill -f "tsserver\\|typescript" || true');
+      console.log("✅ Killed existing TypeScript servers");
+
+      // Clear TypeScript cache
+      await execAsync("rm -rf node_modules/.cache/typescript || true");
+      await execAsync("rm -f tsconfig.tsbuildinfo || true");
+      console.log("✅ Cleared TypeScript cache");
+    } catch (error) {
+      console.warn("⚠️ TypeScript server restart had issues:", error.message);
     }
-
-    async restartTypeScriptServers() {
-        console.log('🔄 Restarting TypeScript servers...');
-
-        try {
-            // Kill existing TypeScript servers
-            await execAsync('pkill -f "tsserver\\|typescript" || true');
-            console.log('✅ Killed existing TypeScript servers');
-
-            // Clear TypeScript cache
-            await execAsync('rm -rf node_modules/.cache/typescript || true');
-            await execAsync('rm -f tsconfig.tsbuildinfo || true');
-            console.log('✅ Cleared TypeScript cache');
-
-        } catch (error) {
-            console.warn('⚠️ TypeScript server restart had issues:', error.message);
-        }
-    }
+  }
 }
 
 const resolver = new AgentConflictResolver();
-resolver.disableAgents().then(() => {
-    console.log('\n🎯 CONFLICT RESOLUTION COMPLETE!');
-    console.log('💡 Your VS Code extensions should now work properly');
-    console.log('🔄 Restart VS Code to ensure clean state');
-    console.log('\n📋 Next Steps:');
-    console.log('1. Restart VS Code completely');
+resolver
+  .disableAgents()
+  .then(() => {
+    console.log("\n🎯 CONFLICT RESOLUTION COMPLETE!");
+    console.log("💡 Your VS Code extensions should now work properly");
+    console.log("🔄 Restart VS Code to ensure clean state");
+    console.log("\n📋 Next Steps:");
+    console.log("1. Restart VS Code completely");
     console.log('2. Use "npm run dev:safe" for development');
-    console.log('3. Use "npm run agents:enable" to re-enable agents when needed');
-}).catch(console.error);
+    console.log(
+      '3. Use "npm run agents:enable" to re-enable agents when needed'
+    );
+  })
+  .catch(console.error);

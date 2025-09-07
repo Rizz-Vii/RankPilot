@@ -18,10 +18,7 @@ import { db } from "@/lib/firebase";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { cn } from "@/lib/utils";
 import { generateContentBrief } from "@/lib/utils/content-functions";
-import type {
-  ContentBriefInput,
-  ContentBriefOutput
-} from "@/types";
+import type { ContentBriefInput, ContentBriefOutput } from "@/types";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -29,7 +26,7 @@ import {
   BarChart2,
   BrainCircuit,
   FileText,
-  Users
+  Users,
 } from "lucide-react";
 import type { ElementType, FC, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
@@ -37,7 +34,7 @@ import {
   PolarGrid,
   RadialBar,
   RadialBarChart,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from "recharts";
 
 const ResultCard: FC<{
@@ -97,7 +94,9 @@ const SeoScoreGauge: FC<{ score: number }> = ({ score }) => {
   );
 };
 
-const BriefResults: FC<{ briefResult: ContentBriefOutput }> = ({ briefResult }) => (
+const BriefResults: FC<{ briefResult: ContentBriefOutput }> = ({
+  briefResult,
+}) => (
   <motion.div
     className="space-y-6"
     initial={{ opacity: 0, y: 20 }}
@@ -166,7 +165,7 @@ const BriefResults: FC<{ briefResult: ContentBriefOutput }> = ({ briefResult }) 
           <ul className="space-y-2 list-disc pl-5 font-body">
             {briefResult.competitorInsights.map((insight, i) => (
               <li
-          key={`${i}-${typeof insight === 'string' ? insight.slice(0, 24) : 'insight'}`}
+                key={`${i}-${typeof insight === "string" ? insight.slice(0, 24) : "insight"}`}
                 className="p-1 rounded transition-colors hover:bg-muted/50"
               >
                 {insight}
@@ -183,12 +182,14 @@ const BriefResults: FC<{ briefResult: ContentBriefOutput }> = ({ briefResult }) 
         <ul className="space-y-2 list-disc pl-5">
           {briefResult.llmGeneratedOutline.map((heading, i) => (
             <li
-          key={`${i}-${heading.title}-${heading.level}`}
+              key={`${i}-${heading.title}-${heading.level}`}
               className="font-body p-1 -ml-1 rounded transition-colors hover:bg-muted/50"
             >
               <div>
                 <strong>H{heading.level}:</strong> {heading.title}
-                <p className="text-sm text-muted-foreground">{heading.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {heading.description}
+                </p>
               </div>
             </li>
           ))}
@@ -219,7 +220,7 @@ export default function ContentBriefPage(): JSX.Element {
 
   const { provenance, setProvenance, markLive, markFallback } = useProvenance();
 
-  const handleSubmit = async (values: { keyword: string; }): Promise<void> => {
+  const handleSubmit = async (values: { keyword: string }): Promise<void> => {
     setIsLoading(true);
     setSubmitted(true);
     setBriefResult(null);
@@ -231,12 +232,12 @@ export default function ContentBriefPage(): JSX.Element {
         topic: values.keyword,
         keyword: values.keyword,
         targetKeywords: [values.keyword],
-        targetAudience: 'general audience',
-        contentType: 'blog post'
+        targetAudience: "general audience",
+        contentType: "blog post",
       };
-  const result = await generateContentBrief(contentBriefInput);
-  setBriefResult(result);
-  markLive();
+      const result = await generateContentBrief(contentBriefInput);
+      setBriefResult(result);
+      markLive();
 
       if (user) {
         const userActivitiesRef = collection(
@@ -257,9 +258,13 @@ export default function ContentBriefPage(): JSX.Element {
         });
       }
     } catch (e: unknown) {
-      const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string')
-        ? (e as { message: string }).message
-        : 'An unexpected error occurred.';
+      const msg =
+        e &&
+        typeof e === "object" &&
+        "message" in e &&
+        typeof (e as { message?: unknown }).message === "string"
+          ? (e as { message: string }).message
+          : "An unexpected error occurred.";
       setError(msg);
       if (!briefResult) markFallback();
     } finally {
@@ -269,62 +274,62 @@ export default function ContentBriefPage(): JSX.Element {
 
   return (
     <FeatureGate feature="content_briefs" requiredTier="agency" showUpgrade>
-    <main className="container mx-auto py-6 space-y-6">
-      <ToolPageHeader
-        title="Content Brief Generator"
-        description="Generate data-driven content briefs with semantic insights."
-  badges={composeToolHeaderBadges("content-brief", provenance)}
-        showBreadcrumb
-      />
-    <div
-      className={cn(
-        "mx-auto transition-all duration-500",
-        submitted ? "max-w-7xl" : "max-w-xl"
-      )}
-    >
-      <div
-        className={cn(
-          "grid gap-8 transition-all duration-500",
-          submitted ? "lg:grid-cols-3" : "lg:grid-cols-1"
-        )}
-      >
-        <motion.div layout className="lg:col-span-1">
-          <ContentBriefForm onSubmit={handleSubmit} isLoading={isLoading} />
-        </motion.div>
-
-        <div className="lg:col-span-2" ref={resultsRef}>
-          <AnimatePresence>
-            {isLoading && (
-              <LoadingScreen text="Generating your content brief..." />
+      <main className="container mx-auto py-6 space-y-6">
+        <ToolPageHeader
+          title="Content Brief Generator"
+          description="Generate data-driven content briefs with semantic insights."
+          badges={composeToolHeaderBadges("content-brief", provenance)}
+          showBreadcrumb
+        />
+        <div
+          className={cn(
+            "mx-auto transition-all duration-500",
+            submitted ? "max-w-7xl" : "max-w-xl"
+          )}
+        >
+          <div
+            className={cn(
+              "grid gap-8 transition-all duration-500",
+              submitted ? "lg:grid-cols-3" : "lg:grid-cols-1"
             )}
+          >
+            <motion.div layout className="lg:col-span-1">
+              <ContentBriefForm onSubmit={handleSubmit} isLoading={isLoading} />
+            </motion.div>
 
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                <Card className="border-destructive">
-                  <CardHeader>
-                    <CardTitle className="text-destructive font-headline flex items-center gap-2">
-                      <AlertTriangle /> Generation Failed
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="font-body text-destructive-foreground">
-                      {error}
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
+            <div className="lg:col-span-2" ref={resultsRef}>
+              <AnimatePresence>
+                {isLoading && (
+                  <LoadingScreen text="Generating your content brief..." />
+                )}
 
-            {briefResult && <BriefResults briefResult={briefResult} />}
-          </AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <Card className="border-destructive">
+                      <CardHeader>
+                        <CardTitle className="text-destructive font-headline flex items-center gap-2">
+                          <AlertTriangle /> Generation Failed
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="font-body text-destructive-foreground">
+                          {error}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+
+                {briefResult && <BriefResults briefResult={briefResult} />}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </main>
-  </FeatureGate>
+      </main>
+    </FeatureGate>
   );
 }

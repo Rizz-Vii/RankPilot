@@ -149,7 +149,9 @@ export default function WebScrapingGuidePage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2 text-destructive-foreground">❌ Avoid</h3>
+              <h3 className="font-semibold mb-2 text-destructive-foreground">
+                ❌ Avoid
+              </h3>
               <ul className="list-disc pl-6 text-sm">
                 <li>Ignoring robots.txt rules</li>
                 <li>Making too many concurrent requests</li>

@@ -1,13 +1,10 @@
 {
-  "extraHints": [
-    "ai-tools",
-    "llm-pipeline"
-  ],
+  "extraHints": ["ai-tools", "llm-pipeline"],
   "extraRuntimeUrls": [
     { "path": "/api/insights/stream", "type": "sse" },
     { "path": "/api/visualizations?type=charts", "type": "json" },
     { "path": "/api/streaming?action=sse&clientId=prov-audit", "type": "sse" },
-  { "path": "/api/streaming?action=metrics", "type": "json" }
+    { "path": "/api/streaming?action=metrics", "type": "json" }
   ],
   "exemptions": []
 }

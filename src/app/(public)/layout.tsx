@@ -24,7 +24,9 @@ export default function PublicLayout({
             Skip to main content
           </a>
           <SiteHeader />
-          <main id="main-content" role="main" className="flex-grow">{children}</main>
+          <main id="main-content" role="main" className="flex-grow">
+            {children}
+          </main>
         </div>
       </HydrationProvider>
     </AuthProvider>

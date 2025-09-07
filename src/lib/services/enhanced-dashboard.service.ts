@@ -15,7 +15,7 @@ import {
   limit,
   orderBy,
   query,
-  where
+  where,
 } from "firebase/firestore";
 
 /**
@@ -67,14 +67,17 @@ export class EnhancedDashboardService {
         limit(50)
       );
 
-      const [activeProjects, completedProjects, analysesSnap, keywords] = await Promise.all([
-        getDocs(activeProjectsQuery),
-        getDocs(completedProjectsQuery),
-        getDocs(recentAnalysesQuery),
-        getDocs(keywordQuery)
-      ]);
+      const [activeProjects, completedProjects, analysesSnap, keywords] =
+        await Promise.all([
+          getDocs(activeProjectsQuery),
+          getDocs(completedProjectsQuery),
+          getDocs(recentAnalysesQuery),
+          getDocs(keywordQuery),
+        ]);
 
-      const analysesDocs = analysesSnap.docs.map((d) => d.data() as UnknownRecord);
+      const analysesDocs = analysesSnap.docs.map(
+        (d) => d.data() as UnknownRecord
+      );
 
       return {
         activeProjects: activeProjects.size,
@@ -88,7 +91,7 @@ export class EnhancedDashboardService {
         averageScore: this.calculateAverageScore(analysesDocs),
         projectSuccess: this.calculateProjectSuccessRate(
           completedProjects.docs.map((d) => d.data() as UnknownRecord)
-        )
+        ),
       };
     } catch (error) {
       // preserve original behavior: log and return null on error (guard console for SSR)
@@ -118,8 +121,10 @@ export class EnhancedDashboardService {
         return {
           id: doc.id,
           name: String(d.name ?? "Untitled Team"),
-          members: Array.isArray(d.members) ? (d.members as UnknownRecord[]) : [],
-          ...d
+          members: Array.isArray(d.members)
+            ? (d.members as UnknownRecord[])
+            : [],
+          ...d,
         };
       });
 
@@ -156,8 +161,9 @@ export class EnhancedDashboardService {
               ? (team.members as UnknownRecord[]).find((m) =>
                   isRecord(m) ? (m as UnknownRecord).userId === userId : false
                 )
-              : undefined)?.role ?? "member"
-        }))
+              : undefined
+            )?.role ?? "member",
+        })),
       };
     } catch (error) {
       if (typeof console !== "undefined" && console.error) {
@@ -196,7 +202,10 @@ export class EnhancedDashboardService {
         .map((a) => Number(a.gapScore ?? 0))
         .filter((score) => score > 0);
 
-      const averageGap = gaps.length > 0 ? gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length : 0;
+      const averageGap =
+        gaps.length > 0
+          ? gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length
+          : 0;
 
       // Find top opportunity
       const topOpportunity = analyses
@@ -212,10 +221,10 @@ export class EnhancedDashboardService {
               opportunity: Array.isArray(topOpportunity.opportunities)
                 ? topOpportunity.opportunities[0]
                 : undefined,
-              gapScore: Number(topOpportunity.gapScore ?? 0)
+              gapScore: Number(topOpportunity.gapScore ?? 0),
             }
           : null,
-        monthlyTrend: this.calculateCompetitorTrend(analyses)
+        monthlyTrend: this.calculateCompetitorTrend(analyses),
       };
     } catch (error) {
       if (typeof console !== "undefined" && console.error) {
@@ -245,12 +254,19 @@ export class EnhancedDashboardService {
         return { totalContent: 0, averageScore: 0, topPerformer: null };
       }
 
-      const scores = analyses.map((a) => Number(a.overallScore ?? 0)).filter((s) => s > 0);
-      const averageScore = scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
+      const scores = analyses
+        .map((a) => Number(a.overallScore ?? 0))
+        .filter((s) => s > 0);
+      const averageScore =
+        scores.length > 0
+          ? scores.reduce((sum, score) => sum + score, 0) / scores.length
+          : 0;
 
       const topPerformer = analyses
         .filter((a) => a.overallScore)
-        .sort((a, b) => Number(b.overallScore ?? 0) - Number(a.overallScore ?? 0))[0];
+        .sort(
+          (a, b) => Number(b.overallScore ?? 0) - Number(a.overallScore ?? 0)
+        )[0];
 
       return {
         totalContent: analyses.length,
@@ -259,10 +275,10 @@ export class EnhancedDashboardService {
           ? {
               url: String(topPerformer.url ?? ""),
               score: Number(topPerformer.overallScore ?? 0),
-              title: String(topPerformer.title ?? "Untitled")
+              title: String(topPerformer.title ?? "Untitled"),
             }
           : null,
-        recentTrend: this.calculateContentTrend(analyses)
+        recentTrend: this.calculateContentTrend(analyses),
       };
     } catch (error) {
       if (typeof console !== "undefined" && console.error) {
@@ -276,57 +292,81 @@ export class EnhancedDashboardService {
   private static calculateAverageScore(analyses: UnknownRecord[]): number {
     if (analyses.length === 0) return 0;
     const scores = analyses
-      .map((a) => Number(((a.summary as UnknownRecord | undefined)?.overallScore) ?? 0))
+      .map((a) =>
+        Number((a.summary as UnknownRecord | undefined)?.overallScore ?? 0)
+      )
       .filter((s) => s > 0);
-    return scores.length > 0 ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 0;
+    return scores.length > 0
+      ? Math.round(
+          scores.reduce((sum, score) => sum + score, 0) / scores.length
+        )
+      : 0;
   }
 
-  private static calculateProjectSuccessRate(projects: UnknownRecord[]): number {
+  private static calculateProjectSuccessRate(
+    projects: UnknownRecord[]
+  ): number {
     if (projects.length === 0) return 0;
-    const successful = projects.filter((p) => String((p.status ?? "") as string) === "completed" && Number(p.successScore ?? 0) > 70).length;
+    const successful = projects.filter(
+      (p) =>
+        String((p.status ?? "") as string) === "completed" &&
+        Number(p.successScore ?? 0) > 70
+    ).length;
     return Math.round((successful / projects.length) * 100);
   }
 
   private static calculateCompetitorTrend(analyses: UnknownRecord[]) {
     // Group by month and calculate trend
-    const monthly: Record<string, number[]> = analyses.reduce((acc: Record<string, number[]>, analysis) => {
-      const date = toDateOptional(analysis.createdAt) || new Date();
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const monthly: Record<string, number[]> = analyses.reduce(
+      (acc: Record<string, number[]>, analysis) => {
+        const date = toDateOptional(analysis.createdAt) || new Date();
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
-      if (!acc[monthKey]) acc[monthKey] = [];
-      const gap = isRecord(analysis) ? Number(analysis.gapScore ?? 0) : 0;
-      acc[monthKey].push(gap);
+        if (!acc[monthKey]) acc[monthKey] = [];
+        const gap = isRecord(analysis) ? Number(analysis.gapScore ?? 0) : 0;
+        acc[monthKey].push(gap);
 
-      return acc;
-    }, {} as Record<string, number[]>);
+        return acc;
+      },
+      {} as Record<string, number[]>
+    );
 
     return Object.entries(monthly)
       .map(([month, scores]) => ({
         month,
-        averageGap: Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length),
-        analyses: scores.length
+        averageGap: Math.round(
+          scores.reduce((sum, score) => sum + score, 0) / scores.length
+        ),
+        analyses: scores.length,
       }))
       .sort((a, b) => a.month.localeCompare(b.month));
   }
 
   private static calculateContentTrend(analyses: UnknownRecord[]) {
     // Similar trending calculation for content
-    const monthly: Record<string, number[]> = analyses.reduce((acc: Record<string, number[]>, analysis) => {
-      const date = toDateOptional(analysis.createdAt) || new Date();
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const monthly: Record<string, number[]> = analyses.reduce(
+      (acc: Record<string, number[]>, analysis) => {
+        const date = toDateOptional(analysis.createdAt) || new Date();
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
-      if (!acc[monthKey]) acc[monthKey] = [];
-      const score = isRecord(analysis) ? Number(analysis.overallScore ?? 0) : 0;
-      acc[monthKey].push(score);
+        if (!acc[monthKey]) acc[monthKey] = [];
+        const score = isRecord(analysis)
+          ? Number(analysis.overallScore ?? 0)
+          : 0;
+        acc[monthKey].push(score);
 
-      return acc;
-    }, {} as Record<string, number[]>);
+        return acc;
+      },
+      {} as Record<string, number[]>
+    );
 
     return Object.entries(monthly)
       .map(([month, scores]) => ({
         month,
-        averageScore: Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length),
-        content: scores.length
+        averageScore: Math.round(
+          scores.reduce((sum, score) => sum + score, 0) / scores.length
+        ),
+        content: scores.length,
       }))
       .sort((a, b) => a.month.localeCompare(b.month));
   }

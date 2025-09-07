@@ -15,7 +15,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import LoadingScreen from "@/components/ui/loading-screen";
@@ -43,7 +43,7 @@ import {
   Star,
   Users,
   Video,
-  Zap
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -130,28 +130,28 @@ export default function TutorialsPage() {
         if (demoEnabled) {
           const demo: Tutorial[] = [
             {
-              id: 'demo-quickstart',
-              title: 'Getting Started with RankPilot',
-              description: 'A quick overview to get productive fast.',
-              category: 'getting-started',
-              difficulty: 'beginner',
-              duration: '8 min',
-              type: 'video',
-              requiredTier: 'free',
-              tags: ['setup','overview'],
+              id: "demo-quickstart",
+              title: "Getting Started with RankPilot",
+              description: "A quick overview to get productive fast.",
+              category: "getting-started",
+              difficulty: "beginner",
+              duration: "8 min",
+              type: "video",
+              requiredTier: "free",
+              tags: ["setup", "overview"],
               popularity: 4,
               lastUpdated: new Date(),
             },
             {
-              id: 'demo-keywords',
-              title: 'Keyword Research Workflow',
-              description: 'Use the built-in tools to discover opportunities.',
-              category: 'keyword-research',
-              difficulty: 'intermediate',
-              duration: '12 min',
-              type: 'article',
-              requiredTier: 'agency',
-              tags: ['keywords','strategy'],
+              id: "demo-keywords",
+              title: "Keyword Research Workflow",
+              description: "Use the built-in tools to discover opportunities.",
+              category: "keyword-research",
+              difficulty: "intermediate",
+              duration: "12 min",
+              type: "article",
+              requiredTier: "agency",
+              tags: ["keywords", "strategy"],
               popularity: 5,
               lastUpdated: new Date(),
             },
@@ -173,22 +173,34 @@ export default function TutorialsPage() {
   // Apply filters to tutorials list
   useEffect(() => {
     const q = searchQuery.trim().toLowerCase();
-    const next = tutorials.filter(t => {
-      const matchQuery = !q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.tags.some(tag => tag.toLowerCase().includes(q));
-      const matchCat = selectedCategory === 'all' || t.category === selectedCategory;
-      const matchDiff = selectedDifficulty === 'all' || t.difficulty === selectedDifficulty;
-      const matchType = selectedType === 'all' || t.type === selectedType;
+    const next = tutorials.filter((t) => {
+      const matchQuery =
+        !q ||
+        t.title.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q) ||
+        t.tags.some((tag) => tag.toLowerCase().includes(q));
+      const matchCat =
+        selectedCategory === "all" || t.category === selectedCategory;
+      const matchDiff =
+        selectedDifficulty === "all" || t.difficulty === selectedDifficulty;
+      const matchType = selectedType === "all" || t.type === selectedType;
       return matchQuery && matchCat && matchDiff && matchType;
     });
     setFilteredTutorials(next);
-  }, [tutorials, searchQuery, selectedCategory, selectedDifficulty, selectedType]);
+  }, [
+    tutorials,
+    searchQuery,
+    selectedCategory,
+    selectedDifficulty,
+    selectedType,
+  ]);
 
   const checkTutorialAccess = (tutorial: Tutorial): boolean => {
     // Check tier requirement
-  if (tutorial.requiredTier === "enterprise" && tier !== "enterprise") {
+    if (tutorial.requiredTier === "enterprise" && tier !== "enterprise") {
       return false;
     }
-  if (tutorial.requiredTier === "agency" && tier === "free") {
+    if (tutorial.requiredTier === "agency" && tier === "free") {
       return false;
     }
 
@@ -216,13 +228,13 @@ export default function TutorialsPage() {
   const getDifficultyColor = (difficulty: Tutorial["difficulty"]) => {
     switch (difficulty) {
       case "beginner":
-  return "bg-success/10 text-success-foreground";
+        return "bg-success/10 text-success-foreground";
       case "intermediate":
-  return "bg-warning/10 text-warning-foreground";
+        return "bg-warning/10 text-warning-foreground";
       case "advanced":
-  return "bg-destructive/10 text-destructive-foreground";
+        return "bg-destructive/10 text-destructive-foreground";
       default:
-  return "bg-muted text-muted-foreground";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -268,7 +280,10 @@ export default function TutorialsPage() {
       <header className="flex items-center gap-3">
         <BookOpen className="h-8 w-8 text-primary" />
         <div>
-          <h1 className="text-3xl font-bold font-headline" data-testid="tutorials-header">
+          <h1
+            className="text-3xl font-bold font-headline"
+            data-testid="tutorials-header"
+          >
             Tutorials & Guides
           </h1>
           <p className="text-muted-foreground font-body">
@@ -381,7 +396,7 @@ export default function TutorialsPage() {
         </CardContent>
       </Card>
 
-  {/* Tutorials by Category */}
+      {/* Tutorials by Category */}
       <Tabs defaultValue="all" className="space-y-6">
         <TabsList className="grid grid-cols-4 lg:grid-cols-6 xl:grid-cols-10">
           <TabsTrigger value="all">All</TabsTrigger>
@@ -416,12 +431,14 @@ export default function TutorialsPage() {
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
-                  {demoEnabled ? 'No tutorials match your filters' : 'Tutorials unavailable'}
+                  {demoEnabled
+                    ? "No tutorials match your filters"
+                    : "Tutorials unavailable"}
                 </h3>
                 <p className="text-muted-foreground text-center">
                   {demoEnabled
-                    ? 'Try adjusting your filters or search terms.'
-                    : 'Set NEXT_PUBLIC_DEMO_CONTENT=true to preview mock tutorials, or check back once live tutorials are enabled.'}
+                    ? "Try adjusting your filters or search terms."
+                    : "Set NEXT_PUBLIC_DEMO_CONTENT=true to preview mock tutorials, or check back once live tutorials are enabled."}
                 </p>
               </CardContent>
             </Card>
@@ -435,7 +452,9 @@ export default function TutorialsPage() {
             className="space-y-6"
           >
             <div className="flex items-center gap-3 mb-6">
-              {React.createElement(category.icon, { className: "h-6 w-6 text-primary" })}
+              {React.createElement(category.icon, {
+                className: "h-6 w-6 text-primary",
+              })}
               <h2 className="text-2xl font-bold">{category.label}</h2>
             </div>
 
@@ -456,7 +475,9 @@ export default function TutorialsPage() {
             ) : (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
-                  {React.createElement(category.icon, { className: "h-12 w-12 text-muted-foreground mb-4" })}
+                  {React.createElement(category.icon, {
+                    className: "h-12 w-12 text-muted-foreground mb-4",
+                  })}
                   <h3 className="text-lg font-semibold mb-2">
                     No {category.label.toLowerCase()} tutorials
                   </h3>

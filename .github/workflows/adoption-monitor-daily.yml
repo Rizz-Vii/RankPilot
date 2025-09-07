@@ -2,11 +2,11 @@ name: "🗓️ NeuroSEO Adoption Monitor (Daily)"
 
 on:
   schedule:
-    - cron: '5 3 * * *'
+    - cron: "5 3 * * *"
   workflow_dispatch: {}
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: "20"
 
 jobs:
   monitor:

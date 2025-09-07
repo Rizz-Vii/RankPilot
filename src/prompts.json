@@ -1,34 +1,34 @@
 {
-    "hero_tagline": [
-        "Write a powerful, benefit-driven homepage tagline for RankPilot that focuses on speed and automation.",
-        "Generate a bold, conversion-focused one-liner for RankPilot, emphasizing AI SEO audits.",
-        "Write a hero subheading for an AI-powered SEO tool that emphasizes Core Web Vitals and site performance."
-    ],
-    "features": [
-        "Describe RankPilot’s Core Web Vitals analysis feature in an engaging, customer-focused way.",
-        "Highlight RankPilot’s competitor tracking capabilities and why they give users a strategic edge.",
-        "Explain how RankPilot’s AI engine evaluates internal link structure with clarity and precision."
-    ],
-    "about": [
-        "Write a mission statement for RankPilot that highlights innovation in AI-powered SEO tools.",
-        "Craft a paragraph explaining RankPilot’s origin story — built by devs obsessed with performance.",
-        "Write a short About Us section for RankPilot that speaks to startups and digital marketers."
-    ],
-    "testimonial": [
-        "Write a short testimonial from an SEO freelancer praising RankPilot’s speed and results.",
-        "Pretend to be a SaaS founder describing how RankPilot uncovered hidden performance issues.",
-        "Generate a believable testimonial from a mid-sized agency using RankPilot to automate SEO audits."
-    ],
-    "use_case": [
-        "Describe a real-world scenario where an ecommerce site used RankPilot to uncover a CLS issue.",
-        "Write a use case of a local SEO agency using RankPilot to streamline multi-site auditing.",
-        "Generate a B2B use case involving technical SEO and RankPilot’s JavaScript rendering insights."
-    ],
-    "faq": [
-        "What makes RankPilot different from traditional SEO tools?",
-        "How does RankPilot help improve Core Web Vitals scores?",
-        "Can RankPilot be used by agencies managing multiple clients?",
-        "What data sources does RankPilot use for analysis?",
-        "Is RankPilot beginner-friendly or better for advanced SEO professionals?"
-    ]
+  "hero_tagline": [
+    "Write a powerful, benefit-driven homepage tagline for RankPilot that focuses on speed and automation.",
+    "Generate a bold, conversion-focused one-liner for RankPilot, emphasizing AI SEO audits.",
+    "Write a hero subheading for an AI-powered SEO tool that emphasizes Core Web Vitals and site performance."
+  ],
+  "features": [
+    "Describe RankPilot’s Core Web Vitals analysis feature in an engaging, customer-focused way.",
+    "Highlight RankPilot’s competitor tracking capabilities and why they give users a strategic edge.",
+    "Explain how RankPilot’s AI engine evaluates internal link structure with clarity and precision."
+  ],
+  "about": [
+    "Write a mission statement for RankPilot that highlights innovation in AI-powered SEO tools.",
+    "Craft a paragraph explaining RankPilot’s origin story — built by devs obsessed with performance.",
+    "Write a short About Us section for RankPilot that speaks to startups and digital marketers."
+  ],
+  "testimonial": [
+    "Write a short testimonial from an SEO freelancer praising RankPilot’s speed and results.",
+    "Pretend to be a SaaS founder describing how RankPilot uncovered hidden performance issues.",
+    "Generate a believable testimonial from a mid-sized agency using RankPilot to automate SEO audits."
+  ],
+  "use_case": [
+    "Describe a real-world scenario where an ecommerce site used RankPilot to uncover a CLS issue.",
+    "Write a use case of a local SEO agency using RankPilot to streamline multi-site auditing.",
+    "Generate a B2B use case involving technical SEO and RankPilot’s JavaScript rendering insights."
+  ],
+  "faq": [
+    "What makes RankPilot different from traditional SEO tools?",
+    "How does RankPilot help improve Core Web Vitals scores?",
+    "Can RankPilot be used by agencies managing multiple clients?",
+    "What data sources does RankPilot use for analysis?",
+    "Is RankPilot beginner-friendly or better for advanced SEO professionals?"
+  ]
 }

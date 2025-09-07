@@ -85,7 +85,7 @@ export * from "./api/analyze-content";
 
 **Found in codebase:**
 
-- `playwright.config.high-memory.ts` - Line 52: `'--max_old_space_size=6144'` 
+- `playwright.config.high-memory.ts` - Line 52: `'--max_old_space_size=6144'`
 - `package.json` - Line 9: `NODE_OPTIONS='--max-old-space-size=6144'`
 - Multiple configs using 6144MB (unsafe for production)
 
@@ -110,19 +110,19 @@ export * from "./api/analyze-content";
 export default defineConfig({
   projects: [
     {
-      name: 'production-memory-desktop',
+      name: "production-memory-desktop",
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices["Desktop Chrome"],
         launchOptions: {
           args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--max_old_space_size=2048', // Safe for production
-            '--memory-pressure-off',
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--max_old_space_size=2048", // Safe for production
+            "--memory-pressure-off",
           ],
           env: {
-            NODE_OPTIONS: '--max-old-space-size=2048',
-          }
+            NODE_OPTIONS: "--max-old-space-size=2048",
+          },
         },
       },
     },
@@ -150,7 +150,7 @@ export default defineConfig({
 **Missing security rules found:**
 
 - No `neuroSeoAnalyses` collection rules
-- No `keywordResearch` collection rules  
+- No `keywordResearch` collection rules
 - Gaps in AI service access control
 
 #### **Solution Implementation - 3 Hours**
@@ -160,35 +160,35 @@ export default defineConfig({
 
 // NeuroSEO™ Analyses Collection - NEW
 match /neuroSeoAnalyses/{analysisId} {
-  allow read: if isAuthenticated() && 
+  allow read: if isAuthenticated() &&
                  (resource.data.userId == request.auth.uid || isAdmin());
-  allow create: if isAuthenticated() && 
+  allow create: if isAuthenticated() &&
                    request.auth.uid == request.resource.data.userId;
-  allow update: if isAuthenticated() && 
+  allow update: if isAuthenticated() &&
                    (resource.data.userId == request.auth.uid || isAdmin());
-  allow delete: if isAuthenticated() && 
+  allow delete: if isAuthenticated() &&
                    (resource.data.userId == request.auth.uid || isAdmin());
 }
 
-// Keyword Research Collection - NEW  
+// Keyword Research Collection - NEW
 match /keywordResearch/{researchId} {
-  allow read: if isAuthenticated() && 
+  allow read: if isAuthenticated() &&
                  (resource.data.userId == request.auth.uid || isAdmin());
-  allow create: if isAuthenticated() && 
+  allow create: if isAuthenticated() &&
                    request.auth.uid == request.resource.data.userId;
-  allow update: if isAuthenticated() && 
+  allow update: if isAuthenticated() &&
                    (resource.data.userId == request.auth.uid || isAdmin());
-  allow delete: if isAuthenticated() && 
+  allow delete: if isAuthenticated() &&
                    (resource.data.userId == request.auth.uid || isAdmin());
 }
 
 // Usage Tracking Collection - NEW
 match /usage/{usageId} {
-  allow read: if isAuthenticated() && 
+  allow read: if isAuthenticated() &&
                  (resource.data.userId == request.auth.uid || isAdmin());
-  allow create: if isAuthenticated() && 
+  allow create: if isAuthenticated() &&
                    request.auth.uid == request.resource.data.userId;
-  allow update: if isAuthenticated() && 
+  allow update: if isAuthenticated() &&
                    (resource.data.userId == request.auth.uid || isAdmin());
 }
 ```
@@ -244,7 +244,7 @@ export default function DashboardBackupPage() {
 **Design system files exist and are ready:**
 
 - ✅ `src/lib/design-system/typography.ts` (85 lines)
-- ✅ `src/lib/design-system/spacing.ts` 
+- ✅ `src/lib/design-system/spacing.ts`
 - ✅ `src/lib/design-system/colors.ts`
 - ✅ `src/lib/design-system/sidebar-styles.ts`
 
@@ -343,7 +343,7 @@ export const EnhancedFormField = ({ label, error, helper, children }: Props) => 
 **Performance issues likely present:**
 
 - LCP > 3.5s due to AI component loading
-- FID > 100ms during AI processing  
+- FID > 100ms during AI processing
 - CLS > 0.1 due to dynamic content loading
 
 #### **Progressive Implementation Strategy**
@@ -381,7 +381,7 @@ export const LazyContentAnalyzer = (props: any) => (
 // CREATE: src/lib/performance/progressive-loader.ts
 export class ProgressiveLoader {
   private static loadedComponents = new Set<string>();
-  
+
   static async loadComponent<T>(
     componentName: string,
     importFn: () => Promise<T>
@@ -389,33 +389,33 @@ export class ProgressiveLoader {
     if (this.loadedComponents.has(componentName)) {
       return importFn();
     }
-    
+
     const loadingStart = performance.now();
-    
+
     try {
       const component = await importFn();
       const loadingTime = performance.now() - loadingStart;
-      
+
       console.log(`Component ${componentName} loaded in ${loadingTime}ms`);
       this.loadedComponents.add(componentName);
-      
+
       return component;
     } catch (error) {
       console.error(`Failed to load component ${componentName}:`, error);
       throw error;
     }
   }
-  
+
   static preloadCriticalComponents() {
     const criticalComponents = [
-      () => import('@/components/dashboard/metric-card'),
-      () => import('@/components/ui/enhanced-sidebar-components'),
-      () => import('@/components/app-nav'),
+      () => import("@/components/dashboard/metric-card"),
+      () => import("@/components/ui/enhanced-sidebar-components"),
+      () => import("@/components/app-nav"),
     ];
-    
-    criticalComponents.forEach(importFn => {
-      importFn().catch(error => {
-        console.warn('Failed to preload critical component:', error);
+
+    criticalComponents.forEach((importFn) => {
+      importFn().catch((error) => {
+        console.warn("Failed to preload critical component:", error);
       });
     });
   }
@@ -426,55 +426,55 @@ export class ProgressiveLoader {
 
 ```typescript
 // CREATE: src/lib/performance/core-web-vitals.ts
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+import { getCLS, getFID, getFCP, getLCP, getTTFB } from "web-vitals";
 
 export class CoreWebVitalsMonitor {
   private static metrics: Record<string, number> = {};
-  
+
   static initialize() {
     getCLS((metric) => {
       this.metrics.cls = metric.value;
-      this.reportMetric('CLS', metric.value, 0.1);
+      this.reportMetric("CLS", metric.value, 0.1);
     });
-    
+
     getFID((metric) => {
       this.metrics.fid = metric.value;
-      this.reportMetric('FID', metric.value, 100);
+      this.reportMetric("FID", metric.value, 100);
     });
-    
+
     getLCP((metric) => {
       this.metrics.lcp = metric.value;
-      this.reportMetric('LCP', metric.value, 2500);
+      this.reportMetric("LCP", metric.value, 2500);
     });
   }
-  
+
   private static reportMetric(name: string, value: number, threshold: number) {
-    const status = value <= threshold ? 'good' : 'needs-improvement';
+    const status = value <= threshold ? "good" : "needs-improvement";
     console.log(`Core Web Vital - ${name}: ${value}ms (${status})`);
-    
+
     // Send to analytics
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', name, {
-        event_category: 'Web Vitals',
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", name, {
+        event_category: "Web Vitals",
         value: Math.round(value),
         non_interaction: true,
       });
     }
   }
-  
-  static getScore(): 'good' | 'needs-improvement' | 'poor' {
+
+  static getScore(): "good" | "needs-improvement" | "poor" {
     const { cls, fid, lcp } = this.metrics;
-    
-    if (!cls || !fid || !lcp) return 'poor';
-    
+
+    if (!cls || !fid || !lcp) return "poor";
+
     const clsGood = cls <= 0.1;
     const fidGood = fid <= 100;
     const lcpGood = lcp <= 2500;
-    
-    if (clsGood && fidGood && lcpGood) return 'good';
-    if (cls <= 0.25 && fid <= 300 && lcp <= 4000) return 'needs-improvement';
-    
-    return 'poor';
+
+    if (clsGood && fidGood && lcpGood) return "good";
+    if (cls <= 0.25 && fid <= 300 && lcp <= 4000) return "needs-improvement";
+
+    return "poor";
   }
 }
 ```
@@ -491,27 +491,27 @@ export class EnhancedNeuroSEOOrchestrator {
   private processingQueue: Map<string, Promise<any>> = new Map();
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
   private readonly CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
-  
+
   async runAnalysis(request: NeuroSEOAnalysisRequest): Promise<NeuroSEOReport> {
     const cacheKey = this.generateCacheKey(request);
-    
+
     // Check cache first
     const cached = this.getFromCache(cacheKey);
     if (cached) {
-      console.log('Returning cached NeuroSEO™ analysis');
+      console.log("Returning cached NeuroSEO™ analysis");
       return cached;
     }
-    
+
     // Check if analysis is already in progress
     if (this.processingQueue.has(cacheKey)) {
-      console.log('Analysis already in progress, waiting...');
+      console.log("Analysis already in progress, waiting...");
       return await this.processingQueue.get(cacheKey)!;
     }
-    
+
     // Start new analysis
     const analysisPromise = this.performAnalysis(request);
     this.processingQueue.set(cacheKey, analysisPromise);
-    
+
     try {
       const result = await analysisPromise;
       this.setCache(cacheKey, result);
@@ -520,23 +520,25 @@ export class EnhancedNeuroSEOOrchestrator {
       this.processingQueue.delete(cacheKey);
     }
   }
-  
-  private async performAnalysis(request: NeuroSEOAnalysisRequest): Promise<NeuroSEOReport> {
+
+  private async performAnalysis(
+    request: NeuroSEOAnalysisRequest
+  ): Promise<NeuroSEOReport> {
     // Memory-optimized processing with chunking
     const urlChunks = this.chunkArray(request.urls, 5); // Process 5 URLs at a time
     const analysisResults = [];
-    
+
     for (const chunk of urlChunks) {
       const chunkResults = await this.processUrlChunk(chunk, request);
       analysisResults.push(...chunkResults);
-      
+
       // Allow garbage collection between chunks
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    
+
     return this.generateComprehensiveReport(analysisResults, request);
   }
-  
+
   private generateCacheKey(request: NeuroSEOAnalysisRequest): string {
     const keyData = {
       urls: request.urls.sort(),
@@ -545,41 +547,41 @@ export class EnhancedNeuroSEOOrchestrator {
     };
     return btoa(JSON.stringify(keyData));
   }
-  
+
   private getFromCache(key: string): NeuroSEOReport | null {
     const cached = this.cache.get(key);
-    
-    if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION) {
+
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
       return cached.data;
     }
-    
+
     if (cached) {
       this.cache.delete(key); // Remove expired cache
     }
-    
+
     return null;
   }
-  
+
   private setCache(key: string, data: NeuroSEOReport): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
     });
-    
+
     // Cleanup old cache entries
     this.cleanupCache();
   }
-  
+
   private cleanupCache(): void {
     const now = Date.now();
-    
+
     for (const [key, value] of this.cache.entries()) {
-      if ((now - value.timestamp) > this.CACHE_DURATION) {
+      if (now - value.timestamp > this.CACHE_DURATION) {
         this.cache.delete(key);
       }
     }
   }
-  
+
   private chunkArray<T>(array: T[], chunkSize: number): T[][] {
     const chunks = [];
     for (let i = 0; i < array.length; i += chunkSize) {
@@ -590,7 +592,7 @@ export class EnhancedNeuroSEOOrchestrator {
 }
 ```
 
-```
+````
 
 ---
 
@@ -698,7 +700,7 @@ If AI functions cause issues after deployment:
 # Emergency rollback
 git checkout HEAD~1 functions/src/index.ts
 firebase deploy --only functions
-```
+````
 
 ### **Memory Configuration Rollback**
 
@@ -740,7 +742,7 @@ mv src/app/(app)/dashboard/page-backup.tsx src/app/(app)/dashboard/page.tsx
 npm run dev-no-turbopack           # 3072MB optimized dev server
 npm run test:production            # 2048MB production testing
 
-# Deployment  
+# Deployment
 firebase deploy --only functions   # Deploy AI functions
 firebase deploy --only firestore:rules  # Deploy security rules
 
@@ -754,7 +756,7 @@ npm run performance:core-vitals    # Performance monitoring
 ```bash
 # Test AI functions
 curl -X POST https://your-project.cloudfunctions.net/api/keyword-suggestions
-curl -X POST https://your-project.cloudfunctions.net/api/audit  
+curl -X POST https://your-project.cloudfunctions.net/api/audit
 curl -X POST https://your-project.cloudfunctions.net/api/analyze-content
 
 # Test security rules

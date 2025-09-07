@@ -20,7 +20,9 @@ test.describe("Performance Optimization Features", () => {
         isLoggedIn = true;
         console.log("✅ Shared authentication successful");
       } catch (authError: unknown) {
-        console.log(`⚠️ Shared authentication failed: ${errorMessage(authError)}`);
+        console.log(
+          `⚠️ Shared authentication failed: ${errorMessage(authError)}`
+        );
         // Continue with public page testing
       }
     }
@@ -30,27 +32,49 @@ test.describe("Performance Optimization Features", () => {
     try {
       // Use existing authentication if available
       if (isLoggedIn) {
-        console.log("✅ Using existing authentication for performance dashboard test");
-        await page.goto("/performance", { timeout: 30000, waitUntil: "domcontentloaded" });
+        console.log(
+          "✅ Using existing authentication for performance dashboard test"
+        );
+        await page.goto("/performance", {
+          timeout: 30000,
+          waitUntil: "domcontentloaded",
+        });
         try {
-          await page.waitForSelector('[data-testid="performance-content"], main, .main-content', { timeout: 30000 });
+          await page.waitForSelector(
+            '[data-testid="performance-content"], main, .main-content',
+            { timeout: 30000 }
+          );
         } catch {
-          console.log("⚠️ performance content selector not found after DOMContentLoaded");
+          console.log(
+            "⚠️ performance content selector not found after DOMContentLoaded"
+          );
         }
       } else {
         console.log("🔐 Logging in to access performance dashboard...");
         const testUser = UNIFIED_TEST_USERS.starter;
         await auth.loginAndGoToDashboard(testUser);
-        await page.goto("/performance", { timeout: 30000, waitUntil: "domcontentloaded" });
+        await page.goto("/performance", {
+          timeout: 30000,
+          waitUntil: "domcontentloaded",
+        });
         try {
-          await page.waitForSelector('[data-testid="performance-content"], main, .main-content', { timeout: 30000 });
+          await page.waitForSelector(
+            '[data-testid="performance-content"], main, .main-content',
+            { timeout: 30000 }
+          );
         } catch {
-          console.log("⚠️ performance content selector not found after DOMContentLoaded");
+          console.log(
+            "⚠️ performance content selector not found after DOMContentLoaded"
+          );
         }
       }
 
       await page.waitForLoadState("domcontentloaded");
-      try { await page.waitForLoadState("networkidle", { timeout: 20000 }); } catch { /* non-fatal */ }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 20000 });
+      } catch {
+        /* non-fatal */
+      }
       await expect(page.locator("body")).toBeVisible();
 
       // Look for performance-related content on the performance page
@@ -60,17 +84,27 @@ test.describe("Performance Optimization Features", () => {
         )
         .count();
 
-      console.log(`✅ Found ${performanceIndicators} performance-related elements on performance page`);
+      console.log(
+        `✅ Found ${performanceIndicators} performance-related elements on performance page`
+      );
 
       // Verify performance page content loads
-      const mainContent = page.locator('[data-testid="performance-content"], main, .main-content');
+      const mainContent = page.locator(
+        '[data-testid="performance-content"], main, .main-content'
+      );
       await expect(mainContent).toBeVisible({ timeout: 10000 });
-
     } catch (error: unknown) {
       console.log(`⚠️ Performance page error: ${errorMessage(error)}`);
       // Fallback to dashboard test
-      await page.goto("/dashboard", { timeout: 20000, waitUntil: "domcontentloaded" });
-      try { await page.waitForLoadState("networkidle", { timeout: 20000 }); } catch { /* non-fatal */ }
+      await page.goto("/dashboard", {
+        timeout: 20000,
+        waitUntil: "domcontentloaded",
+      });
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 20000 });
+      } catch {
+        /* non-fatal */
+      }
       await expect(page.locator("body")).toBeVisible();
     }
 
@@ -80,7 +114,9 @@ test.describe("Performance Optimization Features", () => {
     });
   });
 
-  test("keyword tool functionality (separate from performance)", async ({ page }) => {
+  test("keyword tool functionality (separate from performance)", async ({
+    page,
+  }) => {
     try {
       // Use existing authentication if available
       if (isLoggedIn) {
@@ -106,11 +142,12 @@ test.describe("Performance Optimization Features", () => {
 
       // Look for keyword-specific elements, not performance feedback
       const keywordElements = await page
-        .locator("[data-testid*='keyword'], [class*='keyword'], input[placeholder*='keyword']")
+        .locator(
+          "[data-testid*='keyword'], [class*='keyword'], input[placeholder*='keyword']"
+        )
         .count();
 
       console.log(`Found ${keywordElements} keyword-related elements`);
-
     } catch (error: unknown) {
       console.log(`⚠️ Keyword tool access error: ${errorMessage(error)}`);
       // Fallback to public page test
@@ -136,20 +173,27 @@ test.describe("Performance Optimization Features", () => {
         await page.waitForLoadState("networkidle", { timeout: 15000 });
       } catch {
         // Non-fatal: continue with domcontentloaded baseline
-        console.log("⚠️ networkidle not reached within 15s - proceeding with DOMContentLoaded state");
+        console.log(
+          "⚠️ networkidle not reached within 15s - proceeding with DOMContentLoaded state"
+        );
       }
       await expect(page.locator("body")).toBeVisible({ timeout: 30000 });
 
       // Look for mobile navigation elements
       const mobileNavElements = await page
-        .locator("button[aria-label*='menu'], [class*='mobile'], [class*='nav']")
+        .locator(
+          "button[aria-label*='menu'], [class*='mobile'], [class*='nav']"
+        )
         .count();
 
       console.log(`Found ${mobileNavElements} mobile navigation elements`);
 
       // Check public pages only to avoid auth issues
       try {
-        await page.goto("/login", { timeout: 25000, waitUntil: "domcontentloaded" });
+        await page.goto("/login", {
+          timeout: 25000,
+          waitUntil: "domcontentloaded",
+        });
         try {
           await page.waitForLoadState("networkidle", { timeout: 10000 });
         } catch {
@@ -158,7 +202,9 @@ test.describe("Performance Optimization Features", () => {
         await expect(page.locator("body")).toBeVisible({ timeout: 15000 });
         await page.waitForTimeout(500); // Recovery time
       } catch {
-        console.log("⚠️ Navigation issue (login fallback), continuing with basic test");
+        console.log(
+          "⚠️ Navigation issue (login fallback), continuing with basic test"
+        );
       }
 
       await page.screenshot({
@@ -169,8 +215,13 @@ test.describe("Performance Optimization Features", () => {
       console.log(`⚠️ Mobile navigation test error: ${errorMessage(error)}`);
       // Fallback: just verify basic mobile layout on login page
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.goto("/login", { timeout: 25000, waitUntil: "domcontentloaded" });
-      try { await page.waitForLoadState("networkidle", { timeout: 10000 }); } catch { }
+      await page.goto("/login", {
+        timeout: 25000,
+        waitUntil: "domcontentloaded",
+      });
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 10000 });
+      } catch {}
       await expect(page.locator("body")).toBeVisible({ timeout: 15000 });
     }
   });
@@ -186,7 +237,9 @@ test.describe("Performance Optimization Features", () => {
     try {
       for (const breakpoint of breakpoints) {
         try {
-          console.log(`📱 Testing ${breakpoint.name} breakpoint (${breakpoint.width}x${breakpoint.height})`);
+          console.log(
+            `📱 Testing ${breakpoint.name} breakpoint (${breakpoint.width}x${breakpoint.height})`
+          );
 
           // Set viewport with stabilization delay
           await page.setViewportSize({
@@ -198,7 +251,7 @@ test.describe("Performance Optimization Features", () => {
           // Navigate with error handling
           await page.goto("/", {
             timeout: 15000,
-            waitUntil: "domcontentloaded"
+            waitUntil: "domcontentloaded",
           });
 
           // Verify page loads at each breakpoint
@@ -216,9 +269,10 @@ test.describe("Performance Optimization Features", () => {
 
           // Memory recovery between iterations
           await page.waitForTimeout(500);
-
         } catch (breakpointError: unknown) {
-          console.log(`⚠️ Error testing ${breakpoint.name}: ${errorMessage(breakpointError)}`);
+          console.log(
+            `⚠️ Error testing ${breakpoint.name}: ${errorMessage(breakpointError)}`
+          );
           // Try to recover by going to a simple page
           try {
             await page.goto("/login", { timeout: 10000 });
@@ -247,7 +301,9 @@ test.describe("Performance Optimization Features", () => {
       .locator("[class*='loading'], [class*='spinner'], [class*='processing']")
       .count();
 
-    const loadingText = await page.locator("text=/loading|processing|please wait/i").count();
+    const loadingText = await page
+      .locator("text=/loading|processing|please wait/i")
+      .count();
 
     console.log(
       `Found ${loadingElements + loadingText} loading-related elements`
@@ -256,7 +312,9 @@ test.describe("Performance Optimization Features", () => {
     // Test form interaction on login page
     const inputs = await page.locator("input, textarea").count();
     if (inputs > 0) {
-      const emailInput = page.locator("input[type='email'], input[name='email'], #email").first();
+      const emailInput = page
+        .locator("input[type='email'], input[name='email'], #email")
+        .first();
       if (await emailInput.isVisible()) {
         await emailInput.fill("test@example.com");
       }
@@ -298,15 +356,20 @@ test.describe("Performance Optimization Features", () => {
               )
               .count();
 
-            console.log(`Found ${breadcrumbs} breadcrumb elements on ${pagePath}`);
-
+            console.log(
+              `Found ${breadcrumbs} breadcrumb elements on ${pagePath}`
+            );
           } catch (pageError: unknown) {
-            console.log(`⚠️ Error accessing ${pagePath}: ${errorMessage(pageError)}`);
+            console.log(
+              `⚠️ Error accessing ${pagePath}: ${errorMessage(pageError)}`
+            );
             // Continue with next page
           }
         }
       } else {
-        console.log("⚠️ No authentication available, testing public breadcrumbs");
+        console.log(
+          "⚠️ No authentication available, testing public breadcrumbs"
+        );
         await page.goto("/", { timeout: 10000 });
         await expect(page.locator("body")).toBeVisible();
       }

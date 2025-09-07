@@ -235,7 +235,9 @@ export default function ApiDocsPage() {
                         </code>
                       </div>
                       <div className="flex-1">
-                        <p className="text-muted-foreground">{endpoint.description}</p>
+                        <p className="text-muted-foreground">
+                          {endpoint.description}
+                        </p>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {endpoint.parameters.map((param, paramIndex) => (
                             <Badge

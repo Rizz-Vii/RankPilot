@@ -5,7 +5,7 @@
 
 import { doc, getDoc, increment, setDoc, updateDoc } from "firebase/firestore";
 import { db as sharedDb } from "@/lib/firebase";
-import type { PlanType} from "./stripe";
+import type { PlanType } from "./stripe";
 import { FREE_PLAN, STRIPE_PLANS } from "./stripe";
 
 export interface UsageQuota {
@@ -308,7 +308,7 @@ export class UsageQuotaManager {
       },
       daysUntilReset: Math.ceil(
         (quota.currentPeriodEnd.getTime() - new Date().getTime()) /
-        (1000 * 60 * 60 * 24)
+          (1000 * 60 * 60 * 24)
       ),
     };
 
@@ -360,7 +360,7 @@ export class UsageQuotaManager {
   async enforceUsageLimit(
     userId: string,
     usageType: UsageType
-  ): Promise<{ success: boolean; error?: string; }> {
+  ): Promise<{ success: boolean; error?: string }> {
     const usageCheck = await this.checkUsageLimit(userId, usageType);
 
     if (!usageCheck.allowed) {

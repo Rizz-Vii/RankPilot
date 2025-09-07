@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, BarChart3, Link2, Target } from "lucide-react";
-import { useRealTimeDashboardData, useUserMetrics } from "@/hooks/use-dashboard-data";
+import {
+  useRealTimeDashboardData,
+  useUserMetrics,
+} from "@/hooks/use-dashboard-data";
 
 export function AuthAwareHero() {
   const { user, loading } = useAuth();
@@ -31,7 +34,8 @@ export function AuthAwareHero() {
     // Map to existing, real aggregated fields (avoid referencing non-existent properties)
     const activeProjects = rtData?.activeProjects?.current ?? 0;
     const avgSeoScore = metrics?.seoScore ?? rtData?.seoScore?.current ?? 0;
-    const seoDisplay = typeof avgSeoScore === "number" ? `${avgSeoScore.toFixed(0)}%` : "—";
+    const seoDisplay =
+      typeof avgSeoScore === "number" ? `${avgSeoScore.toFixed(0)}%` : "—";
     const newBacklinks = rtData?.backlinks?.newLast30Days ?? 0;
     return (
       <motion.section
@@ -40,9 +44,13 @@ export function AuthAwareHero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-      <h2 className="text-4xl font-bold mb-4">Welcome back{user.displayName ? `, ${user.displayName}` : ""}! 👋</h2>
+        <h2 className="text-4xl font-bold mb-4">
+          Welcome back{user.displayName ? `, ${user.displayName}` : ""}! 👋
+        </h2>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Your unified growth intelligence hub is updating in real time—technical health, semantic opportunities & authority momentum all in one place.
+          Your unified growth intelligence hub is updating in real
+          time—technical health, semantic opportunities & authority momentum all
+          in one place.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -63,24 +71,47 @@ export function AuthAwareHero() {
 
         {/* Quick Stats or Recent Activity */}
         <div className="grid md:grid-cols-3 gap-6 mt-16">
-          { (rtLoading || metricsLoading) && [0,1,2].map(i => (
-            <div key={i} className="p-6 border rounded-lg animate-pulse flex flex-col items-center gap-2" aria-busy={true} aria-label="Loading metric">
-              <div className="h-5 w-5 rounded bg-muted" />
-              <div className="h-7 w-14 rounded bg-muted" />
-              <div className="h-3 w-24 rounded bg-muted" />
-            </div>
-          ))}
-          { !(rtLoading || metricsLoading) && [
-            { label: 'Active Projects', value: activeProjects, icon: Target },
-            { label: 'SEO Performance', value: seoDisplay, icon: BarChart3 },
-            { label: 'New Backlinks (30d)', value: newBacklinks, icon: Link2 },
-          ].map(({ label, value, icon: Icon }) => (
-            <div key={label} className="p-6 border rounded-lg flex flex-col items-center gap-2" role="group" aria-label={`${label} metric`}>
-              <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
-              <div className="text-2xl font-bold text-primary tabular-nums" aria-live="polite">{value}</div>
-              <div className="text-sm text-muted-foreground text-center">{label}</div>
-            </div>
-          ))}
+          {(rtLoading || metricsLoading) &&
+            [0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="p-6 border rounded-lg animate-pulse flex flex-col items-center gap-2"
+                aria-busy={true}
+                aria-label="Loading metric"
+              >
+                <div className="h-5 w-5 rounded bg-muted" />
+                <div className="h-7 w-14 rounded bg-muted" />
+                <div className="h-3 w-24 rounded bg-muted" />
+              </div>
+            ))}
+          {!(rtLoading || metricsLoading) &&
+            [
+              { label: "Active Projects", value: activeProjects, icon: Target },
+              { label: "SEO Performance", value: seoDisplay, icon: BarChart3 },
+              {
+                label: "New Backlinks (30d)",
+                value: newBacklinks,
+                icon: Link2,
+              },
+            ].map(({ label, value, icon: Icon }) => (
+              <div
+                key={label}
+                className="p-6 border rounded-lg flex flex-col items-center gap-2"
+                role="group"
+                aria-label={`${label} metric`}
+              >
+                <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
+                <div
+                  className="text-2xl font-bold text-primary tabular-nums"
+                  aria-live="polite"
+                >
+                  {value}
+                </div>
+                <div className="text-sm text-muted-foreground text-center">
+                  {label}
+                </div>
+              </div>
+            ))}
         </div>
       </motion.section>
     );
@@ -98,9 +129,10 @@ export function AuthAwareHero() {
         The All‑in‑One NeuroSEO™ Growth Platform
       </h1>
       <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-        One unified AI stack for technical audits, content intelligence, keyword strategy,
-        competitive monitoring, revenue impact tracking, and automation. Ship fixes faster,
-        compound organic growth, and prove ROI—without juggling 6+ tools.
+        One unified AI stack for technical audits, content intelligence, keyword
+        strategy, competitive monitoring, revenue impact tracking, and
+        automation. Ship fixes faster, compound organic growth, and prove
+        ROI—without juggling 6+ tools.
       </p>
       <div className="flex items-center justify-center mb-6 gap-3 flex-wrap">
         <span className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary font-medium badge-glow">
@@ -120,7 +152,12 @@ export function AuthAwareHero() {
             <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
-        <Button size="lg" variant="outline" asChild className="micro-hover-lift">
+        <Button
+          size="lg"
+          variant="outline"
+          asChild
+          className="micro-hover-lift"
+        >
           <Link href="/features">Explore Features</Link>
         </Button>
       </div>

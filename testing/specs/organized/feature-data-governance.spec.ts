@@ -7,60 +7,77 @@ import { UNIFIED_TEST_USERS } from "./unified-test-users";
  * Tests data-governance functionality
  */
 
-const featureDataGovernanceDiagnostics = { errors: [] as { message: string; phase: string }[] };
+const featureDataGovernanceDiagnostics = {
+  errors: [] as { message: string; phase: string }[],
+};
 
-test.describe('Feature - data-governance', () => {
-    let auth: EnhancedAuth;
+test.describe("Feature - data-governance", () => {
+  let auth: EnhancedAuth;
 
-    test.beforeEach(async ({ page }) => {
-        test.setTimeout(60000);
-        auth = new EnhancedAuth(page);
+  test.beforeEach(async ({ page }) => {
+    test.setTimeout(60000);
+    auth = new EnhancedAuth(page);
 
-        try {
-            const testUser = UNIFIED_TEST_USERS.agency;
-            await auth.loginAndGoToDashboard(testUser);
-        } catch (error: unknown) {
-            let msg: string;
-            if (error && typeof error === 'object' && 'message' in error) {
-                msg = String((error as { message?: unknown }).message);
-            } else {
-                msg = String(error);
-            }
-            try {
-                featureDataGovernanceDiagnostics.errors.push({ message: msg, phase: 'beforeEach-login' });
-            } catch { }
-            console.warn('Login failed, using fallback:', msg);
-            await page.goto('/dashboard');
-            await page.waitForTimeout(2000);
-        }
-    });
+    try {
+      const testUser = UNIFIED_TEST_USERS.agency;
+      await auth.loginAndGoToDashboard(testUser);
+    } catch (error: unknown) {
+      let msg: string;
+      if (error && typeof error === "object" && "message" in error) {
+        msg = String((error as { message?: unknown }).message);
+      } else {
+        msg = String(error);
+      }
+      try {
+        featureDataGovernanceDiagnostics.errors.push({
+          message: msg,
+          phase: "beforeEach-login",
+        });
+      } catch {}
+      console.warn("Login failed, using fallback:", msg);
+      await page.goto("/dashboard");
+      await page.waitForTimeout(2000);
+    }
+  });
 
-    test('should load data-governance interface', async ({ page }) => {
-        await page.goto('/data-governance');
-        await expect(page.locator('[data-testid="data-governance-container"]')).toBeVisible();
-    });
+  test("should load data-governance interface", async ({ page }) => {
+    await page.goto("/data-governance");
+    await expect(
+      page.locator('[data-testid="data-governance-container"]')
+    ).toBeVisible();
+  });
 
-    test('should handle data-governance actions', async ({ page }) => {
-        await page.goto('/data-governance');
-        await expect(page.locator('[data-testid="data-governance-actions"]')).toBeVisible();
-    });
+  test("should handle data-governance actions", async ({ page }) => {
+    await page.goto("/data-governance");
+    await expect(
+      page.locator('[data-testid="data-governance-actions"]')
+    ).toBeVisible();
+  });
 
-    test('should validate data-governance data', async ({ page }) => {
-        await page.goto('/data-governance');
-        await expect(page.locator('[data-testid="data-governance-data"]')).toBeVisible();
-    });
+  test("should validate data-governance data", async ({ page }) => {
+    await page.goto("/data-governance");
+    await expect(
+      page.locator('[data-testid="data-governance-data"]')
+    ).toBeVisible();
+  });
 
-    test('should display data-governance correctly on mobile', async ({ page }) => {
-        await page.setViewportSize({ width: 375, height: 667 });
-        await page.goto('/data-governance');
-        await expect(page.locator('[data-testid="data-governance-mobile"]')).toBeVisible();
-    });
+  test("should display data-governance correctly on mobile", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/data-governance");
+    await expect(
+      page.locator('[data-testid="data-governance-mobile"]')
+    ).toBeVisible();
+  });
 
-    test('should handle data-governance errors gracefully', async ({ page }) => {
-        await page.goto('/data-governance');
-        // Simulate error condition
-        await expect(page.locator('[data-testid="data-governance-error-fallback"]')).toBeVisible();
-    });
+  test("should handle data-governance errors gracefully", async ({ page }) => {
+    await page.goto("/data-governance");
+    // Simulate error condition
+    await expect(
+      page.locator('[data-testid="data-governance-error-fallback"]')
+    ).toBeVisible();
+  });
 });
 
 if (Math.random() < -1) console.log(featureDataGovernanceDiagnostics);

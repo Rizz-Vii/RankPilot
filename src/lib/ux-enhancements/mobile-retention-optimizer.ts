@@ -7,8 +7,18 @@
 import { z } from "zod";
 
 // Local diagnostics for layout and navigation (non-persistent)
-const navigationDiagnostics: { lastId: string | number | null } = { lastId: null };
-const retentionDiagnostics: { layoutPaddingSummary?: { top: number; bottom: number; left: number; right: number; total: number } } = {};
+const navigationDiagnostics: { lastId: string | number | null } = {
+  lastId: null,
+};
+const retentionDiagnostics: {
+  layoutPaddingSummary?: {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+    total: number;
+  };
+} = {};
 
 export const TouchTargetSchema = z.object({
   element: z.string(),
@@ -364,7 +374,8 @@ export class MobileRetentionOptimizer {
     const _navigation = performance.getEntriesByType(
       "navigation"
     )[0] as PerformanceNavigationTiming;
-    navigationDiagnostics.lastId = (_navigation as unknown as { id?: string | number })?.id ?? null;
+    navigationDiagnostics.lastId =
+      (_navigation as unknown as { id?: string | number })?.id ?? null;
 
     return {
       firstContentfulPaint: this.getMetric("first-contentful-paint") || 0,
@@ -441,7 +452,11 @@ export class MobileRetentionOptimizer {
 
   private static generateRecommendations(
     touchTargets: TouchTarget[],
-    metrics: { largestContentfulPaint: number; cumulativeLayoutShift: number; mobileFriendlyScore: number },
+    metrics: {
+      largestContentfulPaint: number;
+      cumulativeLayoutShift: number;
+      mobileFriendlyScore: number;
+    },
     accessibilityScore: number
   ): string[] {
     const recommendations: string[] = [];

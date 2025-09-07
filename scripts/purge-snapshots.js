@@ -4,18 +4,18 @@
  * to ensure a clean baseline before a fresh typecheck or CI run.
  * Safe: Only deletes known generated files/directories; ignores if missing.
  */
-'use strict';
-const fs = require('fs');
-const path = require('path');
+"use strict";
+const fs = require("fs");
+const path = require("path");
 
 const ROOT = process.cwd();
 const targets = [
-  'tsconfig.tsbuildinfo',
-  'metrics-snapshots.log',
-  'artifacts/size-reduction.json',
-  'artifacts/neuroseo-scan.json',
-  'artifacts/provenance-snapshot.json',
-  'artifacts/neuroseo-size.json'
+  "tsconfig.tsbuildinfo",
+  "metrics-snapshots.log",
+  "artifacts/size-reduction.json",
+  "artifacts/neuroseo-scan.json",
+  "artifacts/provenance-snapshot.json",
+  "artifacts/neuroseo-size.json",
 ];
 
 let removed = 0;
@@ -31,15 +31,17 @@ for (const rel of targets) {
       }
     }
   } catch (err) {
-    console.warn(`[purge] failed to remove ${rel}: ${err && err.message ? err.message : err}`);
+    console.warn(
+      `[purge] failed to remove ${rel}: ${err && err.message ? err.message : err}`
+    );
   }
 }
 // Optionally prune empty artifacts dir
 try {
-  const art = path.join(ROOT, 'artifacts');
+  const art = path.join(ROOT, "artifacts");
   if (fs.existsSync(art) && fs.readdirSync(art).length === 0) {
     fs.rmSync(art, { force: true });
-    console.log('[purge] removed empty artifacts/ directory');
+    console.log("[purge] removed empty artifacts/ directory");
   }
 } catch {
   /* ignore */

@@ -85,9 +85,10 @@ async function createTestUsers() {
         continue;
       } catch (error: unknown) {
         // User doesn't exist, we can create it (only swallow not-found)
-        const code = (error && typeof error === 'object' && 'code' in error)
-          ? String((error as { code?: unknown }).code)
-          : undefined;
+        const code =
+          error && typeof error === "object" && "code" in error
+            ? String((error as { code?: unknown }).code)
+            : undefined;
         if (code !== "auth/user-not-found") {
           throw error;
         }
@@ -104,13 +105,11 @@ async function createTestUsers() {
 
       console.log(`   ✅ Created user: ${user.email} (UID: ${userRecord.uid})`);
     } catch (error: unknown) {
-      const msg = (error && typeof error === 'object' && 'message' in error)
-        ? String((error as { message?: unknown }).message)
-        : String(error);
-      console.error(
-        `   ❌ Failed to create user ${user.email}:`,
-        msg
-      );
+      const msg =
+        error && typeof error === "object" && "message" in error
+          ? String((error as { message?: unknown }).message)
+          : String(error);
+      console.error(`   ❌ Failed to create user ${user.email}:`, msg);
     }
   }
 

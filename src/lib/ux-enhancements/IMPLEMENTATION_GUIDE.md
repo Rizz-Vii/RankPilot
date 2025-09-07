@@ -5,11 +5,11 @@
 ### 1. Import UX Enhancement Hooks
 
 ```typescript
-import { useProgressiveOnboarding } from '@/lib/ux-enhancements/progressive-onboarding';
-import { useAnalysisMicroInteractions } from '@/lib/ux-enhancements/micro-interactions';
-import { useEmotionalUXMapping } from '@/lib/ux-enhancements/emotional-ux-mapping';
-import { useGamification } from '@/lib/ux-enhancements/gamification-system';
-import { useMobileRetention } from '@/lib/ux-enhancements/mobile-retention-optimizer';
+import { useProgressiveOnboarding } from "@/lib/ux-enhancements/progressive-onboarding";
+import { useAnalysisMicroInteractions } from "@/lib/ux-enhancements/micro-interactions";
+import { useEmotionalUXMapping } from "@/lib/ux-enhancements/emotional-ux-mapping";
+import { useGamification } from "@/lib/ux-enhancements/gamification-system";
+import { useMobileRetention } from "@/lib/ux-enhancements/mobile-retention-optimizer";
 ```
 
 ### 2. Basic Implementation Pattern
@@ -19,13 +19,13 @@ const MyComponent = () => {
   const { trackAction } = useGamification(userId);
   const { triggerMicroInteraction } = useAnalysisMicroInteractions();
   const { trackEmotion } = useEmotionalUXMapping(userId, 'analysis');
-  
+
   const handleUserAction = () => {
     trackAction('analysis_completed');
     triggerMicroInteraction('analysis', 'completed');
     trackEmotion('confidence');
   };
-  
+
   return (
     <button onClick={handleUserAction} className="tool-link">
       Start Analysis
@@ -85,7 +85,9 @@ http://localhost:3000/neuroseo
 
 ```css
 @media (max-width: 768px) {
-  button, a[href], [role="button"] {
+  button,
+  a[href],
+  [role="button"] {
     min-height: 48px !important;
     min-width: 48px !important;
     padding: 12px 16px !important;

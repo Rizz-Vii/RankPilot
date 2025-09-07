@@ -17,11 +17,7 @@
   },
   "hosting": {
     "source": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "frameworksBackend": {
       "region": "australia-southeast2",
       "memory": "1GiB",
@@ -49,11 +45,11 @@
         "SMTP_USER",
         "SMTP_PASS",
         "CONTACT_FROM_EMAIL",
-  "CONTACT_RECEIVER_EMAIL",
-  "TEST_USER_EMAIL",
-  "TEST_USER_PASSWORD",
-  "TEST_ADMIN_EMAIL",
-  "TEST_ADMIN_PASSWORD"
+        "CONTACT_RECEIVER_EMAIL",
+        "TEST_USER_EMAIL",
+        "TEST_USER_PASSWORD",
+        "TEST_ADMIN_EMAIL",
+        "TEST_ADMIN_PASSWORD"
       ]
     },
     "headers": [

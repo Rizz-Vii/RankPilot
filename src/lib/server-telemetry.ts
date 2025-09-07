@@ -47,7 +47,8 @@ export async function createTelemetryProvider(): Promise<TelemetryProvider> {
  * @returns A Promise that resolves to a TelemetryProvider instance.
  */
 async function createRealProvider(): Promise<TelemetryProvider> {
-  let sdkInstance: { shutdown: () => Promise<void>; start: () => void } | null = null; // minimal shape used
+  let sdkInstance: { shutdown: () => Promise<void>; start: () => void } | null =
+    null; // minimal shape used
 
   try {
     // Dynamically import all necessary OpenTelemetry packages.
@@ -188,9 +189,12 @@ async function createRealProvider(): Promise<TelemetryProvider> {
         process.exit(0);
         return;
       }
-      sdkInstance.shutdown()
+      sdkInstance
+        .shutdown()
         .then(() => console.log("OpenTelemetry SDK shut down gracefully."))
-        .catch((error: Error) => console.error("Error shutting down OpenTelemetry:", error))
+        .catch((error: Error) =>
+          console.error("Error shutting down OpenTelemetry:", error)
+        )
         .finally(() => process.exit(0));
     });
 

@@ -3,90 +3,88 @@
  * This file shows different ways to use the chatbot components
  */
 
-import { AdminChatBot, ChatBot, CustomerChatBot } from '@/components/chat';
-import React from 'react';
+import { AdminChatBot, ChatBot, CustomerChatBot } from "@/components/chat";
+import React from "react";
 
 // Example 1: Simple integration in any page
 export function PageWithChatBot() {
-    return (
-        <div className="page-content">
-            <h1>Your Page Content</h1>
-            <p>This is your regular page content...</p>
+  return (
+    <div className="page-content">
+      <h1>Your Page Content</h1>
+      <p>This is your regular page content...</p>
 
-            {/* The chatbot will automatically show based on user permissions */}
-            <ChatBot />
-        </div>
-    );
+      {/* The chatbot will automatically show based on user permissions */}
+      <ChatBot />
+    </div>
+  );
 }
 
 // Example 2: Integration in layout (recommended)
-export function LayoutWithChatBot({ children }: { children: React.ReactNode; }) {
-    return (
-        <div className="app-layout">
-            {children}
+export function LayoutWithChatBot({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="app-layout">
+      {children}
 
-            {/* Place at the end of your layout for global availability */}
-            <ChatBot />
-        </div>
-    );
+      {/* Place at the end of your layout for global availability */}
+      <ChatBot />
+    </div>
+  );
 }
 
 // Example 3: Custom positioning
 export function CustomPositionedChatBot() {
-    return (
-        <div className="relative">
-            <div className="your-content">
-                {/* Your page content */}
-            </div>
+  return (
+    <div className="relative">
+      <div className="your-content">{/* Your page content */}</div>
 
-            {/* Custom positioning with className */}
-            <ChatBot className="bottom-4 right-4" />
-        </div>
-    );
+      {/* Custom positioning with className */}
+      <ChatBot className="bottom-4 right-4" />
+    </div>
+  );
 }
 
 // Example 4: Only customer chatbot
 export function CustomerSupportPage() {
-    const currentUrl = "https://example.com/support";
+  const currentUrl = "https://example.com/support";
 
-    return (
-        <div className="support-page">
-            <h1>Customer Support</h1>
+  return (
+    <div className="support-page">
+      <h1>Customer Support</h1>
 
-            {/* Only show customer chatbot with specific URL context */}
-            <CustomerChatBot currentUrl={currentUrl} />
-        </div>
-    );
+      {/* Only show customer chatbot with specific URL context */}
+      <CustomerChatBot currentUrl={currentUrl} />
+    </div>
+  );
 }
 
 // Example 5: Admin dashboard with admin chatbot
 export function AdminDashboard() {
-    return (
-        <div className="admin-dashboard">
-            <h1>Admin Dashboard</h1>
+  return (
+    <div className="admin-dashboard">
+      <h1>Admin Dashboard</h1>
 
-            {/* Only show admin chatbot for system management */}
-            <AdminChatBot />
-        </div>
-    );
+      {/* Only show admin chatbot for system management */}
+      <AdminChatBot />
+    </div>
+  );
 }
 
 // Example 6: Integration with Next.js App Router layout
 export function RootLayoutWithChatBot({
-    children
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    return (
-        <html lang="en">
-            <body>
-                <main>{children}</main>
+  return (
+    <html lang="en">
+      <body>
+        <main>{children}</main>
 
-                {/* Global chatbot availability */}
-                <ChatBot />
-            </body>
-        </html>
-    );
+        {/* Global chatbot availability */}
+        <ChatBot />
+      </body>
+    </html>
+  );
 }
 
 // Example usage in Next.js app/layout.tsx:

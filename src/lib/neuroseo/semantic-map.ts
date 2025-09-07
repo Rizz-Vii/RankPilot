@@ -52,10 +52,10 @@ export interface SemanticAnalysisResult {
 
 export interface SemanticRecommendation {
   type:
-  | "topic_expansion"
-  | "keyword_optimization"
-  | "entity_enhancement"
-  | "content_depth";
+    | "topic_expansion"
+    | "keyword_optimization"
+    | "entity_enhancement"
+    | "content_depth";
   title: string;
   description: string;
   priority: "high" | "medium" | "low";
@@ -87,7 +87,7 @@ export interface VisualizationData {
 }
 
 // Design token usage (replaced prior hardcoded legacy slate hex)
-const SEMANTIC_EDGE_COLOR = 'var(--color-slate-400)';
+const SEMANTIC_EDGE_COLOR = "var(--color-slate-400)";
 
 export class SemanticMap {
   async analyzeContent(
@@ -151,7 +151,8 @@ export class SemanticMap {
     // Heuristic: 40% topicalAuthority, 35% semanticDensity, 25% entity richness
     const entityRichness = Object.keys(f.entityCoverage).length;
     const entityScore = Math.min(100, entityRichness * 6); // 0..100 scaled
-    const score = f.topicalAuthority * 0.4 + f.semanticDensity * 0.35 + entityScore * 0.25;
+    const score =
+      f.topicalAuthority * 0.4 + f.semanticDensity * 0.35 + entityScore * 0.25;
     return Math.max(0, Math.min(100, Math.round(score)));
   }
 
@@ -363,7 +364,7 @@ export class SemanticMap {
     const sortedKeywords = keywords.sort((a, b) => b.length - a.length);
     return (
       sortedKeywords[0]?.charAt(0).toUpperCase() +
-      sortedKeywords[0]?.slice(1) || "Subtopic"
+        sortedKeywords[0]?.slice(1) || "Subtopic"
     );
   }
 
@@ -727,9 +728,9 @@ export class SemanticMap {
   private getTopicColor(relevanceScore: number): string {
     // Use design tokens instead of raw hex colors
     // Green -> success.500, Yellow -> colors.warning.500, Red -> destructive.500
-    if (relevanceScore >= 80) return 'var(--color-success-500)';
-    if (relevanceScore >= 60) return 'var(--color-warning-500)';
-    return 'var(--color-destructive-500)';
+    if (relevanceScore >= 80) return "var(--color-success-500)";
+    if (relevanceScore >= 60) return "var(--color-warning-500)";
+    return "var(--color-destructive-500)";
   }
 
   private getSentimentColor(
@@ -737,11 +738,11 @@ export class SemanticMap {
   ): string {
     switch (sentiment) {
       case "positive":
-        return 'var(--color-success-500)';
+        return "var(--color-success-500)";
       case "negative":
-        return 'var(--color-destructive-500)';
+        return "var(--color-destructive-500)";
       default:
-        return 'var(--color-gray-500)';
+        return "var(--color-gray-500)";
     }
   }
 }

@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
-import fs from 'fs';
+import fs from "fs";
 import { getProxyConfig } from "./testing/specs/main/utils/proxy";
-const storageStatePath = process.env.PLAYWRIGHT_STORAGE || 'test-results/.auth/admin.json';
+const storageStatePath =
+  process.env.PLAYWRIGHT_STORAGE || "test-results/.auth/admin.json";
 const hasStorage = fs.existsSync(storageStatePath);
 
 export default defineConfig({
@@ -9,18 +10,21 @@ export default defineConfig({
   // Increase global test timeout for slower dev environment
   timeout: 60000,
   workers: process.env.CI ? 1 : undefined,
-  globalSetup: './testing/specs/main/global-setup.ts',
-  globalTeardown: './testing/specs/main/global-teardown.ts',
+  globalSetup: "./testing/specs/main/global-setup.ts",
+  globalTeardown: "./testing/specs/main/global-teardown.ts",
   reporter: [
     ["html"],
     ["junit", { outputFile: "test-results/junit.xml" }],
     ["list"],
   ],
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || process.env.TEST_BASE_URL || 'http://localhost:3000',
-    trace: 'on-first-retry',
-    video: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    baseURL:
+      process.env.PLAYWRIGHT_BASE_URL ||
+      process.env.TEST_BASE_URL ||
+      "http://localhost:3000",
+    trace: "on-first-retry",
+    video: "retain-on-failure",
+    screenshot: "only-on-failure",
     storageState: hasStorage ? storageStatePath : undefined,
     // Allow longer for actions and navigation in the dev container
     actionTimeout: 30000,
@@ -142,18 +146,14 @@ export default defineConfig({
     },
     {
       name: "enterprise-tier-worker",
-      testMatch: [
-        "testing/specs/main/**/*.spec.ts",
-      ],
+      testMatch: ["testing/specs/main/**/*.spec.ts"],
       use: {
         ...devices["Desktop Chrome"],
       },
     },
     {
       name: "firefox-compatibility",
-      testMatch: [
-        "testing/specs/main/**/*.spec.ts",
-      ],
+      testMatch: ["testing/specs/main/**/*.spec.ts"],
       use: {
         ...devices["Desktop Firefox"],
       },
@@ -161,9 +161,7 @@ export default defineConfig({
     // Performance tests (opt-in; specs themselves are env-gated via E2E_RUN_PERF)
     {
       name: "performance",
-      testMatch: [
-        "testing/performance/**/?(*.)spec.ts",
-      ],
+      testMatch: ["testing/performance/**/?(*.)spec.ts"],
       use: {
         ...devices["Desktop Chrome"],
       },

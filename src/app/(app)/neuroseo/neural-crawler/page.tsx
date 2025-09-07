@@ -1,6 +1,6 @@
 "use client";
 
-import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { FeatureGate } from "@/components/subscription/FeatureGate";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -13,12 +13,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { useProvenance } from "@/hooks/useProvenance";
 import { db } from "@/lib/firebase";
-import { recordCrawlerAggregateHit, recordCrawlerLegacyFallback } from '@/lib/metrics/unified-metrics';
-import { dualWriteNeuralCrawlerAggregate } from '@/lib/neural-crawler/aggregate';
-import { tagSynthetic } from '@/lib/synthetic/synthetic-utils';
+import {
+  recordCrawlerAggregateHit,
+  recordCrawlerLegacyFallback,
+} from "@/lib/metrics/unified-metrics";
+import { dualWriteNeuralCrawlerAggregate } from "@/lib/neural-crawler/aggregate";
+import { tagSynthetic } from "@/lib/synthetic/synthetic-utils";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
-import { safeErrorMessage, toJsDate } from '@/lib/utils';
-import { addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp, where } from "firebase/firestore";
+import { safeErrorMessage, toJsDate } from "@/lib/utils";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  serverTimestamp,
+  where,
+} from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -29,10 +43,10 @@ import {
   Link as LinkIcon,
   RefreshCw,
   Search,
-  Zap
+  Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 interface CrawlResult {
   id: string;
@@ -59,7 +73,7 @@ interface CrawlResult {
   links: Array<{
     href: string;
     text: string;
-    type: 'internal' | 'external';
+    type: "internal" | "external";
   }>;
   technicalData: {
     loadTime: number;
@@ -77,13 +91,13 @@ interface CrawlResult {
     externalLinks: number;
   };
   issues: Array<{
-    type: 'error' | 'warning' | 'info';
+    type: "error" | "warning" | "info";
     message: string;
     recommendation: string;
   }>;
   entities: Array<{
     text: string;
-    type: 'person' | 'organization' | 'location' | 'product' | 'concept';
+    type: "person" | "organization" | "location" | "product" | "concept";
     confidence: number;
   }>;
   createdAt: Date;
@@ -92,29 +106,43 @@ interface CrawlResult {
 interface CrawlHistory {
   id: string;
   url: string;
-  status: 'completed' | 'failed' | 'processing';
+  status: "completed" | "failed" | "processing";
   pagesFound: number;
   totalTime: number;
   createdAt: Date;
 }
 
-function normalizeHeadingCounts(h: unknown): CrawlResult['headings'] {
-  const base: CrawlResult['headings'] = { h1: [], h2: [], h3: [], h4: [], h5: [], h6: [] };
-  if (h && typeof h === 'object') {
+function normalizeHeadingCounts(h: unknown): CrawlResult["headings"] {
+  const base: CrawlResult["headings"] = {
+    h1: [],
+    h2: [],
+    h3: [],
+    h4: [],
+    h5: [],
+    h6: [],
+  };
+  if (h && typeof h === "object") {
     const obj = h as Record<string, unknown>;
-    (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const).forEach((k) => {
+    (["h1", "h2", "h3", "h4", "h5", "h6"] as const).forEach((k) => {
       const v = obj[k];
-      const n = typeof v === 'number' ? v : 0;
-      base[k] = Array(n).fill('').map((_, i) => `${k.toUpperCase()} heading ${i + 1}`);
+      const n = typeof v === "number" ? v : 0;
+      base[k] = Array(n)
+        .fill("")
+        .map((_, i) => `${k.toUpperCase()} heading ${i + 1}`);
     });
   }
   return base;
 }
 
-function buildLinkPlaceholders(internal = 0, external = 0): CrawlResult['links'] {
-  const arr: CrawlResult['links'] = [];
-  for (let i = 0; i < internal; i++) arr.push({ href: '#', text: `Internal ${i + 1}`, type: 'internal' });
-  for (let i = 0; i < external; i++) arr.push({ href: '#', text: `External ${i + 1}`, type: 'external' });
+function buildLinkPlaceholders(
+  internal = 0,
+  external = 0
+): CrawlResult["links"] {
+  const arr: CrawlResult["links"] = [];
+  for (let i = 0; i < internal; i++)
+    arr.push({ href: "#", text: `Internal ${i + 1}`, type: "internal" });
+  for (let i = 0; i < external; i++)
+    arr.push({ href: "#", text: `External ${i + 1}`, type: "external" });
   return arr;
 }
 
@@ -123,58 +151,84 @@ function legacyFromAggregate(a: unknown): CrawlResult {
   type Agg = Record<string, unknown>;
   const x = a as Agg;
 
-  const getString = (key: string, fallback = ''): string => {
+  const getString = (key: string, fallback = ""): string => {
     const v = x?.[key];
-    if (typeof v === 'string') return v;
-    if (typeof v === 'number') return String(v);
+    if (typeof v === "string") return v;
+    if (typeof v === "number") return String(v);
     return fallback;
   };
 
   const getNumber = (key: string, fallback = 0): number => {
     const v = x?.[key];
-    if (typeof v === 'number') return v;
-    if (typeof v === 'string') {
+    if (typeof v === "number") return v;
+    if (typeof v === "string") {
       const n = Number(v);
       return Number.isFinite(n) ? n : fallback;
     }
     return fallback;
   };
 
-  const imagesCount = getNumber('imagesCount', 0);
-  const issuesCount = getNumber('issuesCount', 0);
-  const entitiesCount = getNumber('entitiesCount', 0);
-  const linksInternal = getNumber('linksInternal', 0);
-  const linksExternal = getNumber('linksExternal', 0);
+  const imagesCount = getNumber("imagesCount", 0);
+  const issuesCount = getNumber("issuesCount", 0);
+  const entitiesCount = getNumber("entitiesCount", 0);
+  const linksInternal = getNumber("linksInternal", 0);
+  const linksExternal = getNumber("linksExternal", 0);
 
   return {
-    id: (typeof x?.historyId === 'string' ? x.historyId : undefined) || (typeof x?.id === 'string' ? x.id : undefined) || `agg_${getString('url')}`,
-    url: getString('url', ''),
-    title: getString('title', getString('url', '')),
-    metaDescription: getString('metaDescription', ''),
-    content: '',
-    wordCount: getNumber('wordCount', 0),
-    readingTime: getNumber('readingTime', 0),
+    id:
+      (typeof x?.historyId === "string" ? x.historyId : undefined) ||
+      (typeof x?.id === "string" ? x.id : undefined) ||
+      `agg_${getString("url")}`,
+    url: getString("url", ""),
+    title: getString("title", getString("url", "")),
+    metaDescription: getString("metaDescription", ""),
+    content: "",
+    wordCount: getNumber("wordCount", 0),
+    readingTime: getNumber("readingTime", 0),
     headings: normalizeHeadingCounts(x?.headings),
-    images: new Array(imagesCount).fill(0).map((_, i: number) => ({ src: '', alt: `Image ${i + 1}` })),
+    images: new Array(imagesCount)
+      .fill(0)
+      .map((_, i: number) => ({ src: "", alt: `Image ${i + 1}` })),
     links: buildLinkPlaceholders(linksInternal, linksExternal),
-    technicalData: { loadTime: 0, pageSize: 0, statusCode: 200, contentType: 'text/html' },
-    seoAnalysis: {
-      titleLength: getNumber('titleLength', 0),
-      metaDescriptionLength: getNumber('metaDescriptionLength', 0),
-      headingStructure: (typeof x?.headingStructure === 'string' ? x.headingStructure : 'Unknown'),
-      imageOptimization: getNumber('imageOptimization', 0),
-      internalLinks: linksInternal,
-      externalLinks: linksExternal
+    technicalData: {
+      loadTime: 0,
+      pageSize: 0,
+      statusCode: 200,
+      contentType: "text/html",
     },
-    issues: new Array(issuesCount).fill(0).map((_, i: number) => ({ type: 'info', message: `Issue ${i + 1}`, recommendation: '' })),
-    entities: new Array(entitiesCount).fill(0).map((_, i: number) => ({ text: `Entity ${i + 1}`, type: 'concept', confidence: 0 })),
-    createdAt: toJsDate(x?.createdAt)
+    seoAnalysis: {
+      titleLength: getNumber("titleLength", 0),
+      metaDescriptionLength: getNumber("metaDescriptionLength", 0),
+      headingStructure:
+        typeof x?.headingStructure === "string"
+          ? x.headingStructure
+          : "Unknown",
+      imageOptimization: getNumber("imageOptimization", 0),
+      internalLinks: linksInternal,
+      externalLinks: linksExternal,
+    },
+    issues: new Array(issuesCount).fill(0).map((_, i: number) => ({
+      type: "info",
+      message: `Issue ${i + 1}`,
+      recommendation: "",
+    })),
+    entities: new Array(entitiesCount).fill(0).map((_, i: number) => ({
+      text: `Entity ${i + 1}`,
+      type: "concept",
+      confidence: 0,
+    })),
+    createdAt: toJsDate(x?.createdAt),
   };
 }
 
 export default function NeuralCrawlerPage() {
   const { user } = useAuth();
-  const { provenance, setProvenance, markLive, markFallback: _markFallback } = useProvenance();
+  const {
+    provenance,
+    setProvenance,
+    markLive,
+    markFallback: _markFallback,
+  } = useProvenance();
   const [crawlUrl, setCrawlUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -183,16 +237,18 @@ export default function NeuralCrawlerPage() {
   const [selectedTab, setSelectedTab] = useState("overview");
   const aggHits = useRef(0);
   const legacyFallbacks = useRef(0);
-  const aggReadFlagEnv = process.env.NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_READ_AGG === '1';
-  const pruneFlag = process.env.NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_PRUNE_LEGACY === '1';
+  const aggReadFlagEnv =
+    process.env.NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_READ_AGG === "1";
+  const pruneFlag =
+    process.env.NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_PRUNE_LEGACY === "1";
   // Allow runtime override via localStorage (dev/testing) key: neuralCrawlerReadAggOverride = 'on'|'off'
   const [aggReadFlag, setAggReadFlag] = useState(aggReadFlagEnv);
   useEffect(() => {
     try {
-      const override = localStorage.getItem('neuralCrawlerReadAggOverride');
-      if (override === 'on') setAggReadFlag(true);
-      else if (override === 'off') setAggReadFlag(false);
-    } catch { }
+      const override = localStorage.getItem("neuralCrawlerReadAggOverride");
+      if (override === "on") setAggReadFlag(true);
+      else if (override === "off") setAggReadFlag(false);
+    } catch {}
   }, []);
 
   // legacyFromAggregate is a stable top-level helper
@@ -203,9 +259,9 @@ export default function NeuralCrawlerPage() {
 
     try {
       const q = query(
-        collection(db, 'neuralCrawlerHistory'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc'),
+        collection(db, "neuralCrawlerHistory"),
+        where("userId", "==", user.uid),
+        orderBy("createdAt", "desc"),
         limit(10)
       );
 
@@ -220,16 +276,15 @@ export default function NeuralCrawlerPage() {
           status: data.status,
           pagesFound: data.pagesFound || 1,
           totalTime: data.totalTime || 0,
-          createdAt: data.createdAt?.toDate() || new Date()
+          createdAt: data.createdAt?.toDate() || new Date(),
         });
       });
 
       setCrawlHistory(history);
     } catch (error) {
-      console.error('Error loading crawl history:', error);
+      console.error("Error loading crawl history:", error);
     }
   }, [user]);
-
 
   // lightweight counters for aggregate vs legacy resolution (dev telemetry only) - omitted (previously unused)
 
@@ -242,13 +297,15 @@ export default function NeuralCrawlerPage() {
       try {
         // Try aggregate doc by historyId (preferred) then legacy fallback
         if (latest.id) {
-          const aggRef = doc(db, 'neuralCrawlerResultsAgg', latest.id); // attempt direct id match first
+          const aggRef = doc(db, "neuralCrawlerResultsAgg", latest.id); // attempt direct id match first
           const aggSnap = await getDoc(aggRef);
           if (aggSnap.exists()) {
             const data: unknown = aggSnap.data();
             aggHits.current++;
             recordCrawlerAggregateHit();
-            console.info('[neuralCrawler] aggregate hit', { historyId: latest.id });
+            console.info("[neuralCrawler] aggregate hit", {
+              historyId: latest.id,
+            });
             setCurrentResult(legacyFromAggregate(data));
             return;
           }
@@ -256,31 +313,31 @@ export default function NeuralCrawlerPage() {
         // Fallback path: search by userId + url (small query: limit 1)
         if (latest.url) {
           const qLegacy = query(
-            collection(db, 'neuralCrawlerResults'),
-            where('userId', '==', user.uid),
-            where('url', '==', latest.url),
-            orderBy('createdAt', 'desc'),
+            collection(db, "neuralCrawlerResults"),
+            where("userId", "==", user.uid),
+            where("url", "==", latest.url),
+            orderBy("createdAt", "desc"),
             limit(1)
           );
           const legacySnap = await getDocs(qLegacy);
           if (!legacySnap.empty) {
             legacyFallbacks.current++;
             recordCrawlerLegacyFallback();
-            console.warn('[neuralCrawler] legacy fallback (aggregate miss)', { url: latest.url });
+            console.warn("[neuralCrawler] legacy fallback (aggregate miss)", {
+              url: latest.url,
+            });
             const docData: unknown = legacySnap.docs[0].data();
             setCurrentResult(docData as CrawlResult);
           }
         }
       } catch (err) {
-        console.warn('[neuralCrawler] hydrate failed', safeErrorMessage(err));
+        console.warn("[neuralCrawler] hydrate failed", safeErrorMessage(err));
       }
     };
     void run();
   }, [crawlHistory, aggReadFlag, currentResult, user]);
 
   // normalizeHeadingCounts and buildLinkPlaceholders are top-level helpers
-
-
 
   // Load crawl history when user becomes available
   useEffect(() => {
@@ -294,15 +351,16 @@ export default function NeuralCrawlerPage() {
     // Simulate progressive analysis
     for (let i = 0; i <= 100; i += 10) {
       setAnalysisProgress(i);
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
     }
 
     // Generate realistic crawl data
-  const mockResult: CrawlResult = {
+    const mockResult: CrawlResult = {
       id: `crawl_${Date.now()}`,
       url,
       title: "Complete SEO Guide for Modern Businesses | Expert Strategies",
-      metaDescription: "Discover proven SEO strategies that drive organic traffic. Expert insights, actionable techniques, and comprehensive analysis for business growth.",
+      metaDescription:
+        "Discover proven SEO strategies that drive organic traffic. Expert insights, actionable techniques, and comprehensive analysis for business growth.",
       content: `This comprehensive SEO guide provides expert insights into modern search engine optimization strategies. Learn about keyword research, content optimization, technical SEO, and link building techniques that drive sustainable organic growth.
 
 The guide covers essential topics including on-page optimization, site structure, user experience signals, and emerging trends in search algorithms. Whether you're a beginner or experienced marketer, these strategies will help improve your website's visibility and performance.
@@ -312,29 +370,70 @@ Key areas of focus include content quality assessment, competitive analysis, per
       readingTime: 5,
       headings: {
         h1: ["Complete SEO Guide for Modern Businesses"],
-        h2: ["Keyword Research Fundamentals", "On-Page Optimization", "Technical SEO Essentials", "Link Building Strategies"],
-        h3: ["Search Intent Analysis", "Content Optimization", "Site Speed Optimization", "Mobile-First Indexing"],
+        h2: [
+          "Keyword Research Fundamentals",
+          "On-Page Optimization",
+          "Technical SEO Essentials",
+          "Link Building Strategies",
+        ],
+        h3: [
+          "Search Intent Analysis",
+          "Content Optimization",
+          "Site Speed Optimization",
+          "Mobile-First Indexing",
+        ],
         h4: ["Tools and Resources", "Best Practices", "Common Mistakes"],
         h5: ["Advanced Techniques"],
-        h6: []
+        h6: [],
       },
       images: [
-        { src: "/seo-guide-hero.jpg", alt: "SEO Strategy Visualization", width: 1200, height: 600 },
-        { src: "/keyword-research-chart.png", alt: "Keyword Research Process", width: 800, height: 400 },
-        { src: "/technical-seo-diagram.svg", alt: "Technical SEO Components", width: 600, height: 300 }
+        {
+          src: "/seo-guide-hero.jpg",
+          alt: "SEO Strategy Visualization",
+          width: 1200,
+          height: 600,
+        },
+        {
+          src: "/keyword-research-chart.png",
+          alt: "Keyword Research Process",
+          width: 800,
+          height: 400,
+        },
+        {
+          src: "/technical-seo-diagram.svg",
+          alt: "Technical SEO Components",
+          width: 600,
+          height: 300,
+        },
       ],
       links: [
-        { href: "/blog/keyword-research", text: "Advanced Keyword Research", type: "internal" },
-        { href: "/tools/seo-analyzer", text: "SEO Analysis Tool", type: "internal" },
-        { href: "https://developers.google.com/search/docs", text: "Google Search Documentation", type: "external" },
-        { href: "https://moz.com/beginners-guide-to-seo", text: "Moz SEO Guide", type: "external" }
+        {
+          href: "/blog/keyword-research",
+          text: "Advanced Keyword Research",
+          type: "internal",
+        },
+        {
+          href: "/tools/seo-analyzer",
+          text: "SEO Analysis Tool",
+          type: "internal",
+        },
+        {
+          href: "https://developers.google.com/search/docs",
+          text: "Google Search Documentation",
+          type: "external",
+        },
+        {
+          href: "https://moz.com/beginners-guide-to-seo",
+          text: "Moz SEO Guide",
+          type: "external",
+        },
       ],
       technicalData: {
         loadTime: 1.23,
         pageSize: 234567,
         statusCode: 200,
         contentType: "text/html",
-        lastModified: new Date().toISOString()
+        lastModified: new Date().toISOString(),
       },
       seoAnalysis: {
         titleLength: 57,
@@ -342,31 +441,32 @@ Key areas of focus include content quality assessment, competitive analysis, per
         headingStructure: "Good",
         imageOptimization: 85,
         internalLinks: 12,
-        externalLinks: 8
+        externalLinks: 8,
       },
       issues: [
         {
           type: "warning",
           message: "Some images missing alt text",
-          recommendation: "Add descriptive alt text to all images for better accessibility"
+          recommendation:
+            "Add descriptive alt text to all images for better accessibility",
         },
         {
           type: "info",
           message: "Good content length detected",
-          recommendation: "Continue creating comprehensive, valuable content"
-        }
+          recommendation: "Continue creating comprehensive, valuable content",
+        },
       ],
       entities: [
         { text: "SEO", type: "concept", confidence: 0.95 },
         { text: "Google", type: "organization", confidence: 0.92 },
         { text: "keyword research", type: "concept", confidence: 0.88 },
-        { text: "content optimization", type: "concept", confidence: 0.85 }
+        { text: "content optimization", type: "concept", confidence: 0.85 },
       ],
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
-  markLive();
-  return tagSynthetic(mockResult);
+    markLive();
+    return tagSynthetic(mockResult);
   };
 
   const handleAnalyze = async () => {
@@ -377,7 +477,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
 
     const currentUserId = user.uid; // narrow non-null after guard
 
-  setIsAnalyzing(true);
+    setIsAnalyzing(true);
     setAnalysisProgress(0);
     setCurrentResult(null);
 
@@ -385,15 +485,20 @@ Key areas of focus include content quality assessment, competitive analysis, per
       // Save crawl request to history (permission errors are caught and downgraded)
       let historyId = `local_${Date.now()}`;
       try {
-        const historyDoc = await addDoc(collection(db, 'neuralCrawlerHistory'), {
-          userId: currentUserId,
-          url: crawlUrl,
-          status: 'processing',
-          createdAt: serverTimestamp()
-        });
+        const historyDoc = await addDoc(
+          collection(db, "neuralCrawlerHistory"),
+          {
+            userId: currentUserId,
+            url: crawlUrl,
+            status: "processing",
+            createdAt: serverTimestamp(),
+          }
+        );
         historyId = historyDoc.id;
       } catch {
-        console.warn('[neuralCrawler] history write denied, continuing locally');
+        console.warn(
+          "[neuralCrawler] history write denied, continuing locally"
+        );
       }
 
       // Simulate analysis
@@ -405,23 +510,26 @@ Key areas of focus include content quality assessment, competitive analysis, per
         userId: currentUserId,
         historyId,
         ...result,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
       if (!pruneFlag) {
         try {
-          await addDoc(collection(db, 'neuralCrawlerResults'), fullResult);
+          await addDoc(collection(db, "neuralCrawlerResults"), fullResult);
         } catch {
-          console.warn('[neuralCrawler] result write denied, proceeding without persistence');
+          console.warn(
+            "[neuralCrawler] result write denied, proceeding without persistence"
+          );
         }
       }
       // Dual-write compact aggregate (optional, non-blocking)
       void dualWriteNeuralCrawlerAggregate(fullResult);
 
-      try { await loadCrawlHistory(); } catch { }
+      try {
+        await loadCrawlHistory();
+      } catch {}
       toast.success("Website analysis completed successfully!");
-
     } catch (error) {
-      console.error('Analysis error:', error);
+      console.error("Analysis error:", error);
       toast.error("Analysis failed. Please try again.");
     } finally {
       setIsAnalyzing(false);
@@ -435,12 +543,14 @@ Key areas of focus include content quality assessment, competitive analysis, per
     const exportData = {
       url: currentResult.url,
       analysis: currentResult,
-      exportedAt: new Date().toISOString()
+      exportedAt: new Date().toISOString(),
     };
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `neural-crawler-${Date.now()}.json`;
     document.body.appendChild(a);
@@ -452,7 +562,10 @@ Key areas of focus include content quality assessment, competitive analysis, per
   };
 
   const ResultsSkeleton = () => (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4" aria-hidden="true">
+    <div
+      className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4"
+      aria-hidden="true"
+    >
       {Array.from({ length: 4 }).map((_, i) => (
         <Card key={i} className="animate-pulse">
           <CardContent className="p-4 space-y-3">
@@ -467,384 +580,490 @@ Key areas of focus include content quality assessment, competitive analysis, per
 
   return (
     <FeatureGate feature="neural_crawler" requiredTier="starter" showUpgrade>
-    <main className="container mx-auto py-6 px-3 sm:px-6 space-y-6">
-      <ToolPageHeader
-        title="NeuralCrawler™"
-        description="Intelligent web content extraction with JavaScript rendering."
-        badges={composeToolHeaderBadges("neural-crawler", provenance)}
-        showBreadcrumb
-      />
+      <main className="container mx-auto py-6 px-3 sm:px-6 space-y-6">
+        <ToolPageHeader
+          title="NeuralCrawler™"
+          description="Intelligent web content extraction with JavaScript rendering."
+          badges={composeToolHeaderBadges("neural-crawler", provenance)}
+          showBreadcrumb
+        />
 
-      {/* Analysis Input */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Website Analysis
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Label htmlFor="crawl-url">Website URL</Label>
-              <Input
-                id="crawl-url"
-                placeholder="https://example.com"
-                value={crawlUrl}
-                onChange={(e) => setCrawlUrl(e.target.value)}
-                disabled={isAnalyzing}
-              />
-            </div>
-            <div className="flex items-end">
-                <Button
-                  onClick={() => void handleAnalyze()}
-                disabled={isAnalyzing || !crawlUrl}
-                className="min-w-[120px]"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-4 w-4 mr-2" />
-                    Analyze
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          <AnimatePresence>
-            {isAnalyzing && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="space-y-2"
-              >
-                <div className="flex items-center justify-between text-sm">
-                  <span>Crawling and analyzing content...</span>
-                  <span>{analysisProgress}%</span>
-                </div>
-                <Progress value={analysisProgress} className="w-full" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </CardContent>
-      </Card>
-
-      {/* Results */}
-      <AnimatePresence>
-        {isAnalyzing && !currentResult && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Preparing Analysis</h2>
-            <ResultsSkeleton />
-          </motion.div>
-        )}
-  {currentResult && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Analysis Results</h2>
-              <Button onClick={exportResults} variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-            </div>
-
-            <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="content">Content</TabsTrigger>
-                <TabsTrigger value="technical">Technical</TabsTrigger>
-                <TabsTrigger value="seo">SEO Analysis</TabsTrigger>
-                <TabsTrigger value="entities">Entities</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-primary" />
-                        <div>
-                          <p className="text-2xl font-bold">{currentResult.wordCount.toLocaleString()}</p>
-                          <p className="text-sm text-muted-foreground">Words</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-success-foreground" />
-                        <div>
-                          <p className="text-2xl font-bold">{currentResult.readingTime}</p>
-                          <p className="text-sm text-muted-foreground">Min Read</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-2">
-                        <LinkIcon className="h-5 w-5 text-accent" />
-                        <div>
-                          <p className="text-2xl font-bold">{currentResult.links.length}</p>
-                          <p className="text-sm text-muted-foreground">Links Found</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Page Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-medium">Title</Label>
-                      <p className="text-sm mt-1">{currentResult.title}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">Meta Description</Label>
-                      <p className="text-sm mt-1">{currentResult.metaDescription}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">URL</Label>
-                      <p className="text-sm mt-1 text-primary">{currentResult.url}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {currentResult.issues.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Issues & Recommendations</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {currentResult.issues.map((issue, index) => (
-                        <Alert key={index} variant={issue.type === 'error' ? 'destructive' : 'default'}>
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription>
-                            <strong>{issue.message}</strong>
-                            <br />
-                            <span className="text-sm">{issue.recommendation}</span>
-                          </AlertDescription>
-                        </Alert>
-                      ))}
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-
-              <TabsContent value="content" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Heading Structure</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {Object.entries(currentResult.headings).map(([level, headings]) => (
-                      headings.length > 0 && (
-                        <div key={level}>
-                          <Badge variant="outline" className="mb-2">
-                            {level.toUpperCase()} ({headings.length})
-                          </Badge>
-                          <ul className="list-disc list-inside space-y-1 ml-4">
-                            {headings.map((heading, index) => (
-                              <li key={index} className="text-sm">{heading}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )
-                    ))}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <ImageIcon className="h-5 w-5" />
-                      Images ({currentResult.images.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {currentResult.images.slice(0, 5).map((image, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded text-sm">
-                          <ImageIcon className="h-4 w-4" />
-                          <span className="flex-1 truncate">{image.alt || 'No alt text'}</span>
-                          {image.width && image.height && (
-                            <Badge variant="outline" className="text-xs">
-                              {image.width}×{image.height}
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
-                      {currentResult.images.length > 5 && (
-                        <p className="text-sm text-muted-foreground">
-                          +{currentResult.images.length - 5} more images
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="technical" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Performance Metrics</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Load Time</span>
-                        <Badge variant={currentResult.technicalData.loadTime < 2 ? 'default' : 'destructive'}>
-                          {currentResult.technicalData.loadTime}s
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Page Size</span>
-                        <span>{(currentResult.technicalData.pageSize / 1024).toFixed(1)} KB</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Status Code</span>
-                        <Badge variant={currentResult.technicalData.statusCode === 200 ? 'default' : 'destructive'}>
-                          {currentResult.technicalData.statusCode}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Link Analysis</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Internal Links</span>
-                        <span>{currentResult.links.filter(l => l.type === 'internal').length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>External Links</span>
-                        <span>{currentResult.links.filter(l => l.type === 'external').length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Total Links</span>
-                        <span>{currentResult.links.length}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="seo" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>SEO Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Title Length</Label>
-                        <div className="flex items-center gap-2">
-                            <Progress
-                              value={(currentResult.seoAnalysis.titleLength / 60) * 100}
-                              className="flex-1"
-                          />
-                          <span className="text-sm">{currentResult.seoAnalysis.titleLength}/60</span>
-                        </div>
-                      </div>
-                      <div>
-                        <Label>Meta Description Length</Label>
-                        <div className="flex items-center gap-2">
-                            <Progress
-                              value={(currentResult.seoAnalysis.metaDescriptionLength / 160) * 100}
-                              className="flex-1"
-                          />
-                          <span className="text-sm">{currentResult.seoAnalysis.metaDescriptionLength}/160</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                      <div className="flex justify-between">
-                        <span>Heading Structure</span>
-                        <Badge variant="default">{currentResult.seoAnalysis.headingStructure}</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Image Optimization</span>
-                        <Badge variant={currentResult.seoAnalysis.imageOptimization > 80 ? 'default' : 'secondary'}>
-                          {currentResult.seoAnalysis.imageOptimization}%
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="entities" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Named Entities</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {currentResult.entities.map((entity, index) => (
-                        <Badge key={index} variant="outline" className="flex items-center gap-1">
-                          <span>{entity.text}</span>
-                          <span className="text-xs opacity-70">
-                            ({(entity.confidence * 100).toFixed(0)}%)
-                          </span>
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Crawl History */}
-      {crawlHistory.length > 0 && (
+        {/* Analysis Input */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Recent Crawls
+              <Search className="h-5 w-5" />
+              Website Analysis
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {crawlHistory.map((crawl) => (
-                <div key={crawl.id} className="flex items-center justify-between p-3 bg-muted rounded">
-                  <div className="flex items-center gap-3">
-                    <Badge variant={crawl.status === 'completed' ? 'default' : 'secondary'}>
-                      {crawl.status}
-                    </Badge>
-                    <span className="text-sm truncate max-w-md">{crawl.url}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>{crawl.pagesFound} pages</span>
-                    <span>•</span>
-                    <span>{new Date(crawl.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))}
+          <CardContent className="space-y-4">
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Label htmlFor="crawl-url">Website URL</Label>
+                <Input
+                  id="crawl-url"
+                  placeholder="https://example.com"
+                  value={crawlUrl}
+                  onChange={(e) => setCrawlUrl(e.target.value)}
+                  disabled={isAnalyzing}
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  onClick={() => void handleAnalyze()}
+                  disabled={isAnalyzing || !crawlUrl}
+                  className="min-w-[120px]"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4 mr-2" />
+                      Analyze
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
+
+            <AnimatePresence>
+              {isAnalyzing && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-2"
+                >
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Crawling and analyzing content...</span>
+                    <span>{analysisProgress}%</span>
+                  </div>
+                  <Progress value={analysisProgress} className="w-full" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </CardContent>
         </Card>
-      )}
-  </main>
-  </FeatureGate>
+
+        {/* Results */}
+        <AnimatePresence>
+          {isAnalyzing && !currentResult && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-4"
+            >
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Preparing Analysis
+              </h2>
+              <ResultsSkeleton />
+            </motion.div>
+          )}
+          {currentResult && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Analysis Results</h2>
+                <Button onClick={exportResults} variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </div>
+
+              <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="content">Content</TabsTrigger>
+                  <TabsTrigger value="technical">Technical</TabsTrigger>
+                  <TabsTrigger value="seo">SEO Analysis</TabsTrigger>
+                  <TabsTrigger value="entities">Entities</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-5 w-5 text-primary" />
+                          <div>
+                            <p className="text-2xl font-bold">
+                              {currentResult.wordCount.toLocaleString()}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Words
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-5 w-5 text-success-foreground" />
+                          <div>
+                            <p className="text-2xl font-bold">
+                              {currentResult.readingTime}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Min Read
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-2">
+                          <LinkIcon className="h-5 w-5 text-accent" />
+                          <div>
+                            <p className="text-2xl font-bold">
+                              {currentResult.links.length}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Links Found
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Page Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium">Title</Label>
+                        <p className="text-sm mt-1">{currentResult.title}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">
+                          Meta Description
+                        </Label>
+                        <p className="text-sm mt-1">
+                          {currentResult.metaDescription}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">URL</Label>
+                        <p className="text-sm mt-1 text-primary">
+                          {currentResult.url}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {currentResult.issues.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Issues & Recommendations</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        {currentResult.issues.map((issue, index) => (
+                          <Alert
+                            key={index}
+                            variant={
+                              issue.type === "error" ? "destructive" : "default"
+                            }
+                          >
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>
+                              <strong>{issue.message}</strong>
+                              <br />
+                              <span className="text-sm">
+                                {issue.recommendation}
+                              </span>
+                            </AlertDescription>
+                          </Alert>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="content" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Heading Structure</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {Object.entries(currentResult.headings).map(
+                        ([level, headings]) =>
+                          headings.length > 0 && (
+                            <div key={level}>
+                              <Badge variant="outline" className="mb-2">
+                                {level.toUpperCase()} ({headings.length})
+                              </Badge>
+                              <ul className="list-disc list-inside space-y-1 ml-4">
+                                {headings.map((heading, index) => (
+                                  <li key={index} className="text-sm">
+                                    {heading}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <ImageIcon className="h-5 w-5" />
+                        Images ({currentResult.images.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {currentResult.images
+                          .slice(0, 5)
+                          .map((image, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 p-2 bg-muted rounded text-sm"
+                            >
+                              <ImageIcon className="h-4 w-4" />
+                              <span className="flex-1 truncate">
+                                {image.alt || "No alt text"}
+                              </span>
+                              {image.width && image.height && (
+                                <Badge variant="outline" className="text-xs">
+                                  {image.width}×{image.height}
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        {currentResult.images.length > 5 && (
+                          <p className="text-sm text-muted-foreground">
+                            +{currentResult.images.length - 5} more images
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="technical" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Performance Metrics</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex justify-between">
+                          <span>Load Time</span>
+                          <Badge
+                            variant={
+                              currentResult.technicalData.loadTime < 2
+                                ? "default"
+                                : "destructive"
+                            }
+                          >
+                            {currentResult.technicalData.loadTime}s
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Page Size</span>
+                          <span>
+                            {(
+                              currentResult.technicalData.pageSize / 1024
+                            ).toFixed(1)}{" "}
+                            KB
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Status Code</span>
+                          <Badge
+                            variant={
+                              currentResult.technicalData.statusCode === 200
+                                ? "default"
+                                : "destructive"
+                            }
+                          >
+                            {currentResult.technicalData.statusCode}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Link Analysis</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex justify-between">
+                          <span>Internal Links</span>
+                          <span>
+                            {
+                              currentResult.links.filter(
+                                (l) => l.type === "internal"
+                              ).length
+                            }
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>External Links</span>
+                          <span>
+                            {
+                              currentResult.links.filter(
+                                (l) => l.type === "external"
+                              ).length
+                            }
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total Links</span>
+                          <span>{currentResult.links.length}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="seo" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>SEO Analysis</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Title Length</Label>
+                          <div className="flex items-center gap-2">
+                            <Progress
+                              value={
+                                (currentResult.seoAnalysis.titleLength / 60) *
+                                100
+                              }
+                              className="flex-1"
+                            />
+                            <span className="text-sm">
+                              {currentResult.seoAnalysis.titleLength}/60
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <Label>Meta Description Length</Label>
+                          <div className="flex items-center gap-2">
+                            <Progress
+                              value={
+                                (currentResult.seoAnalysis
+                                  .metaDescriptionLength /
+                                  160) *
+                                100
+                              }
+                              className="flex-1"
+                            />
+                            <span className="text-sm">
+                              {currentResult.seoAnalysis.metaDescriptionLength}
+                              /160
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                        <div className="flex justify-between">
+                          <span>Heading Structure</span>
+                          <Badge variant="default">
+                            {currentResult.seoAnalysis.headingStructure}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Image Optimization</span>
+                          <Badge
+                            variant={
+                              currentResult.seoAnalysis.imageOptimization > 80
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {currentResult.seoAnalysis.imageOptimization}%
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="entities" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Named Entities</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {currentResult.entities.map((entity, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="flex items-center gap-1"
+                          >
+                            <span>{entity.text}</span>
+                            <span className="text-xs opacity-70">
+                              ({(entity.confidence * 100).toFixed(0)}%)
+                            </span>
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Crawl History */}
+        {crawlHistory.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Recent Crawls
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {crawlHistory.map((crawl) => (
+                  <div
+                    key={crawl.id}
+                    className="flex items-center justify-between p-3 bg-muted rounded"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Badge
+                        variant={
+                          crawl.status === "completed" ? "default" : "secondary"
+                        }
+                      >
+                        {crawl.status}
+                      </Badge>
+                      <span className="text-sm truncate max-w-md">
+                        {crawl.url}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{crawl.pagesFound} pages</span>
+                      <span>•</span>
+                      <span>
+                        {new Date(crawl.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </main>
+    </FeatureGate>
   );
 }

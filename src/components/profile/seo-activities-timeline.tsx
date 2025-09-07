@@ -18,8 +18,17 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-interface TimestampLike { toDate: () => Date }
-function isTimestampLike(v: unknown): v is TimestampLike { return typeof v === 'object' && v !== null && 'toDate' in v && typeof (v as { toDate?: unknown }).toDate === 'function'; }
+interface TimestampLike {
+  toDate: () => Date;
+}
+function isTimestampLike(v: unknown): v is TimestampLike {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    "toDate" in v &&
+    typeof (v as { toDate?: unknown }).toDate === "function"
+  );
+}
 
 interface Activity {
   id: string;
@@ -144,13 +153,18 @@ export default function SEOActivitiesTimeline({
                   </h4>
                   <time className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                     {formatDistanceToNow(
-                      isTimestampLike(activity.timestamp) ? activity.timestamp.toDate() : new Date(
-                        typeof activity.timestamp === 'string' || typeof activity.timestamp === 'number'
-                          ? activity.timestamp
-                          : Date.now()
-                      ), {
-                      addSuffix: true,
-                    })}
+                      isTimestampLike(activity.timestamp)
+                        ? activity.timestamp.toDate()
+                        : new Date(
+                            typeof activity.timestamp === "string" ||
+                            typeof activity.timestamp === "number"
+                              ? activity.timestamp
+                              : Date.now()
+                          ),
+                      {
+                        addSuffix: true,
+                      }
+                    )}
                   </time>
                 </div>
 

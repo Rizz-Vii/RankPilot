@@ -14,7 +14,6 @@ import { identifyAndCorrectUserTiers } from "@/lib/user-tier-migration";
 import { AlertTriangle, CheckCircle, Info, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
-
 export default function AdminTierMigration() {
   const [isRunning, setIsRunning] = useState(false);
   const [migrationComplete, setMigrationComplete] = useState(false);
@@ -86,7 +85,9 @@ export default function AdminTierMigration() {
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
             <Button
-              onClick={() => { void runMigration(); }}
+              onClick={() => {
+                void runMigration();
+              }}
               disabled={isRunning}
               className="flex items-center gap-2"
             >
@@ -155,10 +156,10 @@ export default function AdminTierMigration() {
             </div>
           </div>
 
-      <div className="p-3 bg-primary/10 dark:bg-primary/15 rounded-md">
+          <div className="p-3 bg-primary/10 dark:bg-primary/15 rounded-md">
             <div className="flex items-start gap-2">
-        <AlertTriangle className="h-4 w-4 text-primary mt-0.5" />
-        <div className="text-sm text-primary dark:text-primary/80">
+              <AlertTriangle className="h-4 w-4 text-primary mt-0.5" />
+              <div className="text-sm text-primary dark:text-primary/80">
                 <p className="font-medium">What this migration does:</p>
                 <ul className="mt-1 list-disc list-inside space-y-1">
                   <li>Scans all users in the database</li>

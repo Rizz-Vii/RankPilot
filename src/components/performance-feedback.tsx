@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { severityButtonClasses, severityClasses } from '@/lib/ui/status-colors';
+import { severityButtonClasses, severityClasses } from "@/lib/ui/status-colors";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -26,10 +26,10 @@ import {
 import { useEffect, useState, type ChangeEvent } from "react";
 
 // Map severity to semantic token-based classes (success|warning|destructive)
-type SeverityLevel = 'critical' | 'high' | 'medium' | 'low';
+type SeverityLevel = "critical" | "high" | "medium" | "low";
 const getSeverityColor = (severity: string): string => {
   const level = severity.toLowerCase() as SeverityLevel;
-  if (["critical","high","medium","low"].includes(level)) {
+  if (["critical", "high", "medium", "low"].includes(level)) {
     return severityButtonClasses(level);
   }
   return "bg-muted text-foreground hover:bg-muted/80";
@@ -118,12 +118,12 @@ export function PerformanceFeedback({
         description: "Thank you for helping us improve!",
       });
 
-  setIsVisible(false);
-  // Reset form state
-  setRating(0);
-  setFeedback("");
-  setCategory('performance');
-  setSeverity('medium');
+      setIsVisible(false);
+      // Reset form state
+      setRating(0);
+      setFeedback("");
+      setCategory("performance");
+      setSeverity("medium");
     } catch {
       toast({
         variant: "destructive",
@@ -204,7 +204,9 @@ export function PerformanceFeedback({
                 {operationType}
               </Badge>
               {responseTime > showThreshold && (
-                <Badge className={`${severityClasses('high', { variant: 'subtle' })} text-xs`}>
+                <Badge
+                  className={`${severityClasses("high", { variant: "subtle" })} text-xs`}
+                >
                   <AlertTriangle className="h-3 w-3 mr-1" />
                   Slow Response
                 </Badge>
@@ -271,14 +273,18 @@ export function PerformanceFeedback({
               <Textarea
                 placeholder="Tell us about your experience..."
                 value={feedback}
-                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                  setFeedback(e.target.value)
+                }
                 className="mt-1 min-h-[80px]"
               />
             </div>
 
             <div className="flex gap-2">
               <Button
-                onClick={() => { void handleSubmit(); }}
+                onClick={() => {
+                  void handleSubmit();
+                }}
                 disabled={isSubmitting || rating === 0}
                 className="flex-1"
               >
@@ -367,9 +373,10 @@ export function FeedbackSummary() {
     }
   }, []);
 
-  const averageRating = feedbackData.length > 0
-    ? feedbackData.reduce((sum, f) => sum + f.rating, 0) / feedbackData.length
-    : 0;
+  const averageRating =
+    feedbackData.length > 0
+      ? feedbackData.reduce((sum, f) => sum + f.rating, 0) / feedbackData.length
+      : 0;
 
   const categoryBreakdown = feedbackData.reduce(
     (acc, f) => {
@@ -435,7 +442,9 @@ export function FeedbackSummary() {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Feedback Categories</CardTitle>
+          <CardTitle className="text-sm font-medium">
+            Feedback Categories
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -446,7 +455,9 @@ export function FeedbackSummary() {
               </div>
             ))}
             {Object.keys(categoryBreakdown).length === 0 && (
-              <div className="text-xs text-muted-foreground">No feedback yet</div>
+              <div className="text-xs text-muted-foreground">
+                No feedback yet
+              </div>
             )}
           </div>
         </CardContent>

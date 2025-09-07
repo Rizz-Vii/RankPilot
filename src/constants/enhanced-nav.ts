@@ -97,7 +97,7 @@ export const neuroSEOItems: NavItem[] = [
     description: "Aggregate vs legacy read adoption metrics",
     requiredTier: "starter",
     feature: "semantic_map",
-    badge: "New"
+    badge: "New",
   },
   {
     title: "TrustBlock™",
@@ -525,7 +525,8 @@ export const navGroups: NavGroup[] = [
         title: "Observability",
         href: "/admin/observability",
         icon: BarChart3,
-        description: "System KPIs & runtime metrics (provenance, latency, AI cost)",
+        description:
+          "System KPIs & runtime metrics (provenance, latency, AI cost)",
         adminOnly: true,
       },
       {
@@ -586,11 +587,11 @@ export const getVisibleNavGroups = (
           if (isAdmin) return { ...item, disabled: false };
           if (!item.requiredTier) return { ...item, disabled: false };
           if (!userTier) {
-            return includeLocked
-              ? { ...item, disabled: true }
-              : null;
+            return includeLocked ? { ...item, disabled: true } : null;
           }
-          const userIndex = TIER_HIERARCHY.indexOf(userTier as SubscriptionTier);
+          const userIndex = TIER_HIERARCHY.indexOf(
+            userTier as SubscriptionTier
+          );
           const requiredIndex = TIER_HIERARCHY.indexOf(
             item.requiredTier as SubscriptionTier
           );
@@ -622,7 +623,9 @@ export const getVisibleNavItems = (
       if (!item.requiredTier) return { ...item, disabled: false };
       if (!userTier) return includeLocked ? { ...item, disabled: true } : null;
       const userIndex = TIER_HIERARCHY.indexOf(userTier as SubscriptionTier);
-      const requiredIndex = TIER_HIERARCHY.indexOf(item.requiredTier as SubscriptionTier);
+      const requiredIndex = TIER_HIERARCHY.indexOf(
+        item.requiredTier as SubscriptionTier
+      );
       const unlocked = userIndex >= requiredIndex;
       if (!unlocked && !includeLocked) return null;
       return { ...item, disabled: !unlocked };

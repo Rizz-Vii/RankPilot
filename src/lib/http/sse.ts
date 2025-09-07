@@ -1,15 +1,15 @@
-import type { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
 
 export interface SSEOptions {
-    heartbeatMs?: number;
-    headers?: Record<string, string>;
+  heartbeatMs?: number;
+  headers?: Record<string, string>;
 }
 
 export interface SSEClient {
-    send: (data: unknown) => void;
-    sendRaw: (raw: string) => void;
-    close: () => void;
-    signal: AbortSignal;
+  send: (data: unknown) => void;
+  sendRaw: (raw: string) => void;
+  close: () => void;
+  signal: AbortSignal;
 }
 
 /**
@@ -22,55 +22,66 @@ export interface SSEClient {
  *   }, { headers: cors.headers, heartbeatMs: 15000 })
  */
 export function sse(
-    req: NextRequest,
-    onClient: (client: SSEClient) => void,
-    options: SSEOptions = {}
+  req: NextRequest,
+  onClient: (client: SSEClient) => void,
+  options: SSEOptions = {}
 ): Response {
-    const heartbeatMs = options.heartbeatMs ?? 15000;
-    const encoder = new TextEncoder();
+  const heartbeatMs = options.heartbeatMs ?? 15000;
+  const encoder = new TextEncoder();
 
-    let interval: ReturnType<typeof setInterval> | undefined;
+  let interval: ReturnType<typeof setInterval> | undefined;
 
-    const stream = new ReadableStream<Uint8Array>({
-        async start(controller) {
-            let closed = false;
-            const safeEnqueue = (raw: string) => {
-                if (closed) return;
-                try {
-                    controller.enqueue(encoder.encode(raw));
-                } catch {
-                    closed = true;
-                    try { controller.close(); } catch { /* ignore */ }
-                }
-            };
-            const sendRaw = (raw: string) => safeEnqueue(raw.endsWith('\n\n') ? raw : raw + '\n\n');
-            const send = (data: unknown) => sendRaw(`data: ${JSON.stringify(data)}\n\n`);
-            const close = () => {
-                if (closed) return;
-                closed = true;
-                try { controller.close(); } catch { /* ignore */ }
-                if (interval !== undefined) clearInterval(interval as unknown as number);
-            };
-            // Heartbeat keep-alive
-            interval = setInterval(() => {
-                send({ type: 'heartbeat' });
-            }, heartbeatMs);
-
-            // Abort handling
-            req.signal.addEventListener('abort', () => close());
-
-            // Invoke client handler synchronously; if it returns a Promise, it will be ignored by design
-            const result = onClient({ send, sendRaw, close, signal: req.signal });
-            void result; // explicitly ignore any potential Promise to satisfy lint rules
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let closed = false;
+      const safeEnqueue = (raw: string) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(raw));
+        } catch {
+          closed = true;
+          try {
+            controller.close();
+          } catch {
+            /* ignore */
+          }
         }
-    });
-
-    return new Response(stream, {
-        headers: {
-            'Content-Type': 'text/event-stream; charset=utf-8',
-            'Cache-Control': 'no-cache, no-transform',
-            'X-Accel-Buffering': 'no',
-            ...(options.headers || {}),
+      };
+      const sendRaw = (raw: string) =>
+        safeEnqueue(raw.endsWith("\n\n") ? raw : raw + "\n\n");
+      const send = (data: unknown) =>
+        sendRaw(`data: ${JSON.stringify(data)}\n\n`);
+      const close = () => {
+        if (closed) return;
+        closed = true;
+        try {
+          controller.close();
+        } catch {
+          /* ignore */
         }
-    });
+        if (interval !== undefined)
+          clearInterval(interval as unknown as number);
+      };
+      // Heartbeat keep-alive
+      interval = setInterval(() => {
+        send({ type: "heartbeat" });
+      }, heartbeatMs);
+
+      // Abort handling
+      req.signal.addEventListener("abort", () => close());
+
+      // Invoke client handler synchronously; if it returns a Promise, it will be ignored by design
+      const result = onClient({ send, sendRaw, close, signal: req.signal });
+      void result; // explicitly ignore any potential Promise to satisfy lint rules
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+      ...(options.headers || {}),
+    },
+  });
 }

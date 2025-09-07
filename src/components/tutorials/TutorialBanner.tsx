@@ -52,7 +52,7 @@ export function TutorialBanner({
         description: "Learn to analyze competitors and identify market gaps.",
         tutorials: ["ca-1"],
       },
-  link_view: {
+      link_view: {
         title: "Link Building Strategies",
         description:
           "Master link analysis and develop effective link building campaigns.",

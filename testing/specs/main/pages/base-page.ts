@@ -26,7 +26,9 @@ export class BasePage {
     await this.page.waitForLoadState("domcontentloaded");
     await randomDelay();
     // Wait for any loading spinner to disappear if present
-    await this.loadingSpinner.waitFor({ state: "hidden", timeout: 30000 }).catch(() => { });
+    await this.loadingSpinner
+      .waitFor({ state: "hidden", timeout: 30000 })
+      .catch(() => {});
   }
 
   async navigateTo(path: string) {

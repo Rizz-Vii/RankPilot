@@ -75,10 +75,7 @@ export default function CompetitorAnalysisForm({
         </CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form
-          onSubmit={handleFormEvent}
-          className="space-y-8"
-        >
+        <form onSubmit={handleFormEvent} className="space-y-8">
           <CardContent className="space-y-4">
             <FormField
               control={form.control}

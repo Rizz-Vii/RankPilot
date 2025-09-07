@@ -9,11 +9,7 @@
   "theme_color": "#1e6bb5",
   "scope": "/",
   "lang": "en-US",
-  "categories": [
-    "productivity",
-    "business",
-    "marketing"
-  ],
+  "categories": ["productivity", "business", "marketing"],
   "icons": [
     {
       "src": "/favicon-16x16.png",

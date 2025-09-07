@@ -11,9 +11,12 @@
  * - Custom branding and watermarks
  */
 
-import * as XLSX from 'xlsx';
-import type { ChartDataPoint, ChartExportConfig } from './d3-visualization-engine';
-import type { ExportJob } from './types';
+import * as XLSX from "xlsx";
+import type {
+  ChartDataPoint,
+  ChartExportConfig,
+} from "./d3-visualization-engine";
+import type { ExportJob } from "./types";
 
 // Minimal jsPDF surface used by our helpers
 // Keep narrow to avoid importing types from jspdf and to stay SSR-safe
@@ -21,743 +24,928 @@ import type { ExportJob } from './types';
 // getNumberOfPages, setPage, saveGraphicsState/restoreGraphicsState, setProperties, output, internal.pageSize
 // Some methods like saveGraphicsState/restoreGraphicsState may be optional across versions, so we guard with optional chaining
 type PdfDoc = {
-    addImage: (imageData: string, format: string, x: number, y: number, width: number, height: number) => void;
-    setFontSize: (size: number) => void;
-    setFont: (family: string, style?: string) => void;
-    text: (text: string, x: number, y: number, options?: { align?: 'left' | 'center' | 'right'; angle?: number }) => void;
-    setTextColor: (r: number, g: number, b: number) => void;
-    setDrawColor: (r: number, g: number, b: number) => void;
-    addPage: () => void;
-    rect: (x: number, y: number, w: number, h: number) => void;
-    getNumberOfPages: () => number;
-    setPage: (page: number) => void;
-    saveGraphicsState?: () => void;
-    restoreGraphicsState?: () => void;
-    setProperties: (props: Record<string, unknown>) => void;
-    output: (type: 'blob') => Blob;
-    internal: { pageSize: { getWidth: () => number; getHeight: () => number } };
+  addImage: (
+    imageData: string,
+    format: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => void;
+  setFontSize: (size: number) => void;
+  setFont: (family: string, style?: string) => void;
+  text: (
+    text: string,
+    x: number,
+    y: number,
+    options?: { align?: "left" | "center" | "right"; angle?: number }
+  ) => void;
+  setTextColor: (r: number, g: number, b: number) => void;
+  setDrawColor: (r: number, g: number, b: number) => void;
+  addPage: () => void;
+  rect: (x: number, y: number, w: number, h: number) => void;
+  getNumberOfPages: () => number;
+  setPage: (page: number) => void;
+  saveGraphicsState?: () => void;
+  restoreGraphicsState?: () => void;
+  setProperties: (props: Record<string, unknown>) => void;
+  output: (type: "blob") => Blob;
+  internal: { pageSize: { getWidth: () => number; getHeight: () => number } };
 };
 
 export interface ExportBatch {
-    id: string;
-    charts: string[];
-    format: 'pdf' | 'excel' | 'json' | 'zip';
-    config: BatchExportConfig;
+  id: string;
+  charts: string[];
+  format: "pdf" | "excel" | "json" | "zip";
+  config: BatchExportConfig;
 }
 
 export interface BatchExportConfig {
-    title?: string;
-    subtitle?: string;
-    author?: string;
-    company?: string;
-    logo?: string;
-    watermark?: boolean;
-    includeMetadata?: boolean;
-    includeTimestamp?: boolean;
-    pageOrientation?: 'portrait' | 'landscape';
-    margins?: {
-        top: number;
-        right: number;
-        bottom: number;
-        left: number;
-    };
+  title?: string;
+  subtitle?: string;
+  author?: string;
+  company?: string;
+  logo?: string;
+  watermark?: boolean;
+  includeMetadata?: boolean;
+  includeTimestamp?: boolean;
+  pageOrientation?: "portrait" | "landscape";
+  margins?: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
 }
 
 export interface ExcelWorkbook {
-    sheets: ExcelSheet[];
-    metadata: {
-        title: string;
-        author: string;
-        created: Date;
-        company?: string;
-    };
+  sheets: ExcelSheet[];
+  metadata: {
+    title: string;
+    author: string;
+    created: Date;
+    company?: string;
+  };
 }
 
 export interface ExcelSheet {
-    name: string;
-    data: unknown[][];
-    charts?: ExcelChart[];
-    formatting?: ExcelFormatting;
+  name: string;
+  data: unknown[][];
+  charts?: ExcelChart[];
+  formatting?: ExcelFormatting;
 }
 
 export interface ExcelChart {
-    type: 'line' | 'bar' | 'pie' | 'scatter';
-    dataRange: string;
-    position: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    };
-    title?: string;
+  type: "line" | "bar" | "pie" | "scatter";
+  dataRange: string;
+  position: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  title?: string;
 }
 
 export interface ExcelFormatting {
-    headerStyle?: {
-        font?: { bold?: boolean; size?: number; color?: string; };
-        fill?: { fgColor?: string; };
-        alignment?: { horizontal?: string; vertical?: string; };
-    };
-    cellStyle?: {
-        font?: { size?: number; color?: string; };
-        fill?: { fgColor?: string; };
-    };
+  headerStyle?: {
+    font?: { bold?: boolean; size?: number; color?: string };
+    fill?: { fgColor?: string };
+    alignment?: { horizontal?: string; vertical?: string };
+  };
+  cellStyle?: {
+    font?: { size?: number; color?: string };
+    fill?: { fgColor?: string };
+  };
 }
 
 export class ChartExportManager {
-    private exportHistory: Map<string, unknown> = new Map();
-    private batchQueue: Map<string, ExportBatch> = new Map();
+  private exportHistory: Map<string, unknown> = new Map();
+  private batchQueue: Map<string, ExportBatch> = new Map();
 
-    constructor() {
-        // Initialize export history tracking (browser only)
-        if (typeof window !== 'undefined' && typeof globalThis !== 'undefined' && 'localStorage' in globalThis) {
-            this.loadExportHistory();
+  constructor() {
+    // Initialize export history tracking (browser only)
+    if (
+      typeof window !== "undefined" &&
+      typeof globalThis !== "undefined" &&
+      "localStorage" in globalThis
+    ) {
+      this.loadExportHistory();
+    }
+  }
+
+  // ----- Color helpers (avoid raw hex literals in source, compute at runtime) -----
+  private clampByte(n: number): number {
+    const r = Math.round(n);
+    return Math.max(0, Math.min(255, Number.isFinite(r) ? r : 0));
+  }
+  private toHex2(n: number): string {
+    return this.clampByte(n).toString(16).padStart(2, "0");
+  }
+  private hexFromRGB(r: number, g: number, b: number): string {
+    return `#${this.toHex2(r)}${this.toHex2(g)}${this.toHex2(b)}`;
+  }
+  private cssColorToHex(v: string): string {
+    if (!v) return "";
+    const hexMatch = v.match(/^#([0-9a-fA-F]{6})$/);
+    if (hexMatch) return `#${hexMatch[1]}`;
+    if (/^rgba?\(/i.test(v)) {
+      const parts = v
+        .replace(/rgba?\(|\)/g, "")
+        .split(",")
+        .map((s) => parseFloat(s.trim()));
+      if (parts.length >= 3 && parts.slice(0, 3).every(Number.isFinite)) {
+        const [r, g, b] = parts;
+        return this.hexFromRGB(r, g, b);
+      }
+    }
+    if (/^hsla?\(/i.test(v)) {
+      const parts = v
+        .replace(/hsla?\(|\)/g, "")
+        .split(",")
+        .map((s) => s.trim());
+      const h = parseFloat(parts[0]);
+      const s = parseFloat(parts[1]) / 100;
+      const l = parseFloat(parts[2]) / 100;
+      if ([h, s, l].every(Number.isFinite)) {
+        const c = (1 - Math.abs(2 * l - 1)) * s;
+        const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+        const m = l - c / 2;
+        let rr = 0,
+          gg = 0,
+          bb = 0;
+        if (h < 60) {
+          rr = c;
+          gg = x;
+          bb = 0;
+        } else if (h < 120) {
+          rr = x;
+          gg = c;
+          bb = 0;
+        } else if (h < 180) {
+          rr = 0;
+          gg = c;
+          bb = x;
+        } else if (h < 240) {
+          rr = 0;
+          gg = x;
+          bb = c;
+        } else if (h < 300) {
+          rr = x;
+          gg = 0;
+          bb = c;
+        } else {
+          rr = c;
+          gg = 0;
+          bb = x;
         }
+        return this.hexFromRGB(255 * (rr + m), 255 * (gg + m), 255 * (bb + m));
+      }
+    }
+    return "";
+  }
+  private resolveTokenToHex(
+    tokenName: string,
+    fallbackRGB: [number, number, number]
+  ): string {
+    try {
+      if (typeof window === "undefined") {
+        const [r, g, b] = fallbackRGB;
+        return this.hexFromRGB(r, g, b);
+      }
+      const v = getComputedStyle(document.documentElement)
+        .getPropertyValue(tokenName)
+        .trim();
+      const hex = this.cssColorToHex(v);
+      if (hex) return hex;
+    } catch {
+      /* ignore */
+    }
+    const [r, g, b] = fallbackRGB;
+    return this.hexFromRGB(r, g, b);
+  }
+
+  /**
+   * Export single chart with enhanced options
+   */
+  async exportChart(
+    chartId: string,
+    chartData:
+      | { image?: string; svg?: string; data?: ChartDataPoint[] }
+      | Record<string, unknown>,
+    config: ChartExportConfig
+  ): Promise<string> {
+    try {
+      let result: string;
+
+      switch (config.format) {
+        case "pdf":
+          result = await this.exportChartToPDF(chartData, config);
+          break;
+        case "excel":
+          result = await this.exportChartToExcel(chartData, config);
+          break;
+        case "png":
+          result = await this.exportChartToPNG(chartData);
+          break;
+        case "svg":
+          result = this.exportChartToSVG(chartData);
+          break;
+        case "json":
+          result = this.exportChartToJSON(chartData, config);
+          break;
+        default:
+          throw new Error(`Unsupported export format: ${config.format}`);
+      }
+
+      // Track export in history
+      this.addToExportHistory(chartId, config, result);
+
+      return result;
+    } catch (error) {
+      console.error("Chart export failed:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Export multiple charts to PDF report
+   */
+  async exportBatchToPDF(batchId: string): Promise<string> {
+    const batch = this.batchQueue.get(batchId);
+    if (!batch) {
+      throw new Error(`Batch ${batchId} not found`);
     }
 
-    // ----- Color helpers (avoid raw hex literals in source, compute at runtime) -----
-    private clampByte(n: number): number { const r = Math.round(n); return Math.max(0, Math.min(255, Number.isFinite(r) ? r : 0)); }
-    private toHex2(n: number): string { return this.clampByte(n).toString(16).padStart(2, '0'); }
-    private hexFromRGB(r: number, g: number, b: number): string { return `#${this.toHex2(r)}${this.toHex2(g)}${this.toHex2(b)}`; }
-    private cssColorToHex(v: string): string {
-        if (!v) return '';
-        const hexMatch = v.match(/^#([0-9a-fA-F]{6})$/);
-        if (hexMatch) return `#${hexMatch[1]}`;
-        if (/^rgba?\(/i.test(v)) {
-            const parts = v.replace(/rgba?\(|\)/g, '').split(',').map(s => parseFloat(s.trim()));
-            if (parts.length >= 3 && parts.slice(0, 3).every(Number.isFinite)) {
-                const [r, g, b] = parts;
-                return this.hexFromRGB(r, g, b);
-            }
+    const { default: jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({
+      orientation: batch.config.pageOrientation || "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margins = batch.config.margins || {
+      top: 20,
+      right: 20,
+      bottom: 20,
+      left: 20,
+    };
+
+    // Add title page
+    this.addPDFTitlePage(pdf, batch.config, pageWidth, pageHeight, margins);
+
+    // Add charts
+    for (let i = 0; i < batch.charts.length; i++) {
+      const chartId = batch.charts[i];
+
+      if (i > 0) {
+        pdf.addPage();
+      }
+
+      await this.addChartToPDF(pdf, chartId, pageWidth, pageHeight, margins);
+    }
+
+    // Add metadata and watermark
+    if (batch.config.watermark) {
+      this.addPDFWatermark(pdf, batch.config.company || "RankPilot");
+    }
+
+    if (batch.config.includeMetadata) {
+      this.addPDFMetadata(pdf, batch.config);
+    }
+
+    const pdfBlob = pdf.output("blob");
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+    // Track batch export
+    this.addToBatchHistory(batchId, "pdf", pdfUrl);
+
+    return pdfUrl;
+  }
+
+  /**
+   * Export multiple charts to Excel workbook
+   */
+  async exportBatchToExcel(batchId: string): Promise<string> {
+    const batch = this.batchQueue.get(batchId);
+    if (!batch) {
+      throw new Error(`Batch ${batchId} not found`);
+    }
+
+    const workbook: ExcelWorkbook = {
+      sheets: [],
+      metadata: {
+        title: batch.config.title || "Chart Export",
+        author: batch.config.author || "RankPilot",
+        created: new Date(),
+        company: batch.config.company,
+      },
+    };
+
+    // Create summary sheet
+    const summarySheet = this.createSummarySheet(batch);
+    workbook.sheets.push(summarySheet);
+
+    // Add individual chart sheets
+    for (const chartId of batch.charts) {
+      const chartSheet = await this.createChartSheet(chartId);
+      workbook.sheets.push(chartSheet);
+    }
+
+    // Generate Excel file
+    const wb = XLSX.utils.book_new();
+
+    // Add metadata
+    wb.Props = {
+      Title: workbook.metadata.title,
+      Author: workbook.metadata.author,
+      CreatedDate: workbook.metadata.created,
+      Company: workbook.metadata.company,
+    };
+
+    // Add sheets
+    workbook.sheets.forEach((sheet) => {
+      const ws = XLSX.utils.aoa_to_sheet(sheet.data);
+
+      // Apply formatting if available
+      if (sheet.formatting) {
+        this.applyExcelFormatting(ws, sheet.formatting);
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, sheet.name);
+    });
+
+    // Generate binary
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const excelBlob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const excelUrl = URL.createObjectURL(excelBlob);
+
+    // Track batch export
+    this.addToBatchHistory(batchId, "excel", excelUrl);
+
+    return excelUrl;
+  }
+
+  /**
+   * Create export batch
+   */
+  createBatch(
+    chartIds: string[],
+    format: "pdf" | "excel",
+    config: BatchExportConfig
+  ): string {
+    const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    const batch: ExportBatch = {
+      id: batchId,
+      charts: chartIds,
+      format,
+      config,
+    };
+
+    this.batchQueue.set(batchId, batch);
+    return batchId;
+  }
+
+  /**
+   * Get export history
+   */
+  getExportHistory(): unknown[] {
+    return Array.from(this.exportHistory.values());
+  }
+
+  /**
+   * Clear export history
+   */
+  clearExportHistory(): void {
+    this.exportHistory.clear();
+    this.saveExportHistory();
+  }
+
+  /**
+   * Private helper methods
+   */
+  private async exportChartToPDF(
+    chartData: unknown,
+    config: ChartExportConfig
+  ): Promise<string> {
+    const { default: jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    // Add title
+    if (config.title) {
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(config.title, pageWidth / 2, 20, { align: "center" });
+    }
+
+    // Add chart image
+    if ((chartData as { image?: string })?.image) {
+      const imgWidth = config.width || pageWidth - 40;
+      const imgHeight = config.height || imgWidth * 0.6;
+      const x = (pageWidth - imgWidth) / 2;
+      const y = config.title ? 35 : 20;
+      pdf.addImage(
+        (chartData as { image?: string }).image!,
+        "PNG",
+        x,
+        y,
+        imgWidth,
+        imgHeight
+      );
+    }
+
+    // Add timestamp
+    if (config.watermark) {
+      pdf.setFontSize(8);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(128, 128, 128);
+      pdf.text(
+        `Generated by RankPilot on ${new Date().toLocaleString()}`,
+        10,
+        pageHeight - 10
+      );
+    }
+
+    const pdfBlob = pdf.output("blob");
+    return URL.createObjectURL(pdfBlob);
+  }
+
+  private async exportChartToExcel(
+    chartData: unknown,
+    config: ChartExportConfig
+  ): Promise<string> {
+    // Resolve colors at runtime (primary header background and text)
+    const headerBg = this.resolveTokenToHex(
+      "--color-primary-500",
+      [79, 70, 229]
+    );
+    const headerText = this.resolveTokenToHex(
+      "--color-primary-foreground",
+      [255, 255, 255]
+    );
+
+    const workbook: ExcelWorkbook = {
+      sheets: [
+        {
+          name: "Chart Data",
+          data: this.convertChartDataToTable(chartData),
+          formatting: {
+            headerStyle: {
+              font: { bold: true, size: 12, color: headerText },
+              fill: { fgColor: headerBg },
+              alignment: { horizontal: "center", vertical: "center" },
+            },
+            cellStyle: {
+              font: { size: 10 },
+            },
+          },
+        },
+      ],
+      metadata: {
+        title: config.title || "Chart Export",
+        author: "RankPilot",
+        created: new Date(),
+      },
+    };
+
+    return this.generateExcelFile(workbook);
+  }
+
+  private async exportChartToPNG(chartData: {
+    image?: string;
+  }): Promise<string> {
+    // Prefer client-provided PNG data URL; otherwise rasterization happens server-side
+    return chartData?.image || "data:image/png;base64,";
+  }
+
+  private exportChartToSVG(chartData: { svg?: string }): string {
+    return chartData?.svg || "<svg></svg>";
+  }
+
+  private exportChartToJSON(
+    chartData: unknown,
+    config: ChartExportConfig
+  ): string {
+    const exportData = {
+      chart: chartData,
+      config,
+      exported: new Date().toISOString(),
+      version: "1.0",
+    };
+
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    return URL.createObjectURL(blob);
+  }
+
+  private addPDFTitlePage(
+    pdf: PdfDoc,
+    config: BatchExportConfig,
+    pageWidth: number,
+    pageHeight: number,
+    margins: Required<NonNullable<BatchExportConfig["margins"]>>
+  ): void {
+    // Add logo if provided
+    if (config.logo) {
+      pdf.addImage(config.logo, "PNG", margins.left, margins.top, 40, 20);
+    }
+
+    // Add title
+    if (config.title) {
+      pdf.setFontSize(24);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(config.title, pageWidth / 2, pageHeight / 2 - 20, {
+        align: "center",
+      });
+    }
+
+    // Add subtitle
+    if (config.subtitle) {
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(config.subtitle, pageWidth / 2, pageHeight / 2, {
+        align: "center",
+      });
+    }
+
+    // Add author and company
+    if (config.author || config.company) {
+      pdf.setFontSize(12);
+      const authorText = config.author ? `By: ${config.author}` : "";
+      const companyText = config.company ? `Company: ${config.company}` : "";
+
+      let yPos = pageHeight / 2 + 40;
+      if (authorText) {
+        pdf.text(authorText, pageWidth / 2, yPos, { align: "center" });
+        yPos += 10;
+      }
+      if (companyText) {
+        pdf.text(companyText, pageWidth / 2, yPos, { align: "center" });
+      }
+    }
+
+    // Add timestamp
+    if (config.includeTimestamp) {
+      pdf.setFontSize(10);
+      pdf.setTextColor(128, 128, 128);
+      pdf.text(
+        `Generated on ${new Date().toLocaleString()}`,
+        pageWidth / 2,
+        pageHeight - margins.bottom,
+        { align: "center" }
+      );
+    }
+  }
+
+  private async addChartToPDF(
+    pdf: PdfDoc,
+    chartId: string,
+    pageWidth: number,
+    _pageHeight: number,
+    margins: Required<NonNullable<BatchExportConfig["margins"]>>
+  ): Promise<void> {
+    // This would fetch the actual chart data and image in a full implementation
+    pdf.setFontSize(14);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`Chart: ${chartId}`, margins.left, margins.top + 20);
+
+    // Draw a container area where the chart image would be placed
+    pdf.setDrawColor(200, 200, 200);
+    pdf.rect(
+      margins.left,
+      margins.top + 30,
+      pageWidth - margins.left - margins.right,
+      100
+    );
+
+    pdf.setFontSize(10);
+    pdf.setTextColor(128, 128, 128);
+    pdf.text(
+      "Chart image would be rendered here",
+      pageWidth / 2,
+      margins.top + 80,
+      { align: "center" }
+    );
+  }
+
+  private addPDFWatermark(pdf: PdfDoc, text: string): void {
+    const pageCount = pdf.getNumberOfPages();
+
+    for (let i = 1; i <= pageCount; i++) {
+      pdf.setPage(i);
+      pdf.setTextColor(220, 220, 220);
+      pdf.setFontSize(50);
+      pdf.saveGraphicsState?.();
+      pdf.text(
+        text,
+        pdf.internal.pageSize.getWidth() / 2,
+        pdf.internal.pageSize.getHeight() / 2,
+        {
+          align: "center",
+          angle: 45,
         }
-        if (/^hsla?\(/i.test(v)) {
-            const parts = v.replace(/hsla?\(|\)/g, '').split(',').map(s => s.trim());
-            const h = parseFloat(parts[0]);
-            const s = parseFloat(parts[1]) / 100;
-            const l = parseFloat(parts[2]) / 100;
-            if ([h, s, l].every(Number.isFinite)) {
-                const c = (1 - Math.abs(2 * l - 1)) * s;
-                const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-                const m = l - c / 2;
-                let rr = 0, gg = 0, bb = 0;
-                if (h < 60) { rr = c; gg = x; bb = 0; }
-                else if (h < 120) { rr = x; gg = c; bb = 0; }
-                else if (h < 180) { rr = 0; gg = c; bb = x; }
-                else if (h < 240) { rr = 0; gg = x; bb = c; }
-                else if (h < 300) { rr = x; gg = 0; bb = c; }
-                else { rr = c; gg = 0; bb = x; }
-                return this.hexFromRGB(255 * (rr + m), 255 * (gg + m), 255 * (bb + m));
-            }
+      );
+      pdf.restoreGraphicsState?.();
+    }
+  }
+
+  private addPDFMetadata(pdf: PdfDoc, config: BatchExportConfig): void {
+    pdf.setProperties({
+      title: config.title || "Chart Export",
+      subject: config.subtitle || "Generated by RankPilot",
+      author: config.author || "RankPilot",
+      creator: "RankPilot Chart Export System",
+      keywords: "charts, analytics, SEO, RankPilot",
+    });
+  }
+
+  private createSummarySheet(batch: ExportBatch): ExcelSheet {
+    // Resolve colors for summary header
+    const summaryBg = this.resolveTokenToHex(
+      "--color-primary-500",
+      [79, 70, 229]
+    );
+    const summaryText = this.resolveTokenToHex(
+      "--color-primary-foreground",
+      [255, 255, 255]
+    );
+
+    const data: unknown[][] = [
+      ["Chart Export Summary"],
+      [""],
+      ["Export Details"],
+      ["Batch ID:", batch.id],
+      ["Generated:", new Date().toLocaleString()],
+      ["Format:", batch.format],
+      ["Charts Count:", batch.charts.length.toString()],
+      [""],
+      ["Chart List"],
+      ["Chart ID", "Status"],
+    ];
+
+    // Add chart list
+    batch.charts.forEach((chartId) => {
+      data.push([chartId, "Exported"]);
+    });
+
+    return {
+      name: "Summary",
+      data,
+      formatting: {
+        headerStyle: {
+          font: { bold: true, size: 14, color: summaryText },
+          fill: { fgColor: summaryBg },
+        },
+      },
+    };
+  }
+
+  private async createChartSheet(chartId: string): Promise<ExcelSheet> {
+    // This would fetch actual chart data; currently populates a sample sheet
+    const data: unknown[][] = [
+      [`Chart Data: ${chartId}`],
+      [""],
+      ["X Axis", "Y Axis", "Series"],
+      ["Jan", "100", "Revenue"],
+      ["Feb", "150", "Revenue"],
+      ["Mar", "120", "Revenue"],
+      ["Apr", "180", "Revenue"],
+      ["May", "200", "Revenue"],
+    ];
+
+    const successBg = this.resolveTokenToHex(
+      "--color-success-500",
+      [16, 185, 129]
+    );
+    const successText = this.resolveTokenToHex(
+      "--color-success-foreground",
+      [255, 255, 255]
+    );
+
+    return {
+      name: chartId.substring(0, 31), // Excel sheet name limit
+      data,
+      formatting: {
+        headerStyle: {
+          font: { bold: true, size: 12, color: successText },
+          fill: { fgColor: successBg },
+        },
+      },
+    };
+  }
+
+  // Basic worksheet type shape used from xlsx library; keep minimal index signature
+  private applyExcelFormatting(
+    worksheet: { [cell: string]: unknown; ["!ref"]?: string },
+    formatting: ExcelFormatting
+  ): void {
+    // Apply header formatting to first row
+    if (formatting.headerStyle) {
+      const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1");
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+        const cell = worksheet[cellAddress] as
+          | Record<string, unknown>
+          | undefined;
+        if (!cell) continue;
+        (cell as { s?: unknown }).s = formatting.headerStyle;
+      }
+    }
+
+    // Apply cell formatting to data rows
+    if (formatting.cellStyle) {
+      const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1");
+      for (let row = 1; row <= range.e.r; row++) {
+        for (let col = range.s.c; col <= range.e.c; col++) {
+          const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+          const cell = worksheet[cellAddress] as
+            | Record<string, unknown>
+            | undefined;
+          if (!cell) continue;
+          (cell as { s?: unknown }).s = formatting.cellStyle;
         }
-        return '';
+      }
     }
-    private resolveTokenToHex(tokenName: string, fallbackRGB: [number, number, number]): string {
-        try {
-            if (typeof window === 'undefined') {
-                const [r, g, b] = fallbackRGB; return this.hexFromRGB(r, g, b);
-            }
-            const v = getComputedStyle(document.documentElement).getPropertyValue(tokenName).trim();
-            const hex = this.cssColorToHex(v);
-            if (hex) return hex;
-        } catch { /* ignore */ }
-        const [r, g, b] = fallbackRGB; return this.hexFromRGB(r, g, b);
+  }
+
+  private convertChartDataToTable(chartData: unknown): unknown[][] {
+    // Convert chart data to table format for Excel
+    const headers = ["X", "Y", "Series", "Value"];
+    const rows = [headers];
+
+    const dataPoints = (chartData as { data?: ChartDataPoint[] })?.data;
+    if (Array.isArray(dataPoints)) {
+      dataPoints.forEach((point: Partial<ChartDataPoint>) => {
+        rows.push([
+          point?.x != null ? String(point.x) : "",
+          point?.y != null ? String(point.y) : "",
+          point.series || "Default",
+          point.value != null
+            ? String(point.value)
+            : point.y != null
+              ? String(point.y)
+              : "",
+        ]);
+      });
     }
 
-    /**
-     * Export single chart with enhanced options
-     */
-    async exportChart(
-        chartId: string,
-        chartData: { image?: string; svg?: string; data?: ChartDataPoint[] } | Record<string, unknown>,
-        config: ChartExportConfig
-    ): Promise<string> {
-        try {
-            let result: string;
+    return rows;
+  }
 
-            switch (config.format) {
-                case 'pdf':
-                    result = await this.exportChartToPDF(chartData, config);
-                    break;
-                case 'excel':
-                    result = await this.exportChartToExcel(chartData, config);
-                    break;
-                case 'png':
-                    result = await this.exportChartToPNG(chartData);
-                    break;
-                case 'svg':
-                    result = this.exportChartToSVG(chartData);
-                    break;
-                case 'json':
-                    result = this.exportChartToJSON(chartData, config);
-                    break;
-                default:
-                    throw new Error(`Unsupported export format: ${config.format}`);
-            }
+  private generateExcelFile(workbook: ExcelWorkbook): string {
+    const wb = XLSX.utils.book_new();
 
-            // Track export in history
-            this.addToExportHistory(chartId, config, result);
+    // Add metadata
+    wb.Props = {
+      Title: workbook.metadata.title,
+      Author: workbook.metadata.author,
+      CreatedDate: workbook.metadata.created,
+      Company: workbook.metadata.company,
+    };
 
-            return result;
-        } catch (error) {
-            console.error('Chart export failed:', error);
-            throw error;
+    // Add sheets
+    workbook.sheets.forEach((sheet) => {
+      const ws = XLSX.utils.aoa_to_sheet(sheet.data);
+
+      if (sheet.formatting) {
+        this.applyExcelFormatting(ws, sheet.formatting);
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, sheet.name);
+    });
+
+    // Generate binary
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const excelBlob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    return URL.createObjectURL(excelBlob);
+  }
+
+  private addToExportHistory(
+    chartId: string,
+    config: ChartExportConfig,
+    result: string
+  ): void {
+    const historyEntry = {
+      id: `export_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      chartId,
+      config,
+      result,
+      timestamp: new Date().toISOString(),
+      type: "single",
+    };
+
+    this.exportHistory.set(historyEntry.id, historyEntry);
+    this.saveExportHistory();
+  }
+
+  private addToBatchHistory(
+    batchId: string,
+    format: string,
+    result: string
+  ): void {
+    const historyEntry = {
+      id: `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      batchId,
+      format,
+      result,
+      timestamp: new Date().toISOString(),
+      type: "batch",
+    };
+
+    this.exportHistory.set(historyEntry.id, historyEntry);
+    this.saveExportHistory();
+  }
+
+  private loadExportHistory(): void {
+    if (
+      typeof window === "undefined" ||
+      typeof globalThis === "undefined" ||
+      !("localStorage" in globalThis)
+    )
+      return;
+    try {
+      const ls = ((): Storage | undefined => {
+        const g: unknown = globalThis;
+        if (g && typeof g === "object" && "localStorage" in g) {
+          const lsCandidate = (g as { localStorage?: unknown }).localStorage;
+          if (typeof lsCandidate === "object" && lsCandidate) {
+            return lsCandidate as Storage;
+          }
         }
+        return undefined;
+      })();
+      const saved = ls?.getItem("chartExportHistory");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        this.exportHistory = new Map(parsed);
+      }
+    } catch {
+      // Ignore storage failures silently on server or restricted environments
     }
+  }
 
-    /**
-     * Export multiple charts to PDF report
-     */
-    async exportBatchToPDF(batchId: string): Promise<string> {
-        const batch = this.batchQueue.get(batchId);
-        if (!batch) {
-            throw new Error(`Batch ${batchId} not found`);
+  private saveExportHistory(): void {
+    if (
+      typeof window === "undefined" ||
+      typeof globalThis === "undefined" ||
+      !("localStorage" in globalThis)
+    )
+      return;
+    try {
+      const ls = ((): Storage | undefined => {
+        const g: unknown = globalThis;
+        if (g && typeof g === "object" && "localStorage" in g) {
+          const lsCandidate = (g as { localStorage?: unknown }).localStorage;
+          if (typeof lsCandidate === "object" && lsCandidate) {
+            return lsCandidate as Storage;
+          }
         }
-
-        const { default: jsPDF } = await import('jspdf');
-        const pdf = new jsPDF({
-            orientation: batch.config.pageOrientation || 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        });
-
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const margins = batch.config.margins || { top: 20, right: 20, bottom: 20, left: 20 };
-
-        // Add title page
-        this.addPDFTitlePage(pdf, batch.config, pageWidth, pageHeight, margins);
-
-        // Add charts
-        for (let i = 0; i < batch.charts.length; i++) {
-            const chartId = batch.charts[i];
-
-            if (i > 0) {
-                pdf.addPage();
-            }
-
-            await this.addChartToPDF(pdf, chartId, pageWidth, pageHeight, margins);
-        }
-
-        // Add metadata and watermark
-        if (batch.config.watermark) {
-            this.addPDFWatermark(pdf, batch.config.company || 'RankPilot');
-        }
-
-        if (batch.config.includeMetadata) {
-            this.addPDFMetadata(pdf, batch.config);
-        }
-
-        const pdfBlob = pdf.output('blob');
-        const pdfUrl = URL.createObjectURL(pdfBlob);
-
-        // Track batch export
-        this.addToBatchHistory(batchId, 'pdf', pdfUrl);
-
-        return pdfUrl;
+        return undefined;
+      })();
+      const serialized = JSON.stringify(
+        Array.from(this.exportHistory.entries())
+      );
+      ls?.setItem("chartExportHistory", serialized);
+    } catch {
+      // Ignore storage failures silently
     }
-
-    /**
-     * Export multiple charts to Excel workbook
-     */
-    async exportBatchToExcel(batchId: string): Promise<string> {
-        const batch = this.batchQueue.get(batchId);
-        if (!batch) {
-            throw new Error(`Batch ${batchId} not found`);
-        }
-
-        const workbook: ExcelWorkbook = {
-            sheets: [],
-            metadata: {
-                title: batch.config.title || 'Chart Export',
-                author: batch.config.author || 'RankPilot',
-                created: new Date(),
-                company: batch.config.company
-            }
-        };
-
-        // Create summary sheet
-        const summarySheet = this.createSummarySheet(batch);
-        workbook.sheets.push(summarySheet);
-
-        // Add individual chart sheets
-        for (const chartId of batch.charts) {
-            const chartSheet = await this.createChartSheet(chartId);
-            workbook.sheets.push(chartSheet);
-        }
-
-        // Generate Excel file
-        const wb = XLSX.utils.book_new();
-
-        // Add metadata
-        wb.Props = {
-            Title: workbook.metadata.title,
-            Author: workbook.metadata.author,
-            CreatedDate: workbook.metadata.created,
-            Company: workbook.metadata.company
-        };
-
-        // Add sheets
-        workbook.sheets.forEach(sheet => {
-            const ws = XLSX.utils.aoa_to_sheet(sheet.data);
-
-            // Apply formatting if available
-            if (sheet.formatting) {
-                this.applyExcelFormatting(ws, sheet.formatting);
-            }
-
-            XLSX.utils.book_append_sheet(wb, ws, sheet.name);
-        });
-
-        // Generate binary
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const excelBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const excelUrl = URL.createObjectURL(excelBlob);
-
-        // Track batch export
-        this.addToBatchHistory(batchId, 'excel', excelUrl);
-
-        return excelUrl;
-    }
-
-    /**
-     * Create export batch
-     */
-    createBatch(chartIds: string[], format: 'pdf' | 'excel', config: BatchExportConfig): string {
-        const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-        const batch: ExportBatch = {
-            id: batchId,
-            charts: chartIds,
-            format,
-            config
-        };
-
-        this.batchQueue.set(batchId, batch);
-        return batchId;
-    }
-
-    /**
-     * Get export history
-     */
-    getExportHistory(): unknown[] {
-        return Array.from(this.exportHistory.values());
-    }
-
-    /**
-     * Clear export history
-     */
-    clearExportHistory(): void {
-        this.exportHistory.clear();
-        this.saveExportHistory();
-    }
-
-    /**
-     * Private helper methods
-     */
-    private async exportChartToPDF(chartData: unknown, config: ChartExportConfig): Promise<string> {
-        const { default: jsPDF } = await import('jspdf');
-        const pdf = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: 'a4'
-        });
-
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-
-        // Add title
-        if (config.title) {
-            pdf.setFontSize(16);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text(config.title, pageWidth / 2, 20, { align: 'center' });
-        }
-
-        // Add chart image
-        if ((chartData as { image?: string })?.image) {
-            const imgWidth = config.width || pageWidth - 40;
-            const imgHeight = config.height || (imgWidth * 0.6);
-            const x = (pageWidth - imgWidth) / 2;
-            const y = config.title ? 35 : 20;
-            pdf.addImage((chartData as { image?: string }).image!, 'PNG', x, y, imgWidth, imgHeight);
-        }
-
-        // Add timestamp
-        if (config.watermark) {
-            pdf.setFontSize(8);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(128, 128, 128);
-            pdf.text(`Generated by RankPilot on ${new Date().toLocaleString()}`, 10, pageHeight - 10);
-        }
-
-        const pdfBlob = pdf.output('blob');
-        return URL.createObjectURL(pdfBlob);
-    }
-
-    private async exportChartToExcel(chartData: unknown, config: ChartExportConfig): Promise<string> {
-        // Resolve colors at runtime (primary header background and text)
-        const headerBg = this.resolveTokenToHex('--color-primary-500', [79, 70, 229]);
-        const headerText = this.resolveTokenToHex('--color-primary-foreground', [255, 255, 255]);
-
-        const workbook: ExcelWorkbook = {
-            sheets: [
-                {
-                    name: 'Chart Data',
-                    data: this.convertChartDataToTable(chartData),
-                    formatting: {
-                        headerStyle: {
-                            font: { bold: true, size: 12, color: headerText },
-                            fill: { fgColor: headerBg },
-                            alignment: { horizontal: 'center', vertical: 'center' }
-                        },
-                        cellStyle: {
-                            font: { size: 10 }
-                        }
-                    }
-                }
-            ],
-            metadata: {
-                title: config.title || 'Chart Export',
-                author: 'RankPilot',
-                created: new Date()
-            }
-        };
-
-        return this.generateExcelFile(workbook);
-    }
-
-    private async exportChartToPNG(chartData: { image?: string }): Promise<string> {
-        // Prefer client-provided PNG data URL; otherwise rasterization happens server-side
-        return chartData?.image || 'data:image/png;base64,';
-    }
-
-    private exportChartToSVG(chartData: { svg?: string }): string {
-        return chartData?.svg || '<svg></svg>';
-    }
-
-    private exportChartToJSON(chartData: unknown, config: ChartExportConfig): string {
-        const exportData = {
-            chart: chartData,
-            config,
-            exported: new Date().toISOString(),
-            version: '1.0'
-        };
-
-        const jsonString = JSON.stringify(exportData, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        return URL.createObjectURL(blob);
-    }
-
-    private addPDFTitlePage(pdf: PdfDoc, config: BatchExportConfig, pageWidth: number, pageHeight: number, margins: Required<NonNullable<BatchExportConfig['margins']>>): void {
-        // Add logo if provided
-        if (config.logo) {
-            pdf.addImage(config.logo, 'PNG', margins.left, margins.top, 40, 20);
-        }
-
-        // Add title
-        if (config.title) {
-            pdf.setFontSize(24);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text(config.title, pageWidth / 2, pageHeight / 2 - 20, { align: 'center' });
-        }
-
-        // Add subtitle
-        if (config.subtitle) {
-            pdf.setFontSize(16);
-            pdf.setFont('helvetica', 'normal');
-            pdf.text(config.subtitle, pageWidth / 2, pageHeight / 2, { align: 'center' });
-        }
-
-        // Add author and company
-        if (config.author || config.company) {
-            pdf.setFontSize(12);
-            const authorText = config.author ? `By: ${config.author}` : '';
-            const companyText = config.company ? `Company: ${config.company}` : '';
-
-            let yPos = pageHeight / 2 + 40;
-            if (authorText) {
-                pdf.text(authorText, pageWidth / 2, yPos, { align: 'center' });
-                yPos += 10;
-            }
-            if (companyText) {
-                pdf.text(companyText, pageWidth / 2, yPos, { align: 'center' });
-            }
-        }
-
-        // Add timestamp
-        if (config.includeTimestamp) {
-            pdf.setFontSize(10);
-            pdf.setTextColor(128, 128, 128);
-            pdf.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - margins.bottom, { align: 'center' });
-        }
-    }
-
-    private async addChartToPDF(pdf: PdfDoc, chartId: string, pageWidth: number, _pageHeight: number, margins: Required<NonNullable<BatchExportConfig['margins']>>): Promise<void> {
-        // This would fetch the actual chart data and image in a full implementation
-        pdf.setFontSize(14);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(`Chart: ${chartId}`, margins.left, margins.top + 20);
-
-        // Draw a container area where the chart image would be placed
-        pdf.setDrawColor(200, 200, 200);
-        pdf.rect(margins.left, margins.top + 30, pageWidth - margins.left - margins.right, 100);
-
-        pdf.setFontSize(10);
-        pdf.setTextColor(128, 128, 128);
-        pdf.text('Chart image would be rendered here', pageWidth / 2, margins.top + 80, { align: 'center' });
-    }
-
-    private addPDFWatermark(pdf: PdfDoc, text: string): void {
-        const pageCount = pdf.getNumberOfPages();
-
-        for (let i = 1; i <= pageCount; i++) {
-            pdf.setPage(i);
-            pdf.setTextColor(220, 220, 220);
-            pdf.setFontSize(50);
-            pdf.saveGraphicsState?.();
-            pdf.text(text, pdf.internal.pageSize.getWidth() / 2, pdf.internal.pageSize.getHeight() / 2, {
-                align: 'center',
-                angle: 45
-            });
-            pdf.restoreGraphicsState?.();
-        }
-    }
-
-    private addPDFMetadata(pdf: PdfDoc, config: BatchExportConfig): void {
-        pdf.setProperties({
-            title: config.title || 'Chart Export',
-            subject: config.subtitle || 'Generated by RankPilot',
-            author: config.author || 'RankPilot',
-            creator: 'RankPilot Chart Export System',
-            keywords: 'charts, analytics, SEO, RankPilot'
-        });
-    }
-
-    private createSummarySheet(batch: ExportBatch): ExcelSheet {
-        // Resolve colors for summary header
-        const summaryBg = this.resolveTokenToHex('--color-primary-500', [79, 70, 229]);
-        const summaryText = this.resolveTokenToHex('--color-primary-foreground', [255, 255, 255]);
-
-        const data: unknown[][] = [
-            ['Chart Export Summary'],
-            [''],
-            ['Export Details'],
-            ['Batch ID:', batch.id],
-            ['Generated:', new Date().toLocaleString()],
-            ['Format:', batch.format],
-            ['Charts Count:', batch.charts.length.toString()],
-            [''],
-            ['Chart List'],
-            ['Chart ID', 'Status']
-        ];
-
-        // Add chart list
-        batch.charts.forEach(chartId => {
-            data.push([chartId, 'Exported']);
-        });
-
-        return {
-            name: 'Summary',
-            data,
-            formatting: {
-                headerStyle: {
-                    font: { bold: true, size: 14, color: summaryText },
-                    fill: { fgColor: summaryBg }
-                }
-            }
-        };
-    }
-
-    private async createChartSheet(chartId: string): Promise<ExcelSheet> {
-        // This would fetch actual chart data; currently populates a sample sheet
-        const data: unknown[][] = [
-            [`Chart Data: ${chartId}`],
-            [''],
-            ['X Axis', 'Y Axis', 'Series'],
-            ['Jan', '100', 'Revenue'],
-            ['Feb', '150', 'Revenue'],
-            ['Mar', '120', 'Revenue'],
-            ['Apr', '180', 'Revenue'],
-            ['May', '200', 'Revenue']
-        ];
-
-        const successBg = this.resolveTokenToHex('--color-success-500', [16, 185, 129]);
-        const successText = this.resolveTokenToHex('--color-success-foreground', [255, 255, 255]);
-
-        return {
-            name: chartId.substring(0, 31), // Excel sheet name limit
-            data,
-            formatting: {
-                headerStyle: {
-                    font: { bold: true, size: 12, color: successText },
-                    fill: { fgColor: successBg }
-                }
-            }
-        };
-    }
-
-    // Basic worksheet type shape used from xlsx library; keep minimal index signature
-    private applyExcelFormatting(worksheet: { [cell: string]: unknown;['!ref']?: string }, formatting: ExcelFormatting): void {
-        // Apply header formatting to first row
-        if (formatting.headerStyle) {
-            const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-            for (let col = range.s.c; col <= range.e.c; col++) {
-                const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
-                const cell = worksheet[cellAddress] as Record<string, unknown> | undefined;
-                if (!cell) continue;
-                (cell as { s?: unknown }).s = formatting.headerStyle;
-            }
-        }
-
-        // Apply cell formatting to data rows
-        if (formatting.cellStyle) {
-            const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-            for (let row = 1; row <= range.e.r; row++) {
-                for (let col = range.s.c; col <= range.e.c; col++) {
-                    const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-                    const cell = worksheet[cellAddress] as Record<string, unknown> | undefined;
-                    if (!cell) continue;
-                    (cell as { s?: unknown }).s = formatting.cellStyle;
-                }
-            }
-        }
-    }
-
-    private convertChartDataToTable(chartData: unknown): unknown[][] {
-        // Convert chart data to table format for Excel
-        const headers = ['X', 'Y', 'Series', 'Value'];
-        const rows = [headers];
-
-        const dataPoints = (chartData as { data?: ChartDataPoint[] })?.data;
-        if (Array.isArray(dataPoints)) {
-            dataPoints.forEach((point: Partial<ChartDataPoint>) => {
-                rows.push([
-                    point?.x != null ? String(point.x) : '',
-                    point?.y != null ? String(point.y) : '',
-                    point.series || 'Default',
-                    point.value != null ? String(point.value) : (point.y != null ? String(point.y) : '')
-                ]);
-            });
-        }
-
-        return rows;
-    }
-
-    private generateExcelFile(workbook: ExcelWorkbook): string {
-        const wb = XLSX.utils.book_new();
-
-        // Add metadata
-        wb.Props = {
-            Title: workbook.metadata.title,
-            Author: workbook.metadata.author,
-            CreatedDate: workbook.metadata.created,
-            Company: workbook.metadata.company
-        };
-
-        // Add sheets
-        workbook.sheets.forEach(sheet => {
-            const ws = XLSX.utils.aoa_to_sheet(sheet.data);
-
-            if (sheet.formatting) {
-                this.applyExcelFormatting(ws, sheet.formatting);
-            }
-
-            XLSX.utils.book_append_sheet(wb, ws, sheet.name);
-        });
-
-        // Generate binary
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const excelBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-        return URL.createObjectURL(excelBlob);
-    }
-
-    private addToExportHistory(chartId: string, config: ChartExportConfig, result: string): void {
-        const historyEntry = {
-            id: `export_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            chartId,
-            config,
-            result,
-            timestamp: new Date().toISOString(),
-            type: 'single'
-        };
-
-        this.exportHistory.set(historyEntry.id, historyEntry);
-        this.saveExportHistory();
-    }
-
-    private addToBatchHistory(batchId: string, format: string, result: string): void {
-        const historyEntry = {
-            id: `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            batchId,
-            format,
-            result,
-            timestamp: new Date().toISOString(),
-            type: 'batch'
-        };
-
-        this.exportHistory.set(historyEntry.id, historyEntry);
-        this.saveExportHistory();
-    }
-
-    private loadExportHistory(): void {
-        if (typeof window === 'undefined' || typeof globalThis === 'undefined' || !('localStorage' in globalThis)) return;
-        try {
-            const ls = ((): Storage | undefined => {
-                const g: unknown = globalThis;
-                if (g && typeof g === 'object' && 'localStorage' in g) {
-                    const lsCandidate = (g as { localStorage?: unknown }).localStorage;
-                    if (typeof lsCandidate === 'object' && lsCandidate) {
-                        return lsCandidate as Storage;
-                    }
-                }
-                return undefined;
-            })();
-            const saved = ls?.getItem('chartExportHistory');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                this.exportHistory = new Map(parsed);
-            }
-        } catch {
-            // Ignore storage failures silently on server or restricted environments
-        }
-    }
-
-    private saveExportHistory(): void {
-        if (typeof window === 'undefined' || typeof globalThis === 'undefined' || !('localStorage' in globalThis)) return;
-        try {
-            const ls = ((): Storage | undefined => {
-                const g: unknown = globalThis;
-                if (g && typeof g === 'object' && 'localStorage' in g) {
-                    const lsCandidate = (g as { localStorage?: unknown }).localStorage;
-                    if (typeof lsCandidate === 'object' && lsCandidate) {
-                        return lsCandidate as Storage;
-                    }
-                }
-                return undefined;
-            })();
-            const serialized = JSON.stringify(Array.from(this.exportHistory.entries()));
-            ls?.setItem('chartExportHistory', serialized);
-        } catch {
-            // Ignore storage failures silently
-        }
-    }
-
-    /**
-     * Queue an export job for a chart
-     */
-    queueExport(chartId: string): ExportJob {
-        const job: ExportJob = { id: chartId + '-' + Date.now(), createdAt: Date.now(), status: 'pending' }
-        // ...existing enqueue logic...
-        return job
-    }
-
-    /**
-     * Mark an export job as done
-     */
-    markExportDone(job: ExportJob): ExportJob {
-        job.status = 'done'
-        return job
-    }
+  }
+
+  /**
+   * Queue an export job for a chart
+   */
+  queueExport(chartId: string): ExportJob {
+    const job: ExportJob = {
+      id: chartId + "-" + Date.now(),
+      createdAt: Date.now(),
+      status: "pending",
+    };
+    // ...existing enqueue logic...
+    return job;
+  }
+
+  /**
+   * Mark an export job as done
+   */
+  markExportDone(job: ExportJob): ExportJob {
+    job.status = "done";
+    return job;
+  }
 }
 
 /**
@@ -768,15 +956,21 @@ export class ChartExportManager {
 // Export singleton instance
 // Only instantiate a singleton in the browser; avoid server import side-effects
 // Export a getter to avoid server-side instantiation while keeping non-null typing for clients
-export const chartExportManager: ChartExportManager = ((): ChartExportManager => {
-    if (typeof window === 'undefined') {
-        // Lazy construct a stub that throws on use to preserve typing while avoiding SSR side effects
-        const handler = new Proxy({}, {
-            get() {
-                throw new Error('chartExportManager is client-only; use server-exports in API routes.');
-            }
-        });
-        return handler as unknown as ChartExportManager;
+export const chartExportManager: ChartExportManager =
+  ((): ChartExportManager => {
+    if (typeof window === "undefined") {
+      // Lazy construct a stub that throws on use to preserve typing while avoiding SSR side effects
+      const handler = new Proxy(
+        {},
+        {
+          get() {
+            throw new Error(
+              "chartExportManager is client-only; use server-exports in API routes."
+            );
+          },
+        }
+      );
+      return handler as unknown as ChartExportManager;
     }
     return new ChartExportManager();
-})();
+  })();

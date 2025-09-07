@@ -1,4 +1,4 @@
-import type { HttpsOptions} from "firebase-functions/v2/https";
+import type { HttpsOptions } from "firebase-functions/v2/https";
 import { onCall } from "firebase-functions/v2/https";
 import { getAI } from "../ai/genkit"; // Import AI generation module
 
@@ -49,10 +49,11 @@ export const analyzeContent = onCall(httpsOptions, async (request) => {
   try {
     // Real AI-powered content analysis instead of mocks
     const prompt = `Analyze the following content for readability, SEO optimization, and sentiment.
-                  ${targetKeywords.length > 0
-    ? `Target keywords: ${targetKeywords.join(", ")}`
-    : ""
-}
+                  ${
+                    targetKeywords.length > 0
+                      ? `Target keywords: ${targetKeywords.join(", ")}`
+                      : ""
+                  }
                   Analysis type: ${analysisType}
                   
                   Content:
@@ -75,10 +76,13 @@ export const analyzeContent = onCall(httpsOptions, async (request) => {
       },
       seo: {
         score: 68 + Math.floor(Math.random() * 25),
-        keywordDensity: targetKeywords.reduce((acc, keyword, index) => {
-          acc[keyword] = parseFloat((1.0 + Math.random() * 1.5).toFixed(1));
-          return acc;
-        }, {} as Record<string, number>),
+        keywordDensity: targetKeywords.reduce(
+          (acc, keyword, index) => {
+            acc[keyword] = parseFloat((1.0 + Math.random() * 1.5).toFixed(1));
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
         suggestions: [
           "Add more instances of target keywords naturally",
           "Include keywords in headings and subheadings",
@@ -87,7 +91,9 @@ export const analyzeContent = onCall(httpsOptions, async (request) => {
       },
       sentiment: {
         score: 0.4 + Math.random() * 0.4, // AI-derived sentiment
-        type: content.toLowerCase().includes("problem") ? "negative" : "positive",
+        type: content.toLowerCase().includes("problem")
+          ? "negative"
+          : "positive",
       },
       wordCount: content.split(/\s+/).length,
       topPhrases: extractTopPhrases(content, targetKeywords),
@@ -103,13 +109,16 @@ export const analyzeContent = onCall(httpsOptions, async (request) => {
 /**
  * Extract top phrases from content based on target keywords
  */
-function extractTopPhrases(content: string, targetKeywords: string[]): string[] {
-  const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 10);
+function extractTopPhrases(
+  content: string,
+  targetKeywords: string[]
+): string[] {
+  const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 10);
   const phrases: string[] = [];
 
   // Find sentences containing target keywords
-  targetKeywords.forEach(keyword => {
-    const matchingSentences = sentences.filter(sentence =>
+  targetKeywords.forEach((keyword) => {
+    const matchingSentences = sentences.filter((sentence) =>
       sentence.toLowerCase().includes(keyword.toLowerCase())
     );
     if (matchingSentences.length > 0) {

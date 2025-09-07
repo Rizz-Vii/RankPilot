@@ -13,7 +13,7 @@ export const testMinimal = onCall(
     return {
       success: true,
       message: "Test function working",
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 );

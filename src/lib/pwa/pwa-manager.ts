@@ -10,520 +10,571 @@
  * - InstallPrompt management for PWA installation
  */
 
-'use client';
+"use client";
 
-import { useAuth } from '@/context/AuthContext';
-import { useEffect, useState } from 'react';
+import { useAuth } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
 
 // Local diagnostics (non-persistent)
 const pwaDiagnostics: { errors: Array<{ message: string }> } = { errors: [] };
 
 interface PWAInstallPrompt extends Event {
-    readonly platforms: string[];
-    readonly userChoice: Promise<{
-        outcome: 'accepted' | 'dismissed';
-        platform: string;
-    }>;
-    prompt(): Promise<void>;
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
 }
 
 interface NotificationOptions {
+  title: string;
+  body: string;
+  tag?: string;
+  icon?: string;
+  badge?: string;
+  data?: unknown;
+  actions?: Array<{
+    action: string;
     title: string;
-    body: string;
-    tag?: string;
     icon?: string;
-    badge?: string;
-    data?: unknown;
-    actions?: Array<{
-        action: string;
-        title: string;
-        icon?: string;
-    }>;
+  }>;
 }
 
 export class PWAManager {
-    private static instance: PWAManager;
-    private registration: ServiceWorkerRegistration | null = null;
-    private installPrompt: PWAInstallPrompt | null = null;
-    private isOnline = true;
-    private pendingData: Array<{ tag: string; data: unknown; timestamp: number; }> = [];
+  private static instance: PWAManager;
+  private registration: ServiceWorkerRegistration | null = null;
+  private installPrompt: PWAInstallPrompt | null = null;
+  private isOnline = true;
+  private pendingData: Array<{
+    tag: string;
+    data: unknown;
+    timestamp: number;
+  }> = [];
 
-    static getInstance(): PWAManager {
-        if (!PWAManager.instance) {
-            PWAManager.instance = new PWAManager();
-        }
-        return PWAManager.instance;
+  static getInstance(): PWAManager {
+    if (!PWAManager.instance) {
+      PWAManager.instance = new PWAManager();
     }
+    return PWAManager.instance;
+  }
 
-    constructor() {
-        if (typeof window !== 'undefined') {
-            // Fire-and-forget initialization; use void operator to satisfy no-floating-promises.
-            // Non-critical initialization errors are intentionally ignored.
-            void this.initializePWA();
-        }
+  constructor() {
+    if (typeof window !== "undefined") {
+      // Fire-and-forget initialization; use void operator to satisfy no-floating-promises.
+      // Non-critical initialization errors are intentionally ignored.
+      void this.initializePWA();
     }
+  }
 
-    private async initializePWA() {
-        // Gate PWA strictly behind explicit env flag to avoid unintended SW interference in production.
-        const enablePWA = process.env.NEXT_PUBLIC_ENABLE_PWA === 'true';
+  private async initializePWA() {
+    // Gate PWA strictly behind explicit env flag to avoid unintended SW interference in production.
+    const enablePWA = process.env.NEXT_PUBLIC_ENABLE_PWA === "true";
 
-        // Register service worker only when enabled
-        if (enablePWA && 'serviceWorker' in navigator) {
-            try {
-                this.registration = await navigator.serviceWorker.register('/sw.js', {
-                    scope: '/'
-                });
+    // Register service worker only when enabled
+    if (enablePWA && "serviceWorker" in navigator) {
+      try {
+        this.registration = await navigator.serviceWorker.register("/sw.js", {
+          scope: "/",
+        });
 
-                console.log('[PWA] Service Worker registered successfully');
+        console.log("[PWA] Service Worker registered successfully");
 
-                // Handle service worker updates
-                this.registration.addEventListener('updatefound', () => {
-                    const newWorker = this.registration?.installing;
-                    if (newWorker) {
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // Fire-and-forget notification
-                                void this.showUpdateAvailableNotification();
-                            }
-                        });
-                    }
-                });
-
-                // Listen for messages from service worker
-                navigator.serviceWorker.addEventListener('message', this.handleServiceWorkerMessage.bind(this));
-
-            } catch (error) {
-                console.error('[PWA] Service Worker registration failed:', error);
-            }
-        }
-
-        // Handle install prompt (only when PWA is enabled)
-        if (enablePWA) {
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                this.installPrompt = e as PWAInstallPrompt;
-                this.showInstallPrompt();
+        // Handle service worker updates
+        this.registration.addEventListener("updatefound", () => {
+          const newWorker = this.registration?.installing;
+          if (newWorker) {
+            newWorker.addEventListener("statechange", () => {
+              if (
+                newWorker.state === "installed" &&
+                navigator.serviceWorker.controller
+              ) {
+                // Fire-and-forget notification
+                void this.showUpdateAvailableNotification();
+              }
             });
-        }
-
-        // Handle app installed
-        window.addEventListener('appinstalled', () => {
-            console.log('[PWA] App installed successfully');
-            this.installPrompt = null;
+          }
         });
 
-        // Handle online/offline status
-        window.addEventListener('online', () => {
-            this.isOnline = true;
-            // Fire-and-forget pending data sync
-            void this.syncPendingData();
+        // Listen for messages from service worker
+        navigator.serviceWorker.addEventListener(
+          "message",
+          this.handleServiceWorkerMessage.bind(this)
+        );
+      } catch (error) {
+        console.error("[PWA] Service Worker registration failed:", error);
+      }
+    }
+
+    // Handle install prompt (only when PWA is enabled)
+    if (enablePWA) {
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        this.installPrompt = e as PWAInstallPrompt;
+        this.showInstallPrompt();
+      });
+    }
+
+    // Handle app installed
+    window.addEventListener("appinstalled", () => {
+      console.log("[PWA] App installed successfully");
+      this.installPrompt = null;
+    });
+
+    // Handle online/offline status
+    window.addEventListener("online", () => {
+      this.isOnline = true;
+      // Fire-and-forget pending data sync
+      void this.syncPendingData();
+    });
+
+    window.addEventListener("offline", () => {
+      this.isOnline = false;
+    });
+
+    // Initialize push notifications only when PWA is enabled
+    if (enablePWA) {
+      // Fire-and-forget initialization of push notifications
+      void this.initializePushNotifications();
+    }
+  }
+
+  private handleServiceWorkerMessage(event: MessageEvent) {
+    const { type, payload } = event.data;
+
+    switch (type) {
+      case "SYNC_SUCCESS":
+        void this.showNotification("Data Synchronized", {
+          body: "Your data has been synchronized successfully",
+          tag: "sync-success",
         });
+        break;
 
-        window.addEventListener('offline', () => {
-            this.isOnline = false;
+      case "ANALYSIS_COMPLETE":
+        void this.showNotification("Analysis Complete", {
+          body: payload.message || "Your SEO analysis is ready",
+          tag: "analysis-complete",
+          data: { url: "/neuroseo/results" },
+          actions: [
+            { action: "view", title: "View Results" },
+            { action: "dismiss", title: "Dismiss" },
+          ],
         });
+        break;
 
-        // Initialize push notifications only when PWA is enabled
-        if (enablePWA) {
-            // Fire-and-forget initialization of push notifications
-            void this.initializePushNotifications();
-        }
+      case "CACHE_UPDATED":
+        console.log("[PWA] Cache updated");
+        break;
+
+      default:
+        console.log("[PWA] Unknown message from service worker:", event.data);
+    }
+  }
+
+  private showUpdateAvailableNotification() {
+    void this.showNotification("Update Available", {
+      body: "A new version of RankPilot is available",
+      tag: "update-available",
+      actions: [
+        { action: "update", title: "Update Now" },
+        { action: "later", title: "Later" },
+      ],
+    });
+  }
+
+  private showInstallPrompt() {
+    // Show custom install prompt UI
+    const event = new CustomEvent("pwa-install-prompt", {
+      detail: { installPrompt: this.installPrompt },
+    });
+    window.dispatchEvent(event);
+  }
+
+  async installApp(): Promise<boolean> {
+    if (!this.installPrompt) {
+      return false;
     }
 
-    private handleServiceWorkerMessage(event: MessageEvent) {
-        const { type, payload } = event.data;
+    try {
+      await this.installPrompt.prompt();
+      const { outcome } = await this.installPrompt.userChoice;
 
-        switch (type) {
-            case 'SYNC_SUCCESS':
-                void this.showNotification('Data Synchronized', {
-                    body: 'Your data has been synchronized successfully',
-                    tag: 'sync-success'
-                });
-                break;
+      if (outcome === "accepted") {
+        console.log("[PWA] User accepted the install prompt");
+        return true;
+      } else {
+        console.log("[PWA] User dismissed the install prompt");
+        return false;
+      }
+    } catch (error) {
+      console.error("[PWA] Install prompt failed:", error);
+      return false;
+    }
+  }
 
-            case 'ANALYSIS_COMPLETE':
-                void this.showNotification('Analysis Complete', {
-                    body: payload.message || 'Your SEO analysis is ready',
-                    tag: 'analysis-complete',
-                    data: { url: '/neuroseo/results' },
-                    actions: [
-                        { action: 'view', title: 'View Results' },
-                        { action: 'dismiss', title: 'Dismiss' }
-                    ]
-                });
-                break;
+  private async initializePushNotifications() {
+    // Passive capability check only; do not request permission automatically
+    try {
+      if (!("Notification" in window) || !("PushManager" in window)) {
+        console.log("[PWA] Push notifications not supported");
+        return;
+      }
+      console.log(
+        "[PWA] Notification permission (current):",
+        Notification.permission
+      );
+    } catch (e) {
+      // Ignore in environments that lack Notification; track diagnostics
+      const message =
+        typeof e === "object" &&
+        e &&
+        "message" in (e as Record<string, unknown>) &&
+        typeof (e as { message?: unknown }).message === "string"
+          ? (e as { message: string }).message
+          : String(e);
+      pwaDiagnostics.errors.push({ message });
+      if (pwaDiagnostics.errors.length > 25) pwaDiagnostics.errors.shift();
+    }
+  }
 
-            case 'CACHE_UPDATED':
-                console.log('[PWA] Cache updated');
-                break;
-
-            default:
-                console.log('[PWA] Unknown message from service worker:', event.data);
-        }
+  async subscribeToPushNotifications(userId: string): Promise<boolean> {
+    if (!this.registration) {
+      return false;
     }
 
-    private showUpdateAvailableNotification() {
-        void this.showNotification('Update Available', {
-            body: 'A new version of RankPilot is available',
-            tag: 'update-available',
-            actions: [
-                { action: 'update', title: 'Update Now' },
-                { action: 'later', title: 'Later' }
-            ]
+    try {
+      // Request permission only when user opts-in
+      if (
+        typeof Notification !== "undefined" &&
+        Notification.permission === "default"
+      ) {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") return false;
+      }
+
+      if (
+        typeof Notification !== "undefined" &&
+        Notification.permission !== "granted"
+      ) {
+        return false;
+      }
+
+      const subscription = await this.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this.urlBase64ToUint8Array(
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+            "BMqSvZWj5OwrOhNM2NQpjqPzqKJFVj1DdM7Z4lNXfqGoCz4O9g-GNp2K7-Qh-ILRgYlCjFkf8ZKqVl_qDlH-J9U"
+        ) as BufferSource,
+      });
+
+      // Send subscription to server
+      await fetch("/api/push-notifications/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subscription,
+          userId,
+        }),
+      });
+
+      console.log("[PWA] Push notification subscription successful");
+      return true;
+    } catch (error) {
+      console.error("[PWA] Push notification subscription failed:", error);
+      return false;
+    }
+  }
+  async unsubscribeFromPushNotifications(): Promise<boolean> {
+    if (!this.registration) {
+      return false;
+    }
+
+    try {
+      const subscription =
+        await this.registration.pushManager.getSubscription();
+
+      if (subscription) {
+        await subscription.unsubscribe();
+
+        // Notify server
+        await fetch("/api/push-notifications/unsubscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscription }),
         });
+      }
+
+      console.log("[PWA] Push notification unsubscribed");
+      return true;
+    } catch (error) {
+      console.error("[PWA] Push notification unsubscribe failed:", error);
+      return false;
+    }
+  }
+
+  private urlBase64ToUint8Array(base64String: string): Uint8Array {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  async showNotification(
+    title: string,
+    options: Partial<NotificationOptions> = {}
+  ) {
+    // Guard for unsupported Notification API or missing registration
+    if (
+      !this.registration ||
+      typeof Notification === "undefined" ||
+      Notification.permission !== "granted"
+    ) {
+      return;
     }
 
-    private showInstallPrompt() {
-        // Show custom install prompt UI
-        const event = new CustomEvent('pwa-install-prompt', {
-            detail: { installPrompt: this.installPrompt }
-        });
-        window.dispatchEvent(event);
+    const defaultOptions: NotificationOptions = {
+      title,
+      body: options.body || "",
+      icon: "/android-chrome-192x192.png",
+      badge: "/favicon-32x32.png",
+      tag: options.tag || "default",
+      data: options.data,
+      actions: options.actions || [],
+    };
+
+    await this.registration.showNotification(title, {
+      ...defaultOptions,
+      ...options,
+    });
+  }
+
+  async syncInBackground(tag: string, data: unknown) {
+    if (!this.registration) {
+      this.addToPendingData(tag, data);
+      return;
     }
 
-    async installApp(): Promise<boolean> {
-        if (!this.installPrompt) {
-            return false;
-        }
+    try {
+      // Store data for background sync
+      await this.storeDataForSync(tag, data);
 
-        try {
-            await this.installPrompt.prompt();
-            const { outcome } = await this.installPrompt.userChoice;
+      // Register background sync if supported
+      const regAny = this.registration as ServiceWorkerRegistration & {
+        sync?: { register: (t: string) => Promise<void> };
+      };
+      if (regAny.sync && typeof regAny.sync.register === "function") {
+        await regAny.sync.register(tag);
+        console.log("[PWA] Background sync registered:", tag);
+      } else {
+        console.log(
+          "[PWA] Background sync not supported, queuing for manual sync"
+        );
+        this.addToPendingData(tag, data);
+      }
+    } catch (error) {
+      console.error("[PWA] Background sync registration failed:", error);
+      this.addToPendingData(tag, data);
+    }
+  }
+  private async storeDataForSync(tag: string, data: unknown) {
+    // Store in IndexedDB for service worker access
+    if ("indexedDB" in window) {
+      const db = await this.openIndexedDB();
+      const transaction = db.transaction(["pending-sync"], "readwrite");
+      const store = transaction.objectStore("pending-sync");
 
-            if (outcome === 'accepted') {
-                console.log('[PWA] User accepted the install prompt');
-                return true;
-            } else {
-                console.log('[PWA] User dismissed the install prompt');
-                return false;
-            }
-        } catch (error) {
-            console.error('[PWA] Install prompt failed:', error);
-            return false;
+      await store.add({
+        id: Date.now(),
+        tag,
+        data,
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      this.addToPendingData(tag, data);
+    }
+  }
+
+  private async openIndexedDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open("rankpilot-pwa", 1);
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+
+        if (!db.objectStoreNames.contains("pending-sync")) {
+          db.createObjectStore("pending-sync", { keyPath: "id" });
         }
+      };
+    });
+  }
+
+  private addToPendingData(tag: string, data: unknown) {
+    this.pendingData.push({ tag, data, timestamp: Date.now() });
+  }
+
+  private async syncPendingData() {
+    if (this.pendingData.length === 0) {
+      return;
     }
 
-    private async initializePushNotifications() {
-        // Passive capability check only; do not request permission automatically
-        try {
-            if (!('Notification' in window) || !('PushManager' in window)) {
-                console.log('[PWA] Push notifications not supported');
-                return;
-            }
-            console.log('[PWA] Notification permission (current):', Notification.permission);
-        } catch (e) {
-            // Ignore in environments that lack Notification; track diagnostics
-            const message = typeof e === 'object' && e && 'message' in (e as Record<string, unknown>) && typeof (e as { message?: unknown }).message === 'string'
-                ? (e as { message: string }).message
-                : String(e);
-            pwaDiagnostics.errors.push({ message });
-            if (pwaDiagnostics.errors.length > 25) pwaDiagnostics.errors.shift();
-        }
+    console.log("[PWA] Syncing pending data...");
+
+    for (const item of [...this.pendingData]) {
+      try {
+        await this.syncInBackground(item.tag, item.data);
+      } catch (error) {
+        console.error("[PWA] Failed to sync pending data:", error);
+      }
     }
 
-    async subscribeToPushNotifications(userId: string): Promise<boolean> {
-        if (!this.registration) {
-            return false;
-        }
+    this.pendingData = [];
+  }
 
-        try {
-            // Request permission only when user opts-in
-            if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-                const permission = await Notification.requestPermission();
-                if (permission !== 'granted') return false;
-            }
+  isInstallable(): boolean {
+    return this.installPrompt !== null;
+  }
 
-            if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
-                return false;
-            }
-
-            const subscription = await this.registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: this.urlBase64ToUint8Array(
-                    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-                    'BMqSvZWj5OwrOhNM2NQpjqPzqKJFVj1DdM7Z4lNXfqGoCz4O9g-GNp2K7-Qh-ILRgYlCjFkf8ZKqVl_qDlH-J9U'
-                ) as BufferSource
-            });
-
-            // Send subscription to server
-            await fetch('/api/push-notifications/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    subscription,
-                    userId
-                })
-            });
-
-            console.log('[PWA] Push notification subscription successful');
-            return true;
-        } catch (error) {
-            console.error('[PWA] Push notification subscription failed:', error);
-            return false;
-        }
-    } async unsubscribeFromPushNotifications(): Promise<boolean> {
-        if (!this.registration) {
-            return false;
-        }
-
-        try {
-            const subscription = await this.registration.pushManager.getSubscription();
-
-            if (subscription) {
-                await subscription.unsubscribe();
-
-                // Notify server
-                await fetch('/api/push-notifications/unsubscribe', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ subscription })
-                });
-            }
-
-            console.log('[PWA] Push notification unsubscribed');
-            return true;
-        } catch (error) {
-            console.error('[PWA] Push notification unsubscribe failed:', error);
-            return false;
-        }
+  isInstalled(): boolean {
+    try {
+      const standalone = window.matchMedia(
+        "(display-mode: standalone)"
+      ).matches;
+      const nav = window.navigator as unknown as { standalone?: boolean };
+      const legacyIOS = nav.standalone === true;
+      return standalone || legacyIOS;
+    } catch {
+      return false;
     }
+  }
 
-    private urlBase64ToUint8Array(base64String: string): Uint8Array {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding)
-            .replace(/-/g, '+')
-            .replace(/_/g, '/');
+  getConnectionStatus(): "online" | "offline" {
+    return this.isOnline ? "online" : "offline";
+  }
 
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
+  async updateServiceWorker() {
+    if (this.registration) {
+      await this.registration.update();
     }
-
-    async showNotification(title: string, options: Partial<NotificationOptions> = {}) {
-        // Guard for unsupported Notification API or missing registration
-        if (!this.registration || typeof Notification === 'undefined' || Notification.permission !== 'granted') {
-            return;
-        }
-
-        const defaultOptions: NotificationOptions = {
-            title,
-            body: options.body || '',
-            icon: '/android-chrome-192x192.png',
-            badge: '/favicon-32x32.png',
-            tag: options.tag || 'default',
-            data: options.data,
-            actions: options.actions || []
-        };
-
-        await this.registration.showNotification(title, {
-            ...defaultOptions,
-            ...options
-        });
-    }
-
-    async syncInBackground(tag: string, data: unknown) {
-        if (!this.registration) {
-            this.addToPendingData(tag, data);
-            return;
-        }
-
-        try {
-            // Store data for background sync
-            await this.storeDataForSync(tag, data);
-
-            // Register background sync if supported
-            const regAny = this.registration as ServiceWorkerRegistration & { sync?: { register: (t: string) => Promise<void> } };
-            if (regAny.sync && typeof regAny.sync.register === 'function') {
-                await regAny.sync.register(tag);
-                console.log('[PWA] Background sync registered:', tag);
-            } else {
-                console.log('[PWA] Background sync not supported, queuing for manual sync');
-                this.addToPendingData(tag, data);
-            }
-        } catch (error) {
-            console.error('[PWA] Background sync registration failed:', error);
-            this.addToPendingData(tag, data);
-        }
-    } private async storeDataForSync(tag: string, data: unknown) {
-        // Store in IndexedDB for service worker access
-        if ('indexedDB' in window) {
-            const db = await this.openIndexedDB();
-            const transaction = db.transaction(['pending-sync'], 'readwrite');
-            const store = transaction.objectStore('pending-sync');
-
-            await store.add({
-                id: Date.now(),
-                tag,
-                data,
-                timestamp: new Date().toISOString()
-            });
-        } else {
-            this.addToPendingData(tag, data);
-        }
-    }
-
-    private async openIndexedDB(): Promise<IDBDatabase> {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open('rankpilot-pwa', 1);
-
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result);
-
-            request.onupgradeneeded = (event) => {
-                const db = (event.target as IDBOpenDBRequest).result;
-
-                if (!db.objectStoreNames.contains('pending-sync')) {
-                    db.createObjectStore('pending-sync', { keyPath: 'id' });
-                }
-            };
-        });
-    }
-
-    private addToPendingData(tag: string, data: unknown) {
-        this.pendingData.push({ tag, data, timestamp: Date.now() });
-    }
-
-    private async syncPendingData() {
-        if (this.pendingData.length === 0) {
-            return;
-        }
-
-        console.log('[PWA] Syncing pending data...');
-
-        for (const item of [...this.pendingData]) {
-            try {
-                await this.syncInBackground(item.tag, item.data);
-            } catch (error) {
-                console.error('[PWA] Failed to sync pending data:', error);
-            }
-        }
-
-        this.pendingData = [];
-    }
-
-    isInstallable(): boolean {
-        return this.installPrompt !== null;
-    }
-
-    isInstalled(): boolean {
-        try {
-            const standalone = window.matchMedia('(display-mode: standalone)').matches;
-            const nav = window.navigator as unknown as { standalone?: boolean };
-            const legacyIOS = nav.standalone === true;
-            return standalone || legacyIOS;
-        } catch {
-            return false;
-        }
-    }
-
-    getConnectionStatus(): 'online' | 'offline' {
-        return this.isOnline ? 'online' : 'offline';
-    }
-
-    async updateServiceWorker() {
-        if (this.registration) {
-            await this.registration.update();
-        }
-    }
+  }
 }
 
 // React hook for PWA functionality
 export function usePWA() {
-    const { user } = useAuth();
-    const [isInstallable, setIsInstallable] = useState(false);
-    const [isInstalled, setIsInstalled] = useState(false);
-    const [connectionStatus, setConnectionStatus] = useState<'online' | 'offline'>('online');
-    const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const { user } = useAuth();
+  const [isInstallable, setIsInstallable] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<
+    "online" | "offline"
+  >("online");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
-    const pwaManager = PWAManager.getInstance();
+  const pwaManager = PWAManager.getInstance();
 
-    useEffect(() => {
-        // Check initial states (with guards to avoid throwing in unsupported contexts)
-        try { setIsInstallable(pwaManager.isInstallable()); } catch { }
-        try { setIsInstalled(pwaManager.isInstalled()); } catch { }
-        try { setConnectionStatus(pwaManager.getConnectionStatus()); } catch { }
-        try {
-            const granted = typeof Notification !== 'undefined' && Notification.permission === 'granted';
-            setNotificationsEnabled(granted);
-        } catch {
-            setNotificationsEnabled(false);
-        }
+  useEffect(() => {
+    // Check initial states (with guards to avoid throwing in unsupported contexts)
+    try {
+      setIsInstallable(pwaManager.isInstallable());
+    } catch {}
+    try {
+      setIsInstalled(pwaManager.isInstalled());
+    } catch {}
+    try {
+      setConnectionStatus(pwaManager.getConnectionStatus());
+    } catch {}
+    try {
+      const granted =
+        typeof Notification !== "undefined" &&
+        Notification.permission === "granted";
+      setNotificationsEnabled(granted);
+    } catch {
+      setNotificationsEnabled(false);
+    }
 
-        // Listen for PWA events
-        const handleInstallPrompt = () => {
-            setIsInstallable(true);
-        };
-
-        const handleAppInstalled = () => {
-            setIsInstalled(true);
-            setIsInstallable(false);
-        };
-
-        const handleOnline = () => setConnectionStatus('online');
-        const handleOffline = () => setConnectionStatus('offline');
-
-        if (typeof window !== 'undefined') {
-            window.addEventListener('pwa-install-prompt', handleInstallPrompt);
-            window.addEventListener('appinstalled', handleAppInstalled);
-            window.addEventListener('online', handleOnline);
-            window.addEventListener('offline', handleOffline);
-        }
-
-        return () => {
-            if (typeof window !== 'undefined') {
-                window.removeEventListener('pwa-install-prompt', handleInstallPrompt);
-                window.removeEventListener('appinstalled', handleAppInstalled);
-                window.removeEventListener('online', handleOnline);
-                window.removeEventListener('offline', handleOffline);
-            }
-        };
-    }, [pwaManager]);
-
-    const installApp = async () => {
-        const success = await pwaManager.installApp();
-        if (success) {
-            setIsInstalled(true);
-            setIsInstallable(false);
-        }
-        return success;
+    // Listen for PWA events
+    const handleInstallPrompt = () => {
+      setIsInstallable(true);
     };
 
-    const enableNotifications = async () => {
-        if (!user) return false;
-
-        const success = await pwaManager.subscribeToPushNotifications(user.uid);
-        setNotificationsEnabled(success);
-        return success;
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setIsInstallable(false);
     };
 
-    const disableNotifications = async () => {
-        const success = await pwaManager.unsubscribeFromPushNotifications();
-        setNotificationsEnabled(!success);
-        return success;
-    };
+    const handleOnline = () => setConnectionStatus("online");
+    const handleOffline = () => setConnectionStatus("offline");
 
-    const syncData = async (tag: string, data: unknown) => {
-        await pwaManager.syncInBackground(tag, data);
-    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("pwa-install-prompt", handleInstallPrompt);
+      window.addEventListener("appinstalled", handleAppInstalled);
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
+    }
 
-    const showNotification = async (title: string, options?: Partial<NotificationOptions>) => {
-        await pwaManager.showNotification(title, options);
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("pwa-install-prompt", handleInstallPrompt);
+        window.removeEventListener("appinstalled", handleAppInstalled);
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+      }
     };
+  }, [pwaManager]);
 
-    return {
-        isInstallable,
-        isInstalled,
-        connectionStatus,
-        notificationsEnabled,
-        installApp,
-        enableNotifications,
-        disableNotifications,
-        syncData,
-        showNotification,
-        updateApp: () => pwaManager.updateServiceWorker()
-    };
+  const installApp = async () => {
+    const success = await pwaManager.installApp();
+    if (success) {
+      setIsInstalled(true);
+      setIsInstallable(false);
+    }
+    return success;
+  };
+
+  const enableNotifications = async () => {
+    if (!user) return false;
+
+    const success = await pwaManager.subscribeToPushNotifications(user.uid);
+    setNotificationsEnabled(success);
+    return success;
+  };
+
+  const disableNotifications = async () => {
+    const success = await pwaManager.unsubscribeFromPushNotifications();
+    setNotificationsEnabled(!success);
+    return success;
+  };
+
+  const syncData = async (tag: string, data: unknown) => {
+    await pwaManager.syncInBackground(tag, data);
+  };
+
+  const showNotification = async (
+    title: string,
+    options?: Partial<NotificationOptions>
+  ) => {
+    await pwaManager.showNotification(title, options);
+  };
+
+  return {
+    isInstallable,
+    isInstalled,
+    connectionStatus,
+    notificationsEnabled,
+    installApp,
+    enableNotifications,
+    disableNotifications,
+    syncData,
+    showNotification,
+    updateApp: () => pwaManager.updateServiceWorker(),
+  };
 }

@@ -1,46 +1,61 @@
 // Unified flat ESLint config (future-proof, layered). Avoids rushstack patch & duplicates.
-import nextPlugin from '@next/eslint-plugin-next';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
-import jsxA11y from 'eslint-plugin-jsx-a11y';
-import react from 'eslint-plugin-react';
-import hooks from 'eslint-plugin-react-hooks';
-import { rule as noRawHexColors } from './scripts/eslint-rules/no-raw-hex-colors.js';
-import { rule as noSelfReexport } from './scripts/eslint-rules/no-self-reexport.js';
+import nextPlugin from "@next/eslint-plugin-next";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+import jsxA11y from "eslint-plugin-jsx-a11y";
+import react from "eslint-plugin-react";
+import hooks from "eslint-plugin-react-hooks";
+import { rule as noRawHexColors } from "./scripts/eslint-rules/no-raw-hex-colors.js";
+import { rule as noSelfReexport } from "./scripts/eslint-rules/no-self-reexport.js";
 
 // Lightweight inline rule to block focused tests (describe.only / it.only / test.only) outside allowlist.
 const focusedTestRule = {
-  meta: { type: 'problem', docs: { description: 'Disallow focused test blocks committed to repo' } },
+  meta: {
+    type: "problem",
+    docs: { description: "Disallow focused test blocks committed to repo" },
+  },
   create(ctx) {
     const allow = [
       // Allow brain skip/focus patterns inside explicit skip tests directory only if needed.
     ];
     const filename = ctx.getFilename();
-    if (allow.some(a => filename.includes(a))) return {};
+    if (allow.some((a) => filename.includes(a))) return {};
     function reportIf(node) {
-      if (node.type === 'MemberExpression' && node.property && node.property.name === 'only') {
-        ctx.report({ node, message: 'Focused test (.only) is not allowed – remove before commit.' });
+      if (
+        node.type === "MemberExpression" &&
+        node.property &&
+        node.property.name === "only"
+      ) {
+        ctx.report({
+          node,
+          message:
+            "Focused test (.only) is not allowed – remove before commit.",
+        });
       }
     }
     return {
       CallExpression(node) {
         // check callee like describe.only / it.only / test.only
-        if (node.callee && node.callee.type === 'MemberExpression') {
+        if (node.callee && node.callee.type === "MemberExpression") {
           const obj = node.callee.object;
-          if (obj && obj.type === 'Identifier' && ['describe', 'it', 'test'].includes(obj.name)) {
+          if (
+            obj &&
+            obj.type === "Identifier" &&
+            ["describe", "it", "test"].includes(obj.name)
+          ) {
             reportIf(node.callee);
           }
         }
-      }
+      },
     };
-  }
+  },
 };
 
 const TEST_GLOBS = [
-  '**/testing/**/*.{ts,tsx,js,jsx}',
-  '**/tests/**/*.{ts,tsx,js,jsx}',
-  '**/*.spec.{ts,tsx,js,jsx}',
-  '**/*.test.{ts,tsx,js,jsx}'
+  "**/testing/**/*.{ts,tsx,js,jsx}",
+  "**/tests/**/*.{ts,tsx,js,jsx}",
+  "**/*.spec.{ts,tsx,js,jsx}",
+  "**/*.test.{ts,tsx,js,jsx}",
 ];
 
 export default [

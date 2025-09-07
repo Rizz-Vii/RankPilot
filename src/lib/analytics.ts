@@ -1,11 +1,15 @@
 import { db, analytics as rawAnalytics } from "@/lib/firebase";
-import { logEvent, setUserProperties, type Analytics } from "firebase/analytics";
+import {
+  logEvent,
+  setUserProperties,
+  type Analytics,
+} from "firebase/analytics";
 import {
   doc,
   getDoc,
   increment,
   serverTimestamp,
-  setDoc
+  setDoc,
 } from "firebase/firestore";
 
 // Resolve analytics instance (only set in production via firebase/index)
@@ -22,22 +26,29 @@ function withAnalytics(cb: (a: Analytics) => void): void {
     cb(a);
   } catch (err) {
     // Non-critical — swallow errors; show debug info in non-production environments (guard console)
-    if (process.env.NODE_ENV !== "production" && typeof console !== "undefined" && console.debug) {
+    if (
+      process.env.NODE_ENV !== "production" &&
+      typeof console !== "undefined" &&
+      console.debug
+    ) {
       console.debug("analytics error", err);
     }
   }
 }
 
 // Compute simple conversion rates – placeholder until richer analytics needed
-const calculateConversionRates = (data: unknown): {
+const calculateConversionRates = (
+  data: unknown
+): {
   viewToBegin: number;
   beginToPurchase: number;
   viewToPurchase: number;
 } => {
   try {
-    const daily = (data && typeof data === "object" && "daily" in data)
-      ? (data as { daily?: unknown }).daily
-      : {};
+    const daily =
+      data && typeof data === "object" && "daily" in data
+        ? (data as { daily?: unknown }).daily
+        : {};
     // naive aggregate: purchase / view_pricing etc.
     let views = 0;
     let purchases = 0;
@@ -50,13 +61,19 @@ const calculateConversionRates = (data: unknown): {
           const bc = obj.begin_checkout as unknown;
           const pu = obj.purchase as unknown;
           views += Number(
-            (vp && typeof vp === "object" && "count" in vp ? (vp as { count?: unknown }).count : vp) || 0
+            (vp && typeof vp === "object" && "count" in vp
+              ? (vp as { count?: unknown }).count
+              : vp) || 0
           );
           begins += Number(
-            (bc && typeof bc === "object" && "count" in bc ? (bc as { count?: unknown }).count : bc) || 0
+            (bc && typeof bc === "object" && "count" in bc
+              ? (bc as { count?: unknown }).count
+              : bc) || 0
           );
           purchases += Number(
-            (pu && typeof pu === "object" && "count" in pu ? (pu as { count?: unknown }).count : pu) || 0
+            (pu && typeof pu === "object" && "count" in pu
+              ? (pu as { count?: unknown }).count
+              : pu) || 0
           );
         }
       });
@@ -75,7 +92,7 @@ const calculateConversionRates = (data: unknown): {
 export const trackPaymentEvents = {
   // Track when user views pricing page
   viewPricing: (source?: string) => {
-    withAnalytics(analytics => {
+    withAnalytics((analytics) => {
       logEvent(analytics, "view_pricing", {
         source: source || "direct",
         timestamp: new Date().toISOString(),
@@ -85,7 +102,7 @@ export const trackPaymentEvents = {
 
   // Track when user starts checkout process
   beginCheckout: (plan: string, amount: number, currency: string = "USD") => {
-    withAnalytics(analytics => {
+    withAnalytics((analytics) => {
       logEvent(analytics, "begin_checkout", {
         currency,
         value: amount,
@@ -109,7 +126,7 @@ export const trackPaymentEvents = {
     transactionId: string,
     currency: string = "USD"
   ) => {
-    withAnalytics(analytics => {
+    withAnalytics((analytics) => {
       logEvent(analytics, "purchase", {
         transaction_id: transactionId,
         currency,
@@ -129,7 +146,7 @@ export const trackPaymentEvents = {
 
   // Track payment method selection
   selectPaymentMethod: (method: string, plan: string) => {
-    withAnalytics(analytics => {
+    withAnalytics((analytics) => {
       logEvent(analytics, "select_payment_method", {
         payment_method: method,
         plan: plan,
@@ -140,7 +157,7 @@ export const trackPaymentEvents = {
 
   // Track checkout abandonment
   abandonCheckout: (plan: string, step: string, reason?: string) => {
-    withAnalytics(analytics => {
+    withAnalytics((analytics) => {
       logEvent(analytics, "abandon_checkout", {
         plan,
         step,
@@ -156,7 +173,7 @@ export const trackPaymentEvents = {
     fromPlan: string,
     toPlan?: string
   ) => {
-    withAnalytics(analytics => {
+    withAnalytics((analytics) => {
       logEvent(analytics, "subscription_change", {
         action,
         from_plan: fromPlan,
@@ -168,7 +185,7 @@ export const trackPaymentEvents = {
 
   // Track refund requests
   refundRequest: (plan: string, amount: number, reason: string) => {
-    withAnalytics(analytics => {
+    withAnalytics((analytics) => {
       logEvent(analytics, "refund_request", {
         plan,
         amount,
@@ -254,23 +271,31 @@ export const conversionFunnel = {
       const date = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
       const metricsRef = doc(db, "analytics", "conversion_metrics");
 
-      await setDoc(metricsRef, {
-        [`daily.${date}.${event}`]: increment(1),
-        [`daily.${date}.total_users`]: increment(1),
-        [`plans.${plan || "unknown"}.${event}`]: increment(1),
-        lastUpdated: serverTimestamp(),
-  }, { merge: true });
+      await setDoc(
+        metricsRef,
+        {
+          [`daily.${date}.${event}`]: increment(1),
+          [`daily.${date}.total_users`]: increment(1),
+          [`plans.${plan || "unknown"}.${event}`]: increment(1),
+          lastUpdated: serverTimestamp(),
+        },
+        { merge: true }
+      );
 
       // Track user journey
       if (userId) {
         const userJourneyRef = doc(db, "user_journeys", userId);
-        await setDoc(userJourneyRef, {
-          [`events.${event}`]: {
-            timestamp: serverTimestamp(),
-            plan: plan || null,
+        await setDoc(
+          userJourneyRef,
+          {
+            [`events.${event}`]: {
+              timestamp: serverTimestamp(),
+              plan: plan || null,
+            },
+            lastActivity: serverTimestamp(),
           },
-          lastActivity: serverTimestamp(),
-  }, { merge: true });
+          { merge: true }
+        );
       }
     } catch (error) {
       console.error("Error updating conversion metrics:", error);
@@ -340,15 +365,19 @@ export const cohortAnalysis = {
   trackCohort: async (userId: string, cohortDate: string, plan: string) => {
     try {
       const cohortRef = doc(db, "cohorts", cohortDate);
-      await setDoc(cohortRef, {
-        [`users.${userId}`]: {
-          plan,
-          joinedAt: serverTimestamp(),
+      await setDoc(
+        cohortRef,
+        {
+          [`users.${userId}`]: {
+            plan,
+            joinedAt: serverTimestamp(),
+          },
+          [`totals.${plan}`]: increment(1),
+          totalUsers: increment(1),
+          lastUpdated: serverTimestamp(),
         },
-        [`totals.${plan}`]: increment(1),
-        totalUsers: increment(1),
-        lastUpdated: serverTimestamp(),
-  }, { merge: true });
+        { merge: true }
+      );
     } catch (error) {
       console.error("Error tracking cohort:", error);
     }
@@ -366,11 +395,15 @@ export const cohortAnalysis = {
         "retention",
         `${cohortDate}_${retentionPeriod}`
       );
-      await setDoc(retentionRef, {
-        [`active_users.${userId}`]: serverTimestamp(),
-        totalActiveUsers: increment(1),
-        lastUpdated: serverTimestamp(),
-  }, { merge: true });
+      await setDoc(
+        retentionRef,
+        {
+          [`active_users.${userId}`]: serverTimestamp(),
+          totalActiveUsers: increment(1),
+          lastUpdated: serverTimestamp(),
+        },
+        { merge: true }
+      );
     } catch (error) {
       console.error("Error tracking retention:", error);
     }

@@ -8,19 +8,23 @@ import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 
 export interface SecurityOptions {
-    requireAuth?: boolean;
-    requireAdmin?: boolean;
-    rateLimit?: {
-        maxRequests: number;
-        windowMs: number;
-    };
-    validateOrigin?: boolean;
+  requireAuth?: boolean;
+  requireAdmin?: boolean;
+  rateLimit?: {
+    maxRequests: number;
+    windowMs: number;
+  };
+  validateOrigin?: boolean;
 }
 
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
 export function withSecurity(options: SecurityOptions = {}) {
-  return function (target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: unknown,
+    propertyName: string,
+    descriptor: PropertyDescriptor
+  ) {
     const method = descriptor.value;
 
     descriptor.value = async function (request: CallableRequest) {
@@ -55,7 +59,7 @@ export function withSecurity(options: SecurityOptions = {}) {
           } else {
             requestCounts.set(key, {
               count: 1,
-              resetTime: now + options.rateLimit.windowMs
+              resetTime: now + options.rateLimit.windowMs,
             });
           }
         }
@@ -66,7 +70,7 @@ export function withSecurity(options: SecurityOptions = {}) {
           const allowedOrigins = [
             "https://rankpilot-h3jpc.web.app",
             "https://rankpilot-h3jpc.firebaseapp.com",
-            "http://localhost:3000"
+            "http://localhost:3000",
           ];
 
           if (origin && !allowedOrigins.includes(origin)) {
@@ -76,7 +80,7 @@ export function withSecurity(options: SecurityOptions = {}) {
 
         logger.info(`Function ${propertyName} started`, {
           userId,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
 
         const result = await method.call(this, request);
@@ -84,18 +88,17 @@ export function withSecurity(options: SecurityOptions = {}) {
         logger.info(`Function ${propertyName} completed`, {
           userId,
           duration: Date.now() - startTime,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
 
         return result;
-
       } catch (error) {
         logger.error(`Function ${propertyName} failed`, {
           userId,
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
           duration: Date.now() - startTime,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
 
         if (error instanceof HttpsError) {

@@ -7,7 +7,10 @@
  * Integration: Dashboard components → Firestore real-time data
  */
 
-import { DashboardDataService, type DashboardData } from "@/lib/services/dashboard-data.service";
+import {
+  DashboardDataService,
+  type DashboardData,
+} from "@/lib/services/dashboard-data.service";
 import { useCallback, useEffect, useState } from "react";
 
 // Hook for real-time dashboard data
@@ -16,24 +19,46 @@ export const useRealTimeDashboardData = (userId: string | null) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    if (!userId) { setLoading(false); return; }
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     console.log(`🔄 Setting up real-time dashboard data for user: ${userId}`);
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     let cancelled = false;
 
     // Prime with initial data
     void DashboardDataService.getUserDashboardData(userId)
-      .then(d => { if (!cancelled) { setData(d); setLoading(false); } })
-      .catch(err => { if (!cancelled) { console.error('Error fetching initial dashboard data:', err); setError('Failed to load dashboard data'); setLoading(false); } });
+      .then((d) => {
+        if (!cancelled) {
+          setData(d);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error("Error fetching initial dashboard data:", err);
+          setError("Failed to load dashboard data");
+          setLoading(false);
+        }
+      });
 
     // Subscribe for realtime updates (StrictMode-safe: re-subscribes on remount)
-    const unsubscribe = DashboardDataService.subscribeToUserDashboardData(userId, upd => {
-      if (!cancelled) { console.log('📊 Dashboard data updated in real-time'); setData(upd); setError(null); }
-    });
+    const unsubscribe = DashboardDataService.subscribeToUserDashboardData(
+      userId,
+      (upd) => {
+        if (!cancelled) {
+          console.log("📊 Dashboard data updated in real-time");
+          setData(upd);
+          setError(null);
+        }
+      }
+    );
 
     return () => {
       cancelled = true;
-      console.log('🔌 Unsubscribing from dashboard data');
+      console.log("🔌 Unsubscribing from dashboard data");
       unsubscribe();
     };
   }, [userId]);
@@ -58,7 +83,7 @@ export const useRealTimeDashboardData = (userId: string | null) => {
     data,
     loading,
     error,
-    refresh
+    refresh,
   };
 };
 
@@ -68,7 +93,12 @@ export const useChartData = (
   userId: string | null
 ) => {
   type SEOTrendPoint = { date: string; score: number };
-  type KeywordVisibility = { score: number; top3: number; top10: number; top100: number };
+  type KeywordVisibility = {
+    score: number;
+    top3: number;
+    top10: number;
+    top100: number;
+  };
   type BacklinkHistoryEntry = { month: string; new: number; lost: number };
   type TrafficSource = { name: string; value: number; fill: string };
   type ChartDataMap = {
@@ -77,7 +107,9 @@ export const useChartData = (
     backlinks: BacklinkHistoryEntry[];
     traffic: TrafficSource[];
   };
-  const [chartData, setChartData] = useState<ChartDataMap[typeof chartType] | null>(null);
+  const [chartData, setChartData] = useState<
+    ChartDataMap[typeof chartType] | null
+  >(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -88,7 +120,8 @@ export const useChartData = (
 
     const fetchChartData = async () => {
       try {
-        const dashboardData = await DashboardDataService.getUserDashboardData(userId);
+        const dashboardData =
+          await DashboardDataService.getUserDashboardData(userId);
 
         switch (chartType) {
           case "seoTrend":
@@ -127,7 +160,7 @@ export const useUserMetrics = (userId: string | null) => {
     trackedKeywords: 0,
     activeProjects: 0,
     domainAuthority: 0,
-    totalBacklinks: 0
+    totalBacklinks: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -145,7 +178,7 @@ export const useUserMetrics = (userId: string | null) => {
           trackedKeywords: data.trackedKeywords.current,
           activeProjects: data.activeProjects.current,
           domainAuthority: data.domainAuthority.score,
-          totalBacklinks: data.backlinks.total
+          totalBacklinks: data.backlinks.total,
         });
       } catch (error) {
         console.error("Error fetching user metrics:", error);

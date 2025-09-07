@@ -112,8 +112,10 @@ const planFeatures = {
   },
 };
 
-export default function BillingSettingsCard({ user }: BillingSettingsCardProps) {
-  const logger = useMemo(() => getLogger('settings.billing'), []);
+export default function BillingSettingsCard({
+  user,
+}: BillingSettingsCardProps) {
+  const logger = useMemo(() => getLogger("settings.billing"), []);
   const [isLoading, setIsLoading] = useState(false);
   const [billingData, setBillingData] = useState<BillingData | null>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -155,7 +157,7 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
       },
       (error) => {
         const msg = getErrorMessage(error);
-        logger.error('billing.data.load.error', { error: msg });
+        logger.error("billing.data.load.error", { error: msg });
         toast.error("Failed to load billing information");
       }
     );
@@ -173,10 +175,13 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
 
       const { url } = result.data as { url: string };
       window.open(url, "_blank");
-      logger.info('billing.portal.open', { userId: user.uid });
+      logger.info("billing.portal.open", { userId: user.uid });
     } catch (error: unknown) {
       const msg = getErrorMessage(error);
-      logger.error('billing.portal.open.error', { userId: user.uid, error: msg });
+      logger.error("billing.portal.open.error", {
+        userId: user.uid,
+        error: msg,
+      });
       toast.error("Failed to open billing portal");
     } finally {
       setIsLoading(false);
@@ -199,10 +204,19 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
 
       const { url } = result.data as { url: string };
       window.location.href = url;
-      logger.info('billing.checkout.start', { userId: user.uid, plan, interval });
+      logger.info("billing.checkout.start", {
+        userId: user.uid,
+        plan,
+        interval,
+      });
     } catch (error: unknown) {
       const msg = getErrorMessage(error);
-      logger.error('billing.checkout.error', { userId: user.uid, plan, interval, error: msg });
+      logger.error("billing.checkout.error", {
+        userId: user.uid,
+        plan,
+        interval,
+        error: msg,
+      });
       toast.error("Failed to start upgrade process");
     } finally {
       setIsUpgrading(false);
@@ -257,7 +271,13 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <TierIcon
-                tier={billingData.subscriptionTier === "agency" ? "agency" : billingData.subscriptionTier === "starter" ? "starter" : "free"}
+                tier={
+                  billingData.subscriptionTier === "agency"
+                    ? "agency"
+                    : billingData.subscriptionTier === "starter"
+                      ? "starter"
+                      : "free"
+                }
                 size={40}
                 className="shadow-sm"
               />
@@ -274,7 +294,15 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
             <div>
               <h3 className="text-2xl font-bold flex items-center gap-2">
                 {currentPlan.name}
-                <TierChip tier={billingData.subscriptionTier === "agency" ? "agency" : billingData.subscriptionTier === "starter" ? "starter" : "free"} />
+                <TierChip
+                  tier={
+                    billingData.subscriptionTier === "agency"
+                      ? "agency"
+                      : billingData.subscriptionTier === "starter"
+                        ? "starter"
+                        : "free"
+                  }
+                />
               </h3>
               <p className="text-muted-foreground">
                 {billingData.subscriptionTier === "free"
@@ -312,8 +340,13 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
                       >
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between mb-2">
-                            <h5 className="font-semibold flex items-center gap-2">{plan.name}</h5>
-                            <TierIcon tier={key === "agency" ? "agency" : "starter"} size={32} />
+                            <h5 className="font-semibold flex items-center gap-2">
+                              {plan.name}
+                            </h5>
+                            <TierIcon
+                              tier={key === "agency" ? "agency" : "starter"}
+                              size={32}
+                            />
                           </div>
                           <p className="text-lg font-bold mb-2">
                             ${plan.price.monthly}/mo
@@ -321,7 +354,12 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
                           <Button
                             className="w-full mb-2"
                             size="sm"
-                            onClick={asVoidHandler(() => handleUpgrade(key as "starter" | "agency", "monthly"))}
+                            onClick={asVoidHandler(() =>
+                              handleUpgrade(
+                                key as "starter" | "agency",
+                                "monthly"
+                              )
+                            )}
                             disabled={isUpgrading}
                           >
                             {isUpgrading ? (
@@ -344,18 +382,18 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
                 </div>
               </div>
             ) : (
-                <Button
-                  onClick={asVoidHandler(() => handleManageBilling())}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Settings className="h-4 w-4 mr-2" />
-                  )}
-                  Manage Subscription
-                </Button>
+              <Button
+                onClick={asVoidHandler(() => handleManageBilling())}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Settings className="h-4 w-4 mr-2" />
+                )}
+                Manage Subscription
+              </Button>
             )}
           </div>
         </CardContent>
@@ -532,21 +570,23 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
                       </p>
                     </div>
                   </div>
-                    <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="font-semibold">{formatCurrency(invoice.amount)}</p>
+                      <p className="font-semibold">
+                        {formatCurrency(invoice.amount)}
+                      </p>
                       <div className="flex items-center gap-1">
-                        {invoice.status === 'paid' && (
+                        {invoice.status === "paid" && (
                           <CheckCircle className="h-3 w-3 text-success" />
                         )}
                         <span
                           className={
                             "text-xs capitalize " +
-                            (invoice.status === 'paid'
+                            (invoice.status === "paid"
                               ? "text-success"
-                              : invoice.status === 'failed'
-                              ? "text-destructive"
-                              : "text-warning")
+                              : invoice.status === "failed"
+                                ? "text-destructive"
+                                : "text-warning")
                           }
                         >
                           {invoice.status}

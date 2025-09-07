@@ -6,7 +6,7 @@ This GitHub Actions workflow provides automated testing and deployment for the `
 
 The workflow runs automatically when:
 
-- You push commits to the `workshop/performance` branch  
+- You push commits to the `workshop/performance` branch
 - You can also trigger it manually via GitHub Actions UI
 
 ## 🎯 **What It Does**

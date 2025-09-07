@@ -1,5 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
 # Validate delegation log (non-blocking)
 if ! npm run validate:aider-log >/dev/null 2>&1; then

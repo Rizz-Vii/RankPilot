@@ -26,11 +26,15 @@ export async function getUserSubscription(
       if (!v) return undefined;
       if (v instanceof Date) return v;
       const maybeTs = v as { toDate?: () => Date };
-      return typeof maybeTs.toDate === "function" ? maybeTs.toDate() : undefined;
+      return typeof maybeTs.toDate === "function"
+        ? maybeTs.toDate()
+        : undefined;
     };
 
-    const status = (userData["subscriptionStatus"] as SubscriptionData["status"]) || "free";
-    const tier = (userData["subscriptionTier"] as SubscriptionData["tier"]) || "free";
+    const status =
+      (userData["subscriptionStatus"] as SubscriptionData["status"]) || "free";
+    const tier =
+      (userData["subscriptionTier"] as SubscriptionData["tier"]) || "free";
 
     return {
       status,
@@ -168,9 +172,9 @@ export function getRemainingUsage(
       limits.competitorAnalysis === -1
         ? "unlimited"
         : Math.max(
-          0,
-          limits.competitorAnalysis - (currentUsage.competitors || 0)
-        ),
+            0,
+            limits.competitorAnalysis - (currentUsage.competitors || 0)
+          ),
   };
 }
 

@@ -26,19 +26,19 @@ function genId() {
 
 type Action =
   | {
-    type: 'ADD_TOAST';
+      type: "ADD_TOAST";
       toast: ToasterToast;
     }
   | {
-    type: 'UPDATE_TOAST';
+      type: "UPDATE_TOAST";
       toast: Partial<ToasterToast>;
     }
   | {
-    type: 'DISMISS_TOAST';
+      type: "DISMISS_TOAST";
       toastId?: ToasterToast["id"];
     }
   | {
-    type: 'REMOVE_TOAST';
+      type: "REMOVE_TOAST";
       toastId?: ToasterToast["id"];
     };
 
@@ -184,4 +184,3 @@ function useToast() {
 }
 
 export { toast, useToast };
-

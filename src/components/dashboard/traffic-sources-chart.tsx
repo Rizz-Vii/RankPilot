@@ -1,8 +1,18 @@
 "use client";
 import styles from "@/app/(app)/dashboard/dashboard.module.css";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { ChartConfig } from "@/components/ui/chart";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { Activity } from "lucide-react";
 import { Cell, Legend, Pie, PieChart } from "recharts";
 
@@ -26,43 +36,65 @@ const getChartColorClass = (colorValue: string, label?: string): string => {
   // Fallback by label mapping
   const byLabel: Record<string, string> = {
     "Organic Search": styles.legendDotChart1,
-    "Direct": styles.legendDotChart2,
-    "Referral": styles.legendDotChart3,
-    "Social": styles.legendDotChart4,
+    Direct: styles.legendDotChart2,
+    Referral: styles.legendDotChart3,
+    Social: styles.legendDotChart4,
   };
   if (label && byLabel[label]) return byLabel[label];
   return styles.legendDotChart1;
 };
 
-export interface TrafficSourcesChartProps { data: Array<{ name: string; value: number; fill: string }>; }
+export interface TrafficSourcesChartProps {
+  data: Array<{ name: string; value: number; fill: string }>;
+}
 
 export function TrafficSourcesChart({ data }: TrafficSourcesChartProps) {
   return (
     <Card data-testid="chart-traffic-sources">
       <CardHeader>
         <CardTitle className="font-headline">Traffic Sources</CardTitle>
-        <CardDescription>Estimated traffic source breakdown. <span className="text-muted-foreground/70">Diversified = resilient growth.</span></CardDescription>
+        <CardDescription>
+          Estimated traffic source breakdown.{" "}
+          <span className="text-muted-foreground/70">
+            Diversified = resilient growth.
+          </span>
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex items-center justify-center">
         {data && data.length > 0 ? (
           <ChartContainer config={pieChartConfig} className="h-[200px] w-full">
             <PieChart>
-              <ChartTooltip cursor={false} content={(props) => <ChartTooltipContent {...props} indicator="line" />} />
-              <Pie data={data} dataKey="value" nameKey="name" innerRadius={50} strokeWidth={5}>
+              <ChartTooltip
+                cursor={false}
+                content={(props) => (
+                  <ChartTooltipContent {...props} indicator="line" />
+                )}
+              />
+              <Pie
+                data={data}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={50}
+                strokeWidth={5}
+              >
                 {data.map((entry) => (
                   <Cell key={entry.name} fill={entry.fill} />
                 ))}
               </Pie>
-              <Legend content={({ payload }) => (
-                <div className={styles.legendContainer}>
-                  {payload?.map((entry) => (
-                    <div key={entry.value} className={styles.legendItem}>
-                      <div className={`${styles.legendDot} ${getChartColorClass(entry.color || "", String(entry.value))}`} />
-                      <span>{entry.value}</span>
-                    </div>
-                  ))}
-                </div>
-              )} />
+              <Legend
+                content={({ payload }) => (
+                  <div className={styles.legendContainer}>
+                    {payload?.map((entry) => (
+                      <div key={entry.value} className={styles.legendItem}>
+                        <div
+                          className={`${styles.legendDot} ${getChartColorClass(entry.color || "", String(entry.value))}`}
+                        />
+                        <span>{entry.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              />
             </PieChart>
           </ChartContainer>
         ) : (

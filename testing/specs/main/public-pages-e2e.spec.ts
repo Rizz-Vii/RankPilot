@@ -9,15 +9,25 @@ test.describe("Public Pages", () => {
     // Use a desktop viewport so primary nav links are visible
     await page.setViewportSize({ width: 1280, height: 800 });
     // Header elements
-    await expect(page.locator("header").getByRole("link", { name: /RankPilot/i })).toBeVisible();
+    await expect(
+      page.locator("header").getByRole("link", { name: /RankPilot/i })
+    ).toBeVisible();
     await expect(page.locator("header").getByRole("navigation")).toBeVisible();
 
     // Main navigation links - check for actual links that exist, be more specific
-    await expect(page.locator("header").getByRole("link", { name: "Features", exact: true })).toBeVisible();
-    await expect(page.locator("header").getByRole("link", { name: "Pricing" })).toBeVisible();
+    await expect(
+      page
+        .locator("header")
+        .getByRole("link", { name: "Features", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.locator("header").getByRole("link", { name: "Pricing" })
+    ).toBeVisible();
 
     // Check for CTA button that leads to registration
-    await expect(page.getByRole("link", { name: "Start 7‑Day Free Trial" })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Start 7‑Day Free Trial" })
+    ).toBeVisible();
   });
 
   test("pricing page content and plans", async ({ page }) => {
@@ -37,9 +47,15 @@ test.describe("Public Pages", () => {
     await expect(page).toHaveURL(/\/features$/);
 
     // Check main feature sections - match actual features page content, be more specific
-    await expect(page.getByRole("heading", { name: "SEO Audit" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Keyword Tool" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Content Analyzer", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "SEO Audit" })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Keyword Tool" })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Content Analyzer", exact: true })
+    ).toBeVisible();
   });
 
   test("FAQ page content", async ({ page }) => {
@@ -50,7 +66,9 @@ test.describe("Public Pages", () => {
     await expect(
       page.getByText("Do I need a credit card to start?")
     ).toBeVisible();
-    await expect(page.getByText("What search surfaces are supported?")).toBeVisible();
+    await expect(
+      page.getByText("What search surfaces are supported?")
+    ).toBeVisible();
     await expect(page.getByText("Can I cancel or downgrade?")).toBeVisible();
   });
 

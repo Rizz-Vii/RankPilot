@@ -34,22 +34,26 @@ const db = getFirestore();
 
 // Create Checkout Session
 export const createCheckoutSession = onRequest(
-  { cors: true, secrets: ["STRIPE_SECRET_KEY"], region: "australia-southeast1" },
+  {
+    cors: true,
+    secrets: ["STRIPE_SECRET_KEY"],
+    region: "australia-southeast1",
+  },
   async (request, response) => {
     try {
-  const { planId, billingInterval, userId } = request.body as {
-    planId?: PlanType;
-    billingInterval?: BillingInterval;
-    userId?: string;
-  };
+      const { planId, billingInterval, userId } = request.body as {
+        planId?: PlanType;
+        billingInterval?: BillingInterval;
+        userId?: string;
+      };
 
       if (!planId || !billingInterval || !userId) {
         response.status(400).json({ error: "Missing required parameters" });
         return;
       }
 
-  const priceId =
-    planId && billingInterval ? getPriceId(planId, billingInterval) : null;
+      const priceId =
+        planId && billingInterval ? getPriceId(planId, billingInterval) : null;
       if (!priceId) {
         response
           .status(400)
@@ -104,7 +108,11 @@ export const createCheckoutSession = onRequest(
 
 // Create Customer Portal Session
 export const createPortalSession = onRequest(
-  { cors: true, secrets: ["STRIPE_SECRET_KEY"], region: "australia-southeast1" },
+  {
+    cors: true,
+    secrets: ["STRIPE_SECRET_KEY"],
+    region: "australia-southeast1",
+  },
   async (request, response) => {
     try {
       const { userId } = request.body;

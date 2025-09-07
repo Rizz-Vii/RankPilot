@@ -1,1 +1,9 @@
-{"ts":"2025-09-05T05:22:45.605Z","iter":2,"planned":0,"considered":0,"drift":null,"adaptiveMax":5,"skippedDueToHash":true}
+{
+  "ts": "2025-09-05T05:22:45.605Z",
+  "iter": 2,
+  "planned": 0,
+  "considered": 0,
+  "drift": null,
+  "adaptiveMax": 5,
+  "skippedDueToHash": true
+}

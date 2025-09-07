@@ -64,13 +64,20 @@ export class FirebaseErrorHandler {
 }
 
 // Wrapper for analytics events that won&apos;t throw errors
-export function safeAnalyticsEvent(eventName: string, eventParams?: Record<string, unknown>): void {
+export function safeAnalyticsEvent(
+  eventName: string,
+  eventParams?: Record<string, unknown>
+): void {
   if (typeof window === "undefined") return;
 
   try {
     if (analytics) {
       if (eventParams) {
-        logEvent(analytics as Analytics, eventName, eventParams as Record<string, unknown>);
+        logEvent(
+          analytics as Analytics,
+          eventName,
+          eventParams as Record<string, unknown>
+        );
       } else {
         logEvent(analytics as Analytics, eventName);
       }

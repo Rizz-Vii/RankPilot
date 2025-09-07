@@ -19,7 +19,9 @@ test.describe("Team Projects - Comprehensive Suite", () => {
   });
 
   test.describe("Page Loading and Navigation", () => {
-    test("loads team projects page with proper authentication", async ({ page }) => {
+    test("loads team projects page with proper authentication", async ({
+      page,
+    }) => {
       console.log("🏗️ Testing Team Projects page loading...");
 
       // Test with free tier user (email/password auth works better in headless)
@@ -30,11 +32,17 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       // Verify page loads correctly
       await expect(page.locator("h1")).toContainText("Team Projects");
-      await expect(page.locator("text=Manage and track your team's SEO projects")).toBeVisible();
+      await expect(
+        page.locator("text=Manage and track your team's SEO projects")
+      ).toBeVisible();
 
       // Verify navigation elements
-      await expect(page.locator("button", { hasText: "Back to Team" })).toBeVisible();
-      await expect(page.locator("button", { hasText: "New Project" })).toBeVisible();
+      await expect(
+        page.locator("button", { hasText: "Back to Team" })
+      ).toBeVisible();
+      await expect(
+        page.locator("button", { hasText: "New Project" })
+      ).toBeVisible();
 
       console.log("✅ Team Projects page loads correctly");
     });
@@ -54,7 +62,9 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator("button", { hasText: "Back to Team" }).waitFor({ state: "visible", timeout: 20000 });
+      await page
+        .locator("button", { hasText: "Back to Team" })
+        .waitFor({ state: "visible", timeout: 20000 });
 
       const backButton = page.locator("button", { hasText: "Back to Team" });
       await expect(backButton).toBeVisible();
@@ -73,10 +83,14 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator("button", { hasText: "New Project" }).waitFor({ state: "visible", timeout: 20000 });
+      await page
+        .locator("button", { hasText: "New Project" })
+        .waitFor({ state: "visible", timeout: 20000 });
 
       // Open create dialog
-      const newProjectButton = page.locator("button", { hasText: "New Project" });
+      const newProjectButton = page.locator("button", {
+        hasText: "New Project",
+      });
       await newProjectButton.click();
 
       // Verify dialog opens
@@ -98,7 +112,7 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       // Set deadline
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const dateString = tomorrow.toISOString().split('T')[0];
+      const dateString = tomorrow.toISOString().split("T")[0];
       await page.fill("#deadline", dateString);
 
       // Add keywords and URLs
@@ -106,16 +120,24 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       await page.fill("#urls", "https://example.com, https://test.com");
 
       // Submit form
-      const createButton = page.locator("button", { hasText: "Create Project" });
+      const createButton = page.locator("button", {
+        hasText: "Create Project",
+      });
       await createButton.click();
 
       // Verify project appears in list
       await expect(page.locator("text=E2E Test Project")).toBeVisible();
-      await expect(page.locator("text=Test project created by automation")).toBeVisible();
+      await expect(
+        page.locator("text=Test project created by automation")
+      ).toBeVisible();
 
       // Verify badges are displayed
-      await expect(page.locator(".bg-green-500", { hasText: "Active" })).toBeVisible();
-      await expect(page.locator(".bg-orange-500", { hasText: "High" })).toBeVisible();
+      await expect(
+        page.locator(".bg-green-500", { hasText: "Active" })
+      ).toBeVisible();
+      await expect(
+        page.locator(".bg-orange-500", { hasText: "High" })
+      ).toBeVisible();
 
       console.log("✅ Project created successfully with all fields");
     });
@@ -125,13 +147,17 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator("button", { hasText: "New Project" }).waitFor({ state: "attached", timeout: 20000 });
+      await page
+        .locator("button", { hasText: "New Project" })
+        .waitFor({ state: "attached", timeout: 20000 });
 
       // Open create dialog
       await page.locator("button", { hasText: "New Project" }).click();
 
       // Try to submit empty form
-      const createButton = page.locator("button", { hasText: "Create Project" });
+      const createButton = page.locator("button", {
+        hasText: "Create Project",
+      });
       await createButton.click();
 
       // Should show validation error
@@ -145,7 +171,9 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator("button", { hasText: "New Project" }).waitFor({ state: "visible", timeout: 20000 });
+      await page
+        .locator("button", { hasText: "New Project" })
+        .waitFor({ state: "visible", timeout: 20000 });
 
       // Open create dialog
       await page.locator("button", { hasText: "New Project" }).click();
@@ -172,7 +200,9 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator("text=E-commerce SEO Campaign").waitFor({ state: "visible", timeout: 30000 });
+      await page
+        .locator("text=E-commerce SEO Campaign")
+        .waitFor({ state: "visible", timeout: 30000 });
 
       // Should display mock projects
       await expect(page.locator("text=E-commerce SEO Campaign")).toBeVisible();
@@ -183,12 +213,20 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       // Removed unused firstProject variable
 
       // Check status badges
-      await expect(page.locator(".bg-green-500", { hasText: "Active" })).toBeVisible();
-      await expect(page.locator(".bg-gray-500", { hasText: "Planning" })).toBeVisible();
+      await expect(
+        page.locator(".bg-green-500", { hasText: "Active" })
+      ).toBeVisible();
+      await expect(
+        page.locator(".bg-gray-500", { hasText: "Planning" })
+      ).toBeVisible();
 
       // Check priority badges
-      await expect(page.locator(".bg-orange-500", { hasText: "High" })).toBeVisible();
-      await expect(page.locator(".bg-yellow-500", { hasText: "Medium" })).toBeVisible();
+      await expect(
+        page.locator(".bg-orange-500", { hasText: "High" })
+      ).toBeVisible();
+      await expect(
+        page.locator(".bg-yellow-500", { hasText: "Medium" })
+      ).toBeVisible();
 
       // Check progress bars
       await expect(page.locator("text=Progress")).toBeVisible();
@@ -206,10 +244,15 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator("button", { hasText: "New Project" }).waitFor({ state: "visible", timeout: 20000 });
+      await page
+        .locator("button", { hasText: "New Project" })
+        .waitFor({ state: "visible", timeout: 20000 });
 
       // Find first project dropdown button
-      const dropdownButton = page.locator("button").filter({ has: page.locator("svg") }).first();
+      const dropdownButton = page
+        .locator("button")
+        .filter({ has: page.locator("svg") })
+        .first();
       await dropdownButton.click();
 
       // Verify menu options
@@ -224,7 +267,9 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator("text=E-commerce SEO Campaign").waitFor({ state: "visible", timeout: 30000 });
+      await page
+        .locator("text=E-commerce SEO Campaign")
+        .waitFor({ state: "visible", timeout: 30000 });
 
       // Create a test project first
       await page.locator("button", { hasText: "New Project" }).click();
@@ -233,8 +278,13 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       await expect(page.locator("text=Project to Delete")).toBeVisible();
 
       // Now delete it
-      const projectToDelete = page.locator("text=Project to Delete").locator("..");
-      const dropdownButton = projectToDelete.locator("button").filter({ has: page.locator("svg") }).first();
+      const projectToDelete = page
+        .locator("text=Project to Delete")
+        .locator("..");
+      const dropdownButton = projectToDelete
+        .locator("button")
+        .filter({ has: page.locator("svg") })
+        .first();
       await dropdownButton.click();
 
       const deleteButton = page.locator("text=Delete");
@@ -242,7 +292,9 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       // Verify project is removed
       await expect(page.locator("text=Project to Delete")).not.toBeVisible();
-      await expect(page.locator("text=Project deleted successfully")).toBeVisible();
+      await expect(
+        page.locator("text=Project deleted successfully")
+      ).toBeVisible();
 
       console.log("✅ Project deletion works correctly");
     });
@@ -254,7 +306,9 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator("input[placeholder*='Search projects']").waitFor({ state: "visible", timeout: 20000 });
+      await page
+        .locator("input[placeholder*='Search projects']")
+        .waitFor({ state: "visible", timeout: 20000 });
 
       // Search for specific project
       const searchInput = page.locator("input[placeholder*='Search projects']");
@@ -262,7 +316,9 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       // Should show only matching projects
       await expect(page.locator("text=E-commerce SEO Campaign")).toBeVisible();
-      await expect(page.locator("text=Blog Content Strategy")).not.toBeVisible();
+      await expect(
+        page.locator("text=Blog Content Strategy")
+      ).not.toBeVisible();
 
       // Clear search
       await searchInput.clear();
@@ -276,16 +332,24 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("agency");
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator("select, [role=combobox]").first().waitFor({ state: "visible", timeout: 20000 });
+      await page
+        .locator("select, [role=combobox]")
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 });
 
       // Filter by Active status
-      const statusFilter = page.locator("select, [role=combobox]").filter({ hasText: "All Statuses" }).first();
+      const statusFilter = page
+        .locator("select, [role=combobox]")
+        .filter({ hasText: "All Statuses" })
+        .first();
       await statusFilter.click();
       await page.locator("text=Active").click();
 
       // Should show only active projects
       await expect(page.locator("text=E-commerce SEO Campaign")).toBeVisible();
-      await expect(page.locator("text=Blog Content Strategy")).not.toBeVisible(); // This is Planning
+      await expect(
+        page.locator("text=Blog Content Strategy")
+      ).not.toBeVisible(); // This is Planning
 
       console.log("✅ Status filtering works correctly");
     });
@@ -295,16 +359,24 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("enterprise");
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator("select, [role=combobox]").first().waitFor({ state: "visible", timeout: 20000 });
+      await page
+        .locator("select, [role=combobox]")
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 });
 
       // Filter by High priority
-      const priorityFilter = page.locator("select, [role=combobox]").filter({ hasText: "All Priorities" }).first();
+      const priorityFilter = page
+        .locator("select, [role=combobox]")
+        .filter({ hasText: "All Priorities" })
+        .first();
       await priorityFilter.click();
       await page.locator("text=High").click();
 
       // Should show only high priority projects
       await expect(page.locator("text=E-commerce SEO Campaign")).toBeVisible(); // High priority
-      await expect(page.locator("text=Blog Content Strategy")).not.toBeVisible(); // Medium priority
+      await expect(
+        page.locator("text=Blog Content Strategy")
+      ).not.toBeVisible(); // Medium priority
 
       console.log("✅ Priority filtering works correctly");
     });
@@ -314,7 +386,9 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       await orchestrator.userManager.loginAs("starter");
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator("input[placeholder*='Search projects']").waitFor({ state: "visible", timeout: 20000 });
+      await page
+        .locator("input[placeholder*='Search projects']")
+        .waitFor({ state: "visible", timeout: 20000 });
 
       // Search for non-existent project
       const searchInput = page.locator("input[placeholder*='Search projects']");
@@ -322,7 +396,9 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       // Should show empty state
       await expect(page.locator("text=No projects found")).toBeVisible();
-      await expect(page.locator("text=Try adjusting your filters")).toBeVisible();
+      await expect(
+        page.locator("text=Try adjusting your filters")
+      ).toBeVisible();
 
       console.log("✅ Empty state displays correctly");
     });
@@ -341,10 +417,12 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       // Verify responsive layout
       await expect(page.locator("h1")).toBeVisible();
-      await expect(page.locator("button", { hasText: "New Project" })).toBeVisible();
+      await expect(
+        page.locator("button", { hasText: "New Project" })
+      ).toBeVisible();
 
       // Check that cards stack properly on mobile
-      const projectCards = page.locator('.grid');
+      const projectCards = page.locator(".grid");
       await expect(projectCards).toHaveClass(/grid/);
 
       // Test touch-friendly buttons (48px minimum)
@@ -374,8 +452,12 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       // Check for proper form labels
       await page.locator("button", { hasText: "New Project" }).click();
-      await expect(page.locator("label", { hasText: "Project Name" })).toBeVisible();
-      await expect(page.locator("label", { hasText: "Description" })).toBeVisible();
+      await expect(
+        page.locator("label", { hasText: "Project Name" })
+      ).toBeVisible();
+      await expect(
+        page.locator("label", { hasText: "Description" })
+      ).toBeVisible();
 
       // Check for accessible buttons
       const buttons = page.locator("button");
@@ -400,14 +482,14 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       const startTime = Date.now();
       await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
-      await page.locator('h1').waitFor({ state: 'visible', timeout: 30000 });
+      await page.locator("h1").waitFor({ state: "visible", timeout: 30000 });
       const loadTime = Date.now() - startTime;
 
       // Should load within 5 seconds
       expect(loadTime).toBeLessThan(5000);
 
       // Check for loading states
-      const projectCards = page.locator('.grid .hover\\:shadow-lg');
+      const projectCards = page.locator(".grid .hover\\:shadow-lg");
       const cardCount = await projectCards.count();
       expect(cardCount).toBeGreaterThan(0); // Should have loaded content
 

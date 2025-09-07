@@ -26,8 +26,8 @@ EOF
 
 # 3. Modify agent initialization to respect development mode
 
-echo "if (process.env.RANKPILOT_AGENTS_ENABLED !== 'false') {" 
-echo "  // Initialize agents only in production"
+echo "if (process.env.RANKPILOT_AGENTS_ENABLED !== 'false') {"
+echo " // Initialize agents only in production"
 echo "}"
 
 # 4. Keep MCP servers for manual use only

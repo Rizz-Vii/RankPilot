@@ -18,9 +18,12 @@ function Skeleton({ className, shimmer = false, ...props }: SkeletonProps) {
 }
 
 // Global shimmer style injected once (idempotent)
-if (typeof document !== 'undefined' && !document.getElementById('skeleton-shimmer-style')) {
-  const style = document.createElement('style');
-  style.id = 'skeleton-shimmer-style';
+if (
+  typeof document !== "undefined" &&
+  !document.getElementById("skeleton-shimmer-style")
+) {
+  const style = document.createElement("style");
+  style.id = "skeleton-shimmer-style";
   style.textContent = `
   @keyframes skeletonShimmerMove { 0% { transform: translateX(-100%);} 100% { transform: translateX(100%);} }
   .skeleton-shimmer { background: linear-gradient(90deg, hsl(var(--muted)) 0%, hsl(var(--muted)) 40%, hsl(var(--muted-foreground)/0.10) 50%, hsl(var(--muted)) 60%, hsl(var(--muted)) 100%); position: relative; }

@@ -66,7 +66,8 @@ async function rotateTestUsers(): Promise<void> {
 
 function generateSecurePassword(): string {
   const length = 16;
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  const charset =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
   let password = "";
   for (let i = 0; i < length; i++) {
     const randomIndex = randomInt(0, charset.length);
@@ -75,7 +76,10 @@ function generateSecurePassword(): string {
   return password;
 }
 
-function updateEnvFile(filePath: string, updates: Record<string, string>): void {
+function updateEnvFile(
+  filePath: string,
+  updates: Record<string, string>
+): void {
   const envPath = path.resolve(process.cwd(), filePath);
   let content = "";
   try {

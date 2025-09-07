@@ -29,7 +29,9 @@ export function ToolAccessWrapper({
   return (
     <div className="p-4 border-2 border-dashed border-border rounded-lg text-center">
       <div className="text-muted-foreground mb-2">🔒 Tool Restricted</div>
-      <p className="text-sm text-muted-foreground">{getRestrictedMessage(toolId)}</p>
+      <p className="text-sm text-muted-foreground">
+        {getRestrictedMessage(toolId)}
+      </p>
     </div>
   );
 }

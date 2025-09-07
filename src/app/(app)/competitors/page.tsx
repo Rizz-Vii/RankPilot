@@ -1,18 +1,22 @@
 // src/app/(app)/competitors/page.tsx
- "use client";
+"use client";
 
 import CompetitorAnalysisForm from "@/components/competitor-analysis-form";
-import KPIGrid from '@/components/metrics/KPIGrid';
-import { LazyDataTable } from '@/components/metrics/LazyDataTable';
-import { MetricCard } from '@/components/metrics/MetricCard';
-import { PeriodSelector } from '@/components/metrics/PeriodSelector';
-import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
+import KPIGrid from "@/components/metrics/KPIGrid";
+import { LazyDataTable } from "@/components/metrics/LazyDataTable";
+import { MetricCard } from "@/components/metrics/MetricCard";
+import { PeriodSelector } from "@/components/metrics/PeriodSelector";
+import { TrendSparkline } from "@/components/metrics/TrendSparkline";
+import { FeatureGate } from "@/components/subscription/FeatureGate";
 import { ToolPageHeader } from "@/components/tool-page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type {
-  ChartConfig
-} from "@/components/ui/chart";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { ChartConfig } from "@/components/ui/chart";
 import {
   ChartContainer,
   ChartTooltip,
@@ -28,9 +32,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/context/AuthContext";
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useToast } from '@/hooks/use-toast';
-import { useCompetitorAnalysisMetrics } from '@/hooks/useCompetitorAnalysisMetrics';
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
+import { useCompetitorAnalysisMetrics } from "@/hooks/useCompetitorAnalysisMetrics";
 import { ACTIVITY_TYPES, TOOL_NAMES } from "@/lib/activity-types";
 import { db } from "@/lib/firebase";
 import type { NeuroSEOAnalysisRequest, NeuroSEOReport } from "@/lib/neuroseo";
@@ -41,7 +45,7 @@ import type { CompetitorAnalysisOutput } from "@/types";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, BarChart3, Users } from "lucide-react";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -73,7 +77,9 @@ const RankingsChart = ({
       fill: "hsl(var(--chart-1))",
     },
     ...competitorUrls.map((url, index) => {
-      const competitorData = (firstKeywordData as Record<string, unknown>)[String(url)] as { rank?: number } | undefined;
+      const competitorData = (firstKeywordData as Record<string, unknown>)[
+        String(url)
+      ] as { rank?: number } | undefined;
       return {
         name: safeHostname(url),
         rank:
@@ -138,13 +144,13 @@ const RankingsChart = ({
 
 // Safe helpers local to this page (avoid broader refactors)
 const ensureHttpUrl = (raw: unknown): string | null => {
-  const s = typeof raw === 'string' ? raw.trim() : '';
+  const s = typeof raw === "string" ? raw.trim() : "";
   if (!s) return null;
   const withProto = /^https?:\/\//i.test(s) ? s : `https://${s}`;
   try {
     const u = new URL(withProto);
     // only allow http/https
-    if (u.protocol === 'http:' || u.protocol === 'https:') return u.toString();
+    if (u.protocol === "http:" || u.protocol === "https:") return u.toString();
     return null;
   } catch {
     return null;
@@ -153,8 +159,12 @@ const ensureHttpUrl = (raw: unknown): string | null => {
 
 const safeHostname = (raw: unknown): string => {
   const u = ensureHttpUrl(raw);
-  if (!u) return String(raw ?? '');
-  try { return new URL(u).hostname; } catch { return String(raw ?? ''); }
+  if (!u) return String(raw ?? "");
+  try {
+    return new URL(u).hostname;
+  } catch {
+    return String(raw ?? "");
+  }
 };
 
 const CompetitorResults = ({
@@ -162,8 +172,11 @@ const CompetitorResults = ({
 }: {
   results: CompetitorAnalysisOutput;
 }) => {
-  const rankings = Array.isArray((results as unknown as { rankings?: unknown }).rankings)
-    ? ((results as unknown as { rankings: Array<Record<string, unknown>> }).rankings)
+  const rankings = Array.isArray(
+    (results as unknown as { rankings?: unknown }).rankings
+  )
+    ? (results as unknown as { rankings: Array<Record<string, unknown>> })
+        .rankings
     : [];
 
   const competitorHeaders = Array.from(
@@ -182,7 +195,9 @@ const CompetitorResults = ({
       transition={{ duration: 0.5 }}
     >
       {rankings.length > 0 ? (
-        <RankingsChart rankings={rankings as CompetitorAnalysisOutput["rankings"]} />
+        <RankingsChart
+          rankings={rankings as CompetitorAnalysisOutput["rankings"]}
+        />
       ) : null}
 
       <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
@@ -203,28 +218,40 @@ const CompetitorResults = ({
                     className="text-center truncate"
                     title={String(url)}
                   >
-            {safeHostname(url)}
+                    {safeHostname(url)}
                   </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
               {rankings.map((item) => {
-                const keyword = (item as Record<string, unknown>).keyword as string | undefined;
-                const yourRank = (item as Record<string, unknown>).yourRank as { rank?: number } | undefined;
+                const keyword = (item as Record<string, unknown>).keyword as
+                  | string
+                  | undefined;
+                const yourRank = (item as Record<string, unknown>).yourRank as
+                  | { rank?: number }
+                  | undefined;
                 const rowKey = keyword || JSON.stringify(item).slice(0, 24);
                 return (
                   <TableRow key={rowKey}>
-                    <TableCell className="font-medium">{keyword || '-'}</TableCell>
-                  <TableCell className="text-center">
-                      {typeof yourRank?.rank === 'number' ? yourRank.rank : "N/A"}
-                  </TableCell>
-                  {competitorHeaders.map((url) => (
-                    <TableCell key={String(url)} className="text-center">
-                      {((item as Record<string, unknown>)[String(url)] as { rank?: number } | undefined)?.rank ?? "N/A"}
+                    <TableCell className="font-medium">
+                      {keyword || "-"}
                     </TableCell>
-                  ))}
-                </TableRow>
+                    <TableCell className="text-center">
+                      {typeof yourRank?.rank === "number"
+                        ? yourRank.rank
+                        : "N/A"}
+                    </TableCell>
+                    {competitorHeaders.map((url) => (
+                      <TableCell key={String(url)} className="text-center">
+                        {(
+                          (item as Record<string, unknown>)[String(url)] as
+                            | { rank?: number }
+                            | undefined
+                        )?.rank ?? "N/A"}
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 );
               })}
             </TableBody>
@@ -242,9 +269,15 @@ const CompetitorResults = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {Array.isArray((results as unknown as { contentGaps?: unknown }).contentGaps) && (results as unknown as { contentGaps: string[] }).contentGaps.length > 0 ? (
+          {Array.isArray(
+            (results as unknown as { contentGaps?: unknown }).contentGaps
+          ) &&
+          (results as unknown as { contentGaps: string[] }).contentGaps.length >
+            0 ? (
             <ul className="list-disc pl-5 space-y-2">
-              {(results as unknown as { contentGaps: string[] }).contentGaps.map((gap) => (
+              {(
+                results as unknown as { contentGaps: string[] }
+              ).contentGaps.map((gap) => (
                 <li key={`gap-${gap.slice(0, 32)}`}>{gap}</li>
               ))}
             </ul>
@@ -275,7 +308,9 @@ export default function CompetitorsPage() {
   // Form state (managed by CompetitorAnalysisForm)
 
   // Get user subscription tier for feature gating
-  const userTier = (user as { subscriptionTier?: string } | null | undefined)?.subscriptionTier || "free";
+  const userTier =
+    (user as { subscriptionTier?: string } | null | undefined)
+      ?.subscriptionTier || "free";
 
   const resultsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -290,7 +325,13 @@ export default function CompetitorsPage() {
   // Simulate analysis progress
   useEffect(() => {
     if (isAnalyzing) {
-      const engines = ['neuralCrawler', 'aiVisibility', 'trustBlock', 'semanticMap', 'orchestrator'];
+      const engines = [
+        "neuralCrawler",
+        "aiVisibility",
+        "trustBlock",
+        "semanticMap",
+        "orchestrator",
+      ];
       let currentIndex = 0;
 
       const interval = setInterval(() => {
@@ -298,11 +339,11 @@ export default function CompetitorsPage() {
           setCurrentEngine(engines[currentIndex]);
           setAnalysisProgress((currentIndex + 1) * 20);
           if (currentIndex > 0) {
-            setCompletedEngines(prev => [...prev, engines[currentIndex - 1]]);
+            setCompletedEngines((prev) => [...prev, engines[currentIndex - 1]]);
           }
           currentIndex++;
         } else {
-          setCompletedEngines(prev => [...prev, engines[engines.length - 1]]);
+          setCompletedEngines((prev) => [...prev, engines[engines.length - 1]]);
           setCurrentEngine("");
         }
       }, 3000);
@@ -315,7 +356,11 @@ export default function CompetitorsPage() {
     }
   }, [isAnalyzing]);
 
-  const handleSubmit = async (values: { yourUrl: string; competitorUrls: string; keywords: string; }) => {
+  const handleSubmit = async (values: {
+    yourUrl: string;
+    competitorUrls: string;
+    keywords: string;
+  }) => {
     // Transform form values to CompetitorAnalysisInput
 
     if (!values.yourUrl.trim()) {
@@ -342,18 +387,30 @@ export default function CompetitorsPage() {
       // Normalize and validate URLs up-front
       const normalizedYour = ensureHttpUrl(values.yourUrl);
       if (!normalizedYour) {
-        setError("Your website URL is invalid. Please include a valid domain (e.g., https://example.com)");
+        setError(
+          "Your website URL is invalid. Please include a valid domain (e.g., https://example.com)"
+        );
         setIsAnalyzing(false);
         return;
       }
-      const competitorList = values.competitorUrls.split(',').map(u => u.trim()).filter(Boolean);
-      const normalizedCompetitors = competitorList.map(ensureHttpUrl).filter((u): u is string => Boolean(u));
+      const competitorList = values.competitorUrls
+        .split(",")
+        .map((u) => u.trim())
+        .filter(Boolean);
+      const normalizedCompetitors = competitorList
+        .map(ensureHttpUrl)
+        .filter((u): u is string => Boolean(u));
       if (!normalizedCompetitors.length) {
-        setError("All competitor URLs are invalid. Please enter at least one valid URL.");
+        setError(
+          "All competitor URLs are invalid. Please enter at least one valid URL."
+        );
         setIsAnalyzing(false);
         return;
       }
-      const keywordsList = values.keywords.split(',').map(k => k.trim()).filter(Boolean);
+      const keywordsList = values.keywords
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean);
       const analysisRequest: NeuroSEOAnalysisRequest = {
         urls: [normalizedYour],
         targetKeywords: keywordsList,
@@ -364,32 +421,43 @@ export default function CompetitorsPage() {
       };
 
       const submit = async () => {
-        const response = await fetch('/api/neuroseo', {
-          method: 'POST',
+        const response = await fetch("/api/neuroseo", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(analysisRequest),
         });
-        if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+        if (!response.ok)
+          throw new Error(`API request failed: ${response.status}`);
         return response.json();
       };
 
       const { mode, result } = await submitOrQueue({
-        isOnline: () => typeof navigator !== 'undefined' ? navigator.onLine : true,
+        isOnline: () =>
+          typeof navigator !== "undefined" ? navigator.onLine : true,
         submit,
-        fallbackQueue: () => queueAnalysisRequest(analysisRequest)
+        fallbackQueue: () => queueAnalysisRequest(analysisRequest),
       });
 
-      if (mode === 'queued') {
+      if (mode === "queued") {
         setIsAnalyzing(false);
-        setError("You're offline. Request queued and will run automatically when you're back online.");
-        toast({ title: 'Request queued', description: 'Your competitive analysis will run when you\'re back online.' });
+        setError(
+          "You're offline. Request queued and will run automatically when you're back online."
+        );
+        toast({
+          title: "Request queued",
+          description:
+            "Your competitive analysis will run when you're back online.",
+        });
         return;
       }
 
       setReport(result as NeuroSEOReport);
-      toast({ title: 'Analysis complete', description: 'Competitive analysis results are ready.' });
+      toast({
+        title: "Analysis complete",
+        description: "Competitive analysis results are ready.",
+      });
 
       if (user) {
         const userActivitiesRef = collection(
@@ -418,7 +486,9 @@ export default function CompetitorsPage() {
         );
       } else {
         const err = e as { message?: string };
-        setError(err.message || "An unexpected error occurred during analysis.");
+        setError(
+          err.message || "An unexpected error occurred during analysis."
+        );
       }
     } finally {
       setIsLoading(false);
@@ -430,136 +500,193 @@ export default function CompetitorsPage() {
   const comp = useCompetitorAnalysisMetrics(months);
   const isMobile = useIsMobile();
   return (
-    <FeatureGate feature="competitor_analysis" requiredTier="starter" showUpgrade>
-    <main className="container mx-auto py-6 space-y-6">
-      <ToolPageHeader
-        title="Competitor Analysis"
-        description="Analyze competitor rankings, content gaps, and strategic opportunities."
-        badges={[
-          { label: "NeuroSEO™", variant: "outline", className: "text-primary border-primary/40" },
-          { label: "Competitive Intelligence", variant: "secondary" }
-        ]}
-        showBreadcrumb
-      />
-  <div className="space-y-10 px-2 sm:px-0">
-        <div className="flex items-start justify-between flex-wrap gap-6">
-          <KPIGrid
-            loading={comp.loading && !comp.kpis.length}
-            skeleton={
-              <div className="rounded-md border p-3 space-y-3 animate-pulse">
-                <div className="h-3 w-1/2 bg-muted rounded" />
-                <div className="h-6 w-2/3 bg-muted rounded" />
-                <div className="h-2 w-1/3 bg-muted rounded" />
-              </div>
-            }
-          >
-            {comp.kpis.map(k => (
-              <MetricCard size={isMobile ? 'sm' : 'md'} key={k.key} label={k.label} value={k.value} delta={k.delta} deltaLabel="vs prev" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
-            ))}
-          </KPIGrid>
-          <PeriodSelector value={months} onChange={setMonths} />
-        </div>
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Competitive Analyses</h2>
-          <LazyDataTable
-            columns={[
+    <FeatureGate
+      feature="competitor_analysis"
+      requiredTier="starter"
+      showUpgrade
+    >
+      <main className="container mx-auto py-6 space-y-6">
+        <ToolPageHeader
+          title="Competitor Analysis"
+          description="Analyze competitor rankings, content gaps, and strategic opportunities."
+          badges={[
+            {
+              label: "NeuroSEO™",
+              variant: "outline",
+              className: "text-primary border-primary/40",
+            },
+            { label: "Competitive Intelligence", variant: "secondary" },
+          ]}
+          showBreadcrumb
+        />
+        <div className="space-y-10 px-2 sm:px-0">
+          <div className="flex items-start justify-between flex-wrap gap-6">
+            <KPIGrid
+              loading={comp.loading && !comp.kpis.length}
+              skeleton={
+                <div className="rounded-md border p-3 space-y-3 animate-pulse">
+                  <div className="h-3 w-1/2 bg-muted rounded" />
+                  <div className="h-6 w-2/3 bg-muted rounded" />
+                  <div className="h-2 w-1/3 bg-muted rounded" />
+                </div>
+              }
+            >
+              {comp.kpis.map((k) => (
+                <MetricCard
+                  size={isMobile ? "sm" : "md"}
+                  key={k.key}
+                  label={k.label}
+                  value={k.value}
+                  delta={k.delta}
+                  deltaLabel="vs prev"
+                  trend={<TrendSparkline data={k.trend} />}
+                  intent={k.intent || "neutral"}
+                />
+              ))}
+            </KPIGrid>
+            <PeriodSelector value={months} onChange={setMonths} />
+          </div>
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Recent Competitive Analyses
+            </h2>
+            <LazyDataTable
+              columns={[
                 {
-                  key: 'period', header: 'Period', render: (r: unknown) => {
+                  key: "period",
+                  header: "Period",
+                  render: (r: unknown) => {
                     const rec = r as Record<string, unknown>;
-                    return (typeof rec.period === 'string' ? rec.period : '-') as string;
-                  }
+                    return (
+                      typeof rec.period === "string" ? rec.period : "-"
+                    ) as string;
+                  },
                 },
                 {
-                  key: 'competitors', header: 'Competitors', render: (r: unknown) => {
+                  key: "competitors",
+                  header: "Competitors",
+                  render: (r: unknown) => {
                     const rec = r as Record<string, unknown>;
                     const comp = rec.competitors;
                     const compUrls = rec.competitorUrls;
                     if (Array.isArray(comp)) return comp.length;
                     if (Array.isArray(compUrls)) return compUrls.length;
-                    return '-';
-                  }
+                    return "-";
+                  },
                 },
-              { key: 'avgDA', header: 'Avg DA', render: (r: unknown) => {
-                const rec = r as Record<string, unknown>;
-                const analysis = rec.analysis as unknown;
-                const overview = (analysis && typeof analysis === 'object' && Array.isArray((analysis as Record<string, unknown>).overview))
-                  ? ((analysis as Record<string, unknown>).overview as Array<{ domainAuthority?: number }>)
-                  : [];
-                if (!overview.length) return '-';
-                const avg = overview.reduce((s: number, o) => s + (o.domainAuthority || 0), 0) / overview.length;
-                  return avg.toFixed(1);
-                } },
-              { key: 'gaps', header: 'Gaps', render: (r: unknown) => {
-                const rec = r as Record<string, unknown>;
-                const analysis = rec.analysis as unknown;
-                const overview = (analysis && typeof analysis === 'object' && Array.isArray((analysis as Record<string, unknown>).overview))
-                  ? ((analysis as Record<string, unknown>).overview as Array<{ domainAuthority?: number }>)
-                  : [];
-                if (!overview.length) return '-';
-                const max = overview.reduce((m: number, o) => Math.max(m, o.domainAuthority || 0), 0);
-                return overview.filter((o) => (o.domainAuthority || 0) < max - 5).length;
-                } },
-            ]}
-            rows={comp.rows}
-            loading={comp.loading}
-            empty="No analyses yet"
-          />
-        </div>
-      <div
-        className={cn(
-          "mx-auto transition-all duration-500",
-          submitted ? "max-w-7xl" : "max-w-xl"
-        )}
-      >
-      <div
-        className={cn(
-          "grid gap-8 transition-all duration-500",
-          submitted ? "lg:grid-cols-3" : "lg:grid-cols-1"
-        )}
-      >
-        <motion.div layout className="lg:col-span-1">
-          <CompetitorAnalysisForm
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-          />
-        </motion.div>
+                {
+                  key: "avgDA",
+                  header: "Avg DA",
+                  render: (r: unknown) => {
+                    const rec = r as Record<string, unknown>;
+                    const analysis = rec.analysis as unknown;
+                    const overview =
+                      analysis &&
+                      typeof analysis === "object" &&
+                      Array.isArray(
+                        (analysis as Record<string, unknown>).overview
+                      )
+                        ? ((analysis as Record<string, unknown>)
+                            .overview as Array<{ domainAuthority?: number }>)
+                        : [];
+                    if (!overview.length) return "-";
+                    const avg =
+                      overview.reduce(
+                        (s: number, o) => s + (o.domainAuthority || 0),
+                        0
+                      ) / overview.length;
+                    return avg.toFixed(1);
+                  },
+                },
+                {
+                  key: "gaps",
+                  header: "Gaps",
+                  render: (r: unknown) => {
+                    const rec = r as Record<string, unknown>;
+                    const analysis = rec.analysis as unknown;
+                    const overview =
+                      analysis &&
+                      typeof analysis === "object" &&
+                      Array.isArray(
+                        (analysis as Record<string, unknown>).overview
+                      )
+                        ? ((analysis as Record<string, unknown>)
+                            .overview as Array<{ domainAuthority?: number }>)
+                        : [];
+                    if (!overview.length) return "-";
+                    const max = overview.reduce(
+                      (m: number, o) => Math.max(m, o.domainAuthority || 0),
+                      0
+                    );
+                    return overview.filter(
+                      (o) => (o.domainAuthority || 0) < max - 5
+                    ).length;
+                  },
+                },
+              ]}
+              rows={comp.rows}
+              loading={comp.loading}
+              empty="No analyses yet"
+            />
+          </div>
+          <div
+            className={cn(
+              "mx-auto transition-all duration-500",
+              submitted ? "max-w-7xl" : "max-w-xl"
+            )}
+          >
+            <div
+              className={cn(
+                "grid gap-8 transition-all duration-500",
+                submitted ? "lg:grid-cols-3" : "lg:grid-cols-1"
+              )}
+            >
+              <motion.div layout className="lg:col-span-1">
+                <CompetitorAnalysisForm
+                  onSubmit={handleSubmit}
+                  isLoading={isLoading}
+                />
+              </motion.div>
 
-        <div className="lg:col-span-2" ref={resultsRef}>
-          <AnimatePresence>
-            {isLoading && (
-              <motion.div key="loading">
-                <LoadingScreen text="Analyzing rankings..." />
-              </motion.div>
-            )}
-            {error && (
-              <motion.div
-                key="error"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                <Card className="border-destructive shadow-xl hover:shadow-2xl transition-shadow duration-300">
-                  <CardHeader>
-                    <CardTitle className="text-destructive font-headline flex items-center gap-2">
-                      <AlertTriangle /> Analysis Failed
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>{error}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-            {report && (
-              <motion.div key="results">
-                <CompetitorResults results={report as unknown as CompetitorAnalysisOutput} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+              <div className="lg:col-span-2" ref={resultsRef}>
+                <AnimatePresence>
+                  {isLoading && (
+                    <motion.div key="loading">
+                      <LoadingScreen text="Analyzing rankings..." />
+                    </motion.div>
+                  )}
+                  {error && (
+                    <motion.div
+                      key="error"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                    >
+                      <Card className="border-destructive shadow-xl hover:shadow-2xl transition-shadow duration-300">
+                        <CardHeader>
+                          <CardTitle className="text-destructive font-headline flex items-center gap-2">
+                            <AlertTriangle /> Analysis Failed
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p>{error}</p>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )}
+                  {report && (
+                    <motion.div key="results">
+                      <CompetitorResults
+                        results={report as unknown as CompetitorAnalysisOutput}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-  </div></div>
-  </main>
-  </FeatureGate>
+      </main>
+    </FeatureGate>
   );
 }

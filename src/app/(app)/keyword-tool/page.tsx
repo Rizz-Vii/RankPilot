@@ -87,7 +87,9 @@ const DesktopSkeletonTable = () => (
       <TableRow>
         <TableHead>Keyword</TableHead>
         <TableHead className="hidden xl:table-cell">Cluster</TableHead>
-        <TableHead className="hidden 2xl:table-cell text-right">Relevance</TableHead>
+        <TableHead className="hidden 2xl:table-cell text-right">
+          Relevance
+        </TableHead>
         <TableHead className="text-right">Search Volume</TableHead>
         <TableHead>Difficulty</TableHead>
       </TableRow>
@@ -95,10 +97,18 @@ const DesktopSkeletonTable = () => (
     <TableBody>
       {Array.from({ length: 8 }).map((_, i) => (
         <TableRow key={i}>
-          <TableCell><div className="h-4 w-40 bg-muted rounded" /></TableCell>
-          <TableCell className="hidden xl:table-cell"><div className="h-3 w-20 bg-muted rounded" /></TableCell>
-          <TableCell className="hidden 2xl:table-cell text-right"><div className="h-3 w-10 bg-muted rounded ml-auto" /></TableCell>
-          <TableCell className="text-right"><div className="h-3 w-14 bg-muted rounded ml-auto" /></TableCell>
+          <TableCell>
+            <div className="h-4 w-40 bg-muted rounded" />
+          </TableCell>
+          <TableCell className="hidden xl:table-cell">
+            <div className="h-3 w-20 bg-muted rounded" />
+          </TableCell>
+          <TableCell className="hidden 2xl:table-cell text-right">
+            <div className="h-3 w-10 bg-muted rounded ml-auto" />
+          </TableCell>
+          <TableCell className="text-right">
+            <div className="h-3 w-14 bg-muted rounded ml-auto" />
+          </TableCell>
           <TableCell>
             <div className="flex items-center space-x-2">
               <div className="flex-1 h-2 bg-muted rounded" />
@@ -115,34 +125,57 @@ const DesktopSkeletonTable = () => (
 // Results Component
 // ---------------------------------------------------------------------------
 
-const KeywordResults = ({ results }: { results: { suggestions: EnhancedKeywordData[]; relatedQueries?: string[] } }) => {
+const KeywordResults = ({
+  results,
+}: {
+  results: { suggestions: EnhancedKeywordData[]; relatedQueries?: string[] };
+}) => {
   const { toast } = useToast();
   const copyAll = () => {
-    void copyToClipboard(results.suggestions.map(k => k.keyword).join(", "));
-    toast?.({ title: "Copied keywords", description: "Keywords copied to clipboard." });
+    void copyToClipboard(results.suggestions.map((k) => k.keyword).join(", "));
+    toast?.({
+      title: "Copied keywords",
+      description: "Keywords copied to clipboard.",
+    });
   };
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       {/* Mobile */}
       <div className="block md:hidden">
         <MobileResultsCard
           title="Keyword Suggestions"
           subtitle={`${results.suggestions.length} keywords found`}
           icon={<Search className="h-5 w-5" />}
-          actions={<Button variant="ghost" size="sm" onClick={copyAll}><Copy className="h-4 w-4" /></Button>}
+          actions={
+            <Button variant="ghost" size="sm" onClick={copyAll}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          }
         >
           <div className="space-y-3">
             {results.suggestions.map((k, i) => (
               <div key={i} className="p-3 bg-muted/30 rounded-lg">
                 <div className="flex justify-between mb-2">
                   <span className="font-medium text-sm">{k.keyword}</span>
-                  <span className="text-xs text-muted-foreground">{k.searchVolume?.toLocaleString?.() || "-"}/mo</span>
+                  <span className="text-xs text-muted-foreground">
+                    {k.searchVolume?.toLocaleString?.() || "-"}/mo
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
-                    <Progress value={k.difficulty} className={cn("h-2", getProgressColor(k.difficulty))} />
+                    <Progress
+                      value={k.difficulty}
+                      className={cn("h-2", getProgressColor(k.difficulty))}
+                    />
                   </div>
-                  <span className="text-xs text-muted-foreground">{k.difficulty ?? "-"}%</span>
+                  <span className="text-xs text-muted-foreground">
+                    {k.difficulty ?? "-"}%
+                  </span>
                 </div>
               </div>
             ))}
@@ -152,7 +185,12 @@ const KeywordResults = ({ results }: { results: { suggestions: EnhancedKeywordDa
               <p className="text-xs font-medium mb-2">Related Queries</p>
               <div className="flex flex-wrap gap-2">
                 {results.relatedQueries.slice(0, 10).map((rq, i) => (
-                  <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{rq}</span>
+                  <span
+                    key={i}
+                    className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full"
+                  >
+                    {rq}
+                  </span>
                 ))}
               </div>
             </div>
@@ -165,16 +203,34 @@ const KeywordResults = ({ results }: { results: { suggestions: EnhancedKeywordDa
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle className="font-headline">Suggested Keywords</CardTitle>
-              <Button variant="ghost" size="sm" onClick={copyAll} className="font-body"><Copy className="mr-2 h-4 w-4" /> Copy</Button>
+              <CardTitle className="font-headline">
+                Suggested Keywords
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={copyAll}
+                className="font-body"
+              >
+                <Copy className="mr-2 h-4 w-4" /> Copy
+              </Button>
             </div>
-            <CardDescription className="font-body">AI-enriched suggestions with relevance, volume & difficulty.</CardDescription>
+            <CardDescription className="font-body">
+              AI-enriched suggestions with relevance, volume & difficulty.
+            </CardDescription>
             {results.relatedQueries?.length ? (
               <div className="mt-2">
-                <p className="text-xs font-medium text-muted-foreground mb-1">Related Queries</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">
+                  Related Queries
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {results.relatedQueries.slice(0, 12).map((rq, i) => (
-                    <span key={i} className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">{rq}</span>
+                    <span
+                      key={i}
+                      className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+                    >
+                      {rq}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -185,8 +241,12 @@ const KeywordResults = ({ results }: { results: { suggestions: EnhancedKeywordDa
               <TableHeader>
                 <TableRow>
                   <TableHead>Keyword</TableHead>
-                  <TableHead className="hidden xl:table-cell">Cluster</TableHead>
-                  <TableHead className="hidden 2xl:table-cell text-right w-[110px]">Relevance</TableHead>
+                  <TableHead className="hidden xl:table-cell">
+                    Cluster
+                  </TableHead>
+                  <TableHead className="hidden 2xl:table-cell text-right w-[110px]">
+                    Relevance
+                  </TableHead>
                   <TableHead className="text-right">Search Volume</TableHead>
                   <TableHead className="w-[150px]">Difficulty</TableHead>
                 </TableRow>
@@ -194,14 +254,32 @@ const KeywordResults = ({ results }: { results: { suggestions: EnhancedKeywordDa
               <TableBody>
                 {results.suggestions.map((k, i) => (
                   <TableRow key={i}>
-                    <TableCell className="font-medium font-body">{k.keyword}</TableCell>
-                    <TableCell className="hidden xl:table-cell text-xs text-muted-foreground font-body">{k.semanticCluster || "-"}</TableCell>
-                    <TableCell className="hidden 2xl:table-cell text-right text-xs font-body">{typeof k.topicalRelevance === "number" ? `${k.topicalRelevance}%` : "-"}</TableCell>
-                    <TableCell className="text-right font-body">{k.searchVolume?.toLocaleString?.() || "-"}</TableCell>
+                    <TableCell className="font-medium font-body">
+                      {k.keyword}
+                    </TableCell>
+                    <TableCell className="hidden xl:table-cell text-xs text-muted-foreground font-body">
+                      {k.semanticCluster || "-"}
+                    </TableCell>
+                    <TableCell className="hidden 2xl:table-cell text-right text-xs font-body">
+                      {typeof k.topicalRelevance === "number"
+                        ? `${k.topicalRelevance}%`
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="text-right font-body">
+                      {k.searchVolume?.toLocaleString?.() || "-"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        <Progress value={k.difficulty} className={cn("flex-1", getProgressColor(k.difficulty))} />
-                        <span className="text-sm text-muted-foreground font-body w-8">{k.difficulty ?? "-"}</span>
+                        <Progress
+                          value={k.difficulty}
+                          className={cn(
+                            "flex-1",
+                            getProgressColor(k.difficulty)
+                          )}
+                        />
+                        <span className="text-sm text-muted-foreground font-body w-8">
+                          {k.difficulty ?? "-"}
+                        </span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -221,7 +299,9 @@ const KeywordResults = ({ results }: { results: { suggestions: EnhancedKeywordDa
 export default function KeywordToolPage() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<KeywordSuggestionsResponse | null>(null);
+  const [results, setResults] = useState<KeywordSuggestionsResponse | null>(
+    null
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [_usedFallback, setUsedFallback] = useState(false);
@@ -246,26 +326,40 @@ export default function KeywordToolPage() {
   function adaptKeywordSuggestions(raw: unknown): KeywordSuggestionsResponse {
     const r = (raw ?? {}) as Record<string, unknown>;
     return {
-      suggestions: Array.isArray(r.suggestions) ? (r.suggestions as KeywordSuggestionsResponse['suggestions']) : (Array.isArray(r.keywords) ? (r.keywords as KeywordSuggestionsResponse['suggestions']) : []),
-      relatedQueries: Array.isArray(r.relatedQueries) ? (r.relatedQueries as string[]) : [],
-      totalProcessingTime: typeof r.totalProcessingTime === 'number' ? (r.totalProcessingTime as number) : 0,
+      suggestions: Array.isArray(r.suggestions)
+        ? (r.suggestions as KeywordSuggestionsResponse["suggestions"])
+        : Array.isArray(r.keywords)
+          ? (r.keywords as KeywordSuggestionsResponse["suggestions"])
+          : [],
+      relatedQueries: Array.isArray(r.relatedQueries)
+        ? (r.relatedQueries as string[])
+        : [],
+      totalProcessingTime:
+        typeof r.totalProcessingTime === "number"
+          ? (r.totalProcessingTime as number)
+          : 0,
       cacheHit: !!r.cacheHit,
-      plan: typeof r.plan === 'string' ? r.plan : undefined,
-      quota: r.quota as unknown as KeywordSuggestionsResponse['quota'],
-      source: ((): KeywordSuggestionsResponse['source'] => {
-        if (typeof r.source !== 'string') return undefined;
+      plan: typeof r.plan === "string" ? r.plan : undefined,
+      quota: r.quota as unknown as KeywordSuggestionsResponse["quota"],
+      source: ((): KeywordSuggestionsResponse["source"] => {
+        if (typeof r.source !== "string") return undefined;
         const v = r.source as string;
-        return v === 'live' || v === 'cache' || v === 'fallback' ? v : undefined;
+        return v === "live" || v === "cache" || v === "fallback"
+          ? v
+          : undefined;
       })(),
     };
   }
 
-  const handleSubmit = async (values: { topic: string; includeLongTailKeywords: boolean; }) => {
+  const handleSubmit = async (values: {
+    topic: string;
+    includeLongTailKeywords: boolean;
+  }) => {
     setIsLoading(true);
     setSubmitted(true);
     setResults(null);
-  setErrorMessage(null);
-  setUsedFallback(false);
+    setErrorMessage(null);
+    setUsedFallback(false);
     setProvenance(null);
 
     // Start performance monitoring
@@ -278,7 +372,7 @@ export default function KeywordToolPage() {
           query: values.topic,
           count: values.includeLongTailKeywords ? 20 : 10,
           includeMetrics: true,
-          language: "en"
+          language: "en",
         }),
         20000,
         "Keyword analysis is taking longer than expected. Using demo data instead."
@@ -286,13 +380,13 @@ export default function KeywordToolPage() {
 
       const adapted = adaptKeywordSuggestions(result);
       setResults(adapted);
-      setUsedFallback(adapted.source === 'fallback');
+      setUsedFallback(adapted.source === "fallback");
       setProvenance(adapted.source || null);
 
       // End performance monitoring with success
       endOperation(false);
 
-    if (user) {
+      if (user) {
         const userActivitiesRef = collection(
           db,
           "users",
@@ -304,37 +398,47 @@ export default function KeywordToolPage() {
           tool: "Keyword Tool",
           timestamp: serverTimestamp(),
           details: values,
-      resultsSummary: `Searched for keywords related to "${values.topic}". Found ${(adapted?.suggestions?.length || 0)} suggestions.`,
+          resultsSummary: `Searched for keywords related to "${values.topic}". Found ${adapted?.suggestions?.length || 0} suggestions.`,
         });
       }
-  } catch (error) {
+    } catch (error) {
       // End performance monitoring with error
       endOperation(true); // Force show feedback on error
 
       const message = safeErrorMessage(error);
       const isTimeout = error instanceof TimeoutError;
-      const isServiceUnavailable = /temporarily unavailable|internal|unavailable/i.test(message);
-      const isGenericFailure = /Failed to get keyword suggestions/i.test(message);
+      const isServiceUnavailable =
+        /temporarily unavailable|internal|unavailable/i.test(message);
+      const isGenericFailure = /Failed to get keyword suggestions/i.test(
+        message
+      );
       const isQuota = /Daily keyword research limit reached/i.test(message);
-      const isRateLimited = /sending requests too quickly|rate limit/i.test(message);
+      const isRateLimited = /sending requests too quickly|rate limit/i.test(
+        message
+      );
 
       if (isTimeout || isServiceUnavailable || isGenericFailure) {
         console.warn("Keyword suggestions fallback engaged:", message);
         const demoData = getDemoData("keyword-tool");
         if (demoData) {
           const kws = (demoData as Record<string, unknown>)?.keywords;
-          const adapted = adaptKeywordSuggestions({ suggestions: (Array.isArray(kws) ? kws : []), source: 'fallback' });
+          const adapted = adaptKeywordSuggestions({
+            suggestions: Array.isArray(kws) ? kws : [],
+            source: "fallback",
+          });
           setResults(adapted);
           setUsedFallback(true);
-          setProvenance('fallback');
+          setProvenance("fallback");
           if (!isTimeout) {
             // Provide subtle notice that data is fallback
-            setErrorMessage("Live service unavailable. Showing demo data – retry for fresh results.");
+            setErrorMessage(
+              "Live service unavailable. Showing demo data – retry for fresh results."
+            );
           }
         } else {
           setErrorMessage(message);
         }
-  } else if (isQuota || isRateLimited) {
+      } else if (isQuota || isRateLimited) {
         setErrorMessage(message);
         // structured error telemetry (fire and forget)
         try {
@@ -367,11 +471,11 @@ export default function KeywordToolPage() {
   };
 
   return (
-  <main className="container mx-auto py-6">
+    <main className="container mx-auto py-6">
       <ToolPageHeader
         title="Keyword Research Tool"
         description="Discover high-performing keywords to boost your SEO strategy and content performance."
-    badges={composeToolHeaderBadges("keyword-tool", provenance)}
+        badges={composeToolHeaderBadges("keyword-tool", provenance)}
       />
 
       <section
@@ -399,7 +503,12 @@ export default function KeywordToolPage() {
           <div className="lg:col-span-2" ref={resultsRef}>
             <AnimatePresence>
               {isLoading && (
-                <motion.div key="loading" className="space-y-6" aria-busy="true" aria-live="polite">
+                <motion.div
+                  key="loading"
+                  className="space-y-6"
+                  aria-busy="true"
+                  aria-live="polite"
+                >
                   <LoadingState
                     isLoading={true}
                     title="Analyzing Keywords"
@@ -438,7 +547,11 @@ export default function KeywordToolPage() {
                 </motion.div>
               )}
               {errorMessage && !isLoading && (
-                <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
                   <Card className="border-destructive/40">
                     <CardContent className="p-6">
                       <p className="font-body text-destructive text-center">
@@ -451,7 +564,9 @@ export default function KeywordToolPage() {
             </AnimatePresence>
             {results?.quota && (
               <p className="mt-4 text-xs text-muted-foreground font-body text-center">
-                {results.quota.limit === -1 ? "Unlimited quota" : `${results.quota.remaining} of ${results.quota.limit} daily searches remaining`}
+                {results.quota.limit === -1
+                  ? "Unlimited quota"
+                  : `${results.quota.remaining} of ${results.quota.limit} daily searches remaining`}
                 {results.cacheHit && " • Cache hit"}
               </p>
             )}

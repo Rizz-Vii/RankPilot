@@ -309,7 +309,9 @@ export function filterNavBySubscription(
     })
     .map((item) => {
       // Filter subitems based on tool access if they exist
-      const filteredItem: NavItem & { children?: NavItem[] } = { ...(item as NavItem & { children?: NavItem[] }) };
+      const filteredItem: NavItem & { children?: NavItem[] } = {
+        ...(item as NavItem & { children?: NavItem[] }),
+      };
 
       if ("children" in item && Array.isArray(item.children)) {
         const filteredChildren = item.children.filter((child) => {

@@ -23,7 +23,10 @@ import type { User } from "firebase/auth";
 import { asUserProfile, type UserProfile } from "../../../types/user-profile";
 
 // Minimal Firestore-like timestamp support
-interface ActivityTimestamp { seconds?: number; toDate?: () => Date }
+interface ActivityTimestamp {
+  seconds?: number;
+  toDate?: () => Date;
+}
 
 interface Activity {
   id: string;
@@ -87,12 +90,23 @@ export default function SEOAchievementsBadges({
           ? (() => {
               const ts = activities.find((a) => a.type === "audit")?.timestamp;
               if (!ts) return undefined;
-              if (typeof ts === 'number') return new Date(ts * 1000);
+              if (typeof ts === "number") return new Date(ts * 1000);
               if (ts instanceof Date) return ts;
-              if (typeof ts === 'object' && 'toDate' in ts && typeof ts.toDate === 'function') {
-                try { return ts.toDate(); } catch {}
+              if (
+                typeof ts === "object" &&
+                "toDate" in ts &&
+                typeof ts.toDate === "function"
+              ) {
+                try {
+                  return ts.toDate();
+                } catch {}
               }
-              if (typeof ts === 'object' && 'seconds' in ts && typeof ts.seconds === 'number') return new Date(ts.seconds * 1000);
+              if (
+                typeof ts === "object" &&
+                "seconds" in ts &&
+                typeof ts.seconds === "number"
+              )
+                return new Date(ts.seconds * 1000);
               return undefined;
             })()
           : undefined,
@@ -158,16 +172,10 @@ export default function SEOAchievementsBadges({
       title: "Community Member",
       description: "Completed profile with all details",
       icon: <Users className="h-5 w-5" />,
-      earned: !!(
-        prof?.displayName &&
-        prof?.bio &&
-        prof?.primaryKeywords
-      ),
-      progress: [
-        prof?.displayName,
-        prof?.bio,
-        prof?.primaryKeywords,
-      ].filter(Boolean).length,
+      earned: !!(prof?.displayName && prof?.bio && prof?.primaryKeywords),
+      progress: [prof?.displayName, prof?.bio, prof?.primaryKeywords].filter(
+        Boolean
+      ).length,
       requirement: 3,
     },
   ];

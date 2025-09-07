@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { fixAbbaUser } from "@/lib/admin-user-management";
 
 export default function DebugPage() {
-  const isProd = process.env.NODE_ENV === 'production';
+  const isProd = process.env.NODE_ENV === "production";
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -40,7 +40,9 @@ export default function DebugPage() {
       <div className="min-h-[50vh] grid place-items-center p-6">
         <div className="text-center">
           <h1 className="text-xl font-semibold">Debug tools disabled</h1>
-          <p className="text-muted-foreground">These development tools are not available in production.</p>
+          <p className="text-muted-foreground">
+            These development tools are not available in production.
+          </p>
         </div>
       </div>
     );
@@ -65,7 +67,9 @@ export default function DebugPage() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">
-            <Button onClick={() => void handleFixUser()}>Fix Abba User Subscription</Button>
+            <Button onClick={() => void handleFixUser()}>
+              Fix Abba User Subscription
+            </Button>
           </div>
         </CardContent>
       </Card>

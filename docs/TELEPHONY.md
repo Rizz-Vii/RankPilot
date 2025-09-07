@@ -8,9 +8,9 @@ Set these in your environment or project secrets:
 
 - TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 - TWILIO_AUTH_TOKEN=your_auth_token
-- TWILIO_FROM_NUMBER=+15551234567  # Verified or purchased Twilio number
+- TWILIO_FROM_NUMBER=+15551234567 # Verified or purchased Twilio number
 - TWILIO_DEFAULT_TWIML_URL=https://example.com/api/telephony/webhook # Optional default TwiML URL
-- TWILIO_TEST_MODE=1  # Optional; when 1, outbound calls are simulated and no external requests are made
+- TWILIO_TEST_MODE=1 # Optional; when 1, outbound calls are simulated and no external requests are made
 
 ## Server Helpers
 

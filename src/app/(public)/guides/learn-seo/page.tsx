@@ -190,7 +190,9 @@ export default function LearnSEOGuidePage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2 text-success-foreground">✅ Focus On</h3>
+              <h3 className="font-semibold mb-2 text-success-foreground">
+                ✅ Focus On
+              </h3>
               <ul className="list-disc pl-6 text-sm">
                 <li>User experience and intent</li>
                 <li>High-quality, helpful content</li>

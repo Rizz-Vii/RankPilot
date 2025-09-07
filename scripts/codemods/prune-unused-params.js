@@ -11,34 +11,54 @@
  *  - Idempotent: repeated runs cause no further changes.
  *  - Outputs JSON summary at end.
  */
-const fs = require('node:fs');
-const path = require('node:path');
-const ts = require('typescript');
+const fs = require("node:fs");
+const path = require("node:path");
+const ts = require("typescript");
 
-const APPLY = process.env.APPLY === '1';
+const APPLY = process.env.APPLY === "1";
 const root = process.cwd();
 
 function walk(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name.startsWith('.')) continue;
+    if (entry.name.startsWith(".")) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (['node_modules', '.next', 'dist', 'out', 'coverage', 'functions'].includes(entry.name)) continue;
+      if (
+        [
+          "node_modules",
+          ".next",
+          "dist",
+          "out",
+          "coverage",
+          "functions",
+        ].includes(entry.name)
+      )
+        continue;
       walk(full, out);
       continue;
     }
-    if (/\.(tsx?|jsx?)$/.test(entry.name) && !entry.name.endsWith('.d.ts')) out.push(full);
+    if (/\.(tsx?|jsx?)$/.test(entry.name) && !entry.name.endsWith(".d.ts"))
+      out.push(full);
   }
   return out;
 }
 
-function isUppercaseStart(name) { return !!name && /[A-Z]/.test(name[0]); }
+function isUppercaseStart(name) {
+  return !!name && /[A-Z]/.test(name[0]);
+}
 
 function hasJSX(node) {
   let found = false;
   function visit(n) {
     if (found) return;
-    if (n.kind === ts.SyntaxKind.JsxElement || n.kind === ts.SyntaxKind.JsxSelfClosingElement || n.kind === ts.SyntaxKind.JsxFragment) { found = true; return; }
+    if (
+      n.kind === ts.SyntaxKind.JsxElement ||
+      n.kind === ts.SyntaxKind.JsxSelfClosingElement ||
+      n.kind === ts.SyntaxKind.JsxFragment
+    ) {
+      found = true;
+      return;
+    }
     ts.forEachChild(n, visit);
   }
   if (node.body) ts.forEachChild(node.body, visit);
@@ -58,15 +78,30 @@ function collectUnusedParams(sf) {
     const ext = path.extname(filePath);
     // Named function or variable assigned arrow with uppercase name OR JSX in body in TSX file
     let name = undefined;
-    if (ts.isFunctionDeclaration(funcNode) && funcNode.name) name = funcNode.name.text;
-    else if (ts.isFunctionExpression(funcNode) && funcNode.name) name = funcNode.name.text;
-    else if (ts.isMethodDeclaration(funcNode) && funcNode.name && ts.isIdentifier(funcNode.name)) name = funcNode.name.text;
+    if (ts.isFunctionDeclaration(funcNode) && funcNode.name)
+      name = funcNode.name.text;
+    else if (ts.isFunctionExpression(funcNode) && funcNode.name)
+      name = funcNode.name.text;
+    else if (
+      ts.isMethodDeclaration(funcNode) &&
+      funcNode.name &&
+      ts.isIdentifier(funcNode.name)
+    )
+      name = funcNode.name.text;
     else if (ts.isArrowFunction(funcNode)) {
       // Attempt to infer variable name from parent
-      if (ts.isVariableDeclaration(funcNode.parent) && ts.isIdentifier(funcNode.parent.name)) name = funcNode.parent.name.text;
-      else if (ts.isPropertyAssignment(funcNode.parent) && ts.isIdentifier(funcNode.parent.name)) name = funcNode.parent.name.text;
+      if (
+        ts.isVariableDeclaration(funcNode.parent) &&
+        ts.isIdentifier(funcNode.parent.name)
+      )
+        name = funcNode.parent.name.text;
+      else if (
+        ts.isPropertyAssignment(funcNode.parent) &&
+        ts.isIdentifier(funcNode.parent.name)
+      )
+        name = funcNode.parent.name.text;
     }
-    if (ext === '.tsx') {
+    if (ext === ".tsx") {
       if (name && isUppercaseStart(name)) return true;
       if (hasJSX(funcNode)) return true;
     }
@@ -77,7 +112,10 @@ function collectUnusedParams(sf) {
     let used = false;
     function visit(n) {
       if (used) return;
-      if (ts.isIdentifier(n) && n.text === name) { used = true; return; }
+      if (ts.isIdentifier(n) && n.text === name) {
+        used = true;
+        return;
+      }
       ts.forEachChild(n, visit);
     }
     if (bodyNode) ts.forEachChild(bodyNode, visit);
@@ -85,7 +123,12 @@ function collectUnusedParams(sf) {
   }
 
   function visit(node) {
-    if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isFunctionExpression(node) || ts.isMethodDeclaration(node)) {
+    if (
+      ts.isFunctionDeclaration(node) ||
+      ts.isArrowFunction(node) ||
+      ts.isFunctionExpression(node) ||
+      ts.isMethodDeclaration(node)
+    ) {
       const params = node.parameters;
       if (!params.length) return ts.forEachChild(node, visit);
 
@@ -93,11 +136,11 @@ function collectUnusedParams(sf) {
       const component = isReactComponent(node, sf.fileName);
 
       // Determine usage for each param
-      const unusedStatus = params.map(p => {
+      const unusedStatus = params.map((p) => {
         if (p.dotDotDotToken) return false; // rest param skip
         const name = paramName(p);
         if (!name) return false; // destructured skip
-        if (name.startsWith('_')) return false; // already ignored
+        if (name.startsWith("_")) return false; // already ignored
         if (p.initializer) return false; // keep stable signature
         const used = identifierUsed(name, node.body);
         return !used;
@@ -128,13 +171,19 @@ function collectUnusedParams(sf) {
             // Only parameter: remove inside parentheses content; rely on caller to have parsed function
             // We'll trust start/end as is; minor formatting leftover acceptable
           }
-          edits.push({ type: 'remove', start, end, name });
+          edits.push({ type: "remove", start, end, name });
         } else {
           // Rename param to _<name>
-            const idNode = p.name;
-            if (ts.isIdentifier(idNode)) {
-              edits.push({ type: 'rename', start: idNode.getStart(), end: idNode.getEnd(), name, newName: '_' + name });
-            }
+          const idNode = p.name;
+          if (ts.isIdentifier(idNode)) {
+            edits.push({
+              type: "rename",
+              start: idNode.getStart(),
+              end: idNode.getEnd(),
+              name,
+              newName: "_" + name,
+            });
+          }
         }
       }
     }
@@ -145,12 +194,20 @@ function collectUnusedParams(sf) {
   return edits;
 }
 
-const files = walk(path.join(root, 'src'));
-let filesModified = 0, paramsRemoved = 0, paramsRenamed = 0;
+const files = walk(path.join(root, "src"));
+let filesModified = 0,
+  paramsRemoved = 0,
+  paramsRenamed = 0;
 
 for (const file of files) {
-  const code = fs.readFileSync(file, 'utf8');
-  const sf = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true, file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  const code = fs.readFileSync(file, "utf8");
+  const sf = ts.createSourceFile(
+    file,
+    code,
+    ts.ScriptTarget.Latest,
+    true,
+    file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+  );
   const edits = collectUnusedParams(sf);
   if (!edits.length) continue;
   // Apply edits to source text
@@ -158,13 +215,13 @@ for (const file of files) {
   // Sort edits descending by start to avoid offset shifts
   edits.sort((a, b) => b.start - a.start);
   for (const e of edits) {
-    if (e.type === 'remove') {
+    if (e.type === "remove") {
       newCode = newCode.slice(0, e.start) + newCode.slice(e.end);
       paramsRemoved++;
-    } else if (e.type === 'rename') {
+    } else if (e.type === "rename") {
       // Avoid double underscore if already applied by previous run
       const current = newCode.slice(e.start, e.end);
-      if (!current.startsWith('_')) {
+      if (!current.startsWith("_")) {
         newCode = newCode.slice(0, e.start) + e.newName + newCode.slice(e.end);
         paramsRenamed++;
       }
@@ -172,9 +229,19 @@ for (const file of files) {
   }
   if (newCode !== code) {
     filesModified++;
-    if (APPLY) fs.writeFileSync(file, newCode, 'utf8');
-    console.log(`[unused-params] ${APPLY ? 'updated' : 'would update'} ${path.relative(root, file)} (${edits.length} edits)`);
+    if (APPLY) fs.writeFileSync(file, newCode, "utf8");
+    console.log(
+      `[unused-params] ${APPLY ? "updated" : "would update"} ${path.relative(root, file)} (${edits.length} edits)`
+    );
   }
 }
 
-console.log(JSON.stringify({ apply: APPLY, filesScanned: files.length, filesModified, paramsRemoved, paramsRenamed }));
+console.log(
+  JSON.stringify({
+    apply: APPLY,
+    filesScanned: files.length,
+    filesModified,
+    paramsRemoved,
+    paramsRenamed,
+  })
+);

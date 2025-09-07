@@ -47,7 +47,7 @@ Rollback: Delete `queue-metrics.ts`, remove lazy import/addition in `unified-met
 - DEV-GOV-COUNTERS: Added test-only unified metrics reset helper `__resetUnifiedMetricsTestOnly` for isolated counter tests (in-memory only, no runtime impact).
 - Added unit test `testing/unit/metrics/team-rate-limit-metrics.test.cjs` verifying independent increment of `rateLimitRejections` and `teamRateLimitAllows`.
 - No production logic changes beyond exported helper; governance counters wiring unchanged.
-Rollback: Remove helper export and test file; no side effects (helper unused in prod paths).
+  Rollback: Remove helper export and test file; no side effects (helper unused in prod paths).
 
 ### 25-08-2025 (Phase Transition – Phase 2 ➜ Phase 3)
 
@@ -63,3 +63,17 @@ Rollback: Remove helper export and test file; no side effects (helper unused in 
 - chore: Ran `npm run typecheck` and `npm run test:unit` to validate no regressions.
 
 Rollback: Revert `src/lib/voice/holds-cleanup.ts` to previous query with `heldUntil <= now` and remove try/catch wrapper.
+
+### 07-09-2025 (Testing Infrastructure Hardening: Health + Firestore Rules)
+
+- tests(firebase): Add one-shot Firestore emulator runner script (`scripts/run-firestore-emulator-and-tests.mjs`) that starts the emulator with readiness detection (stderr log heuristics + TCP polling), sets `FIRESTORE_EMULATOR_HOST`, runs rules tests, and exits cleanly.
+- chore(vscode): Add background task to start Firestore emulator for local dev.
+- chore(npm): Wire `test:unit:health` and include it in the aggregate `test:unit` chain; add `emulators:start:firestore` and `test:unit:firebase:emulated` scripts.
+- fix(api/health): Remove duplicate handler block that caused runtime 500; keep minimal health route returning unified metrics snapshot.
+- docs(runbooks): Intend to integrate emulator one-shot into CI later; local workflow already green.
+
+Rollback plan:
+
+- Remove `scripts/run-firestore-emulator-and-tests.mjs` and VS Code task entry; revert `package.json` scripts to previous state.
+- Restore prior `src/app/api/health/route.ts` if needed (not recommended; duplicate handler was erroneous).
+- This change is non-schema, non-persistent; rollback is file deletion/reverts only.

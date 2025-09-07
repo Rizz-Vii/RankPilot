@@ -19,7 +19,7 @@ import { Brain, Eye, Settings, Users } from "lucide-react";
 import { useState } from "react";
 
 export default function EnhancedNavigationDemo() {
-  const isProd = process.env.NODE_ENV === 'production';
+  const isProd = process.env.NODE_ENV === "production";
   const [selectedTier, setSelectedTier] = useState<string>("agency");
   const [isAdmin, setIsAdmin] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -36,7 +36,9 @@ export default function EnhancedNavigationDemo() {
       <div className="min-h-[50vh] grid place-items-center p-6">
         <div className="text-center">
           <h1 className="text-xl font-semibold">Demo disabled</h1>
-          <p className="text-muted-foreground">This demo page isn’t available in production.</p>
+          <p className="text-muted-foreground">
+            This demo page isn’t available in production.
+          </p>
         </div>
       </div>
     );

@@ -108,7 +108,9 @@ export default function LoginPage() {
 
       // Redirection is handled by the useEffect hook after auth state updates
     } catch (error: unknown) {
-      setErrors({ form: safeErrorMessage(error) || "Login failed. Please try again." });
+      setErrors({
+        form: safeErrorMessage(error) || "Login failed. Please try again.",
+      });
     }
   };
 
@@ -119,7 +121,8 @@ export default function LoginPage() {
       // Redirection is handled by the useEffect hook after auth state updates
     } catch (error: unknown) {
       setErrors({
-        form: safeErrorMessage(error) || "Google sign-in failed. Please try again.",
+        form:
+          safeErrorMessage(error) || "Google sign-in failed. Please try again.",
       });
     }
   };
@@ -131,7 +134,8 @@ export default function LoginPage() {
       // Redirection is handled by the useEffect hook after auth state updates
     } catch (error: unknown) {
       setErrors({
-        form: safeErrorMessage(error) || "GitHub sign-in failed. Please try again.",
+        form:
+          safeErrorMessage(error) || "GitHub sign-in failed. Please try again.",
       });
     }
   };
@@ -143,9 +147,17 @@ export default function LoginPage() {
   return (
     <div className="inset-0 flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 space-y-6 rounded-1xl shadow-xl border bg-card text-card-foreground">
-  <h2 className="text-2xl font-bold text-center mb-2">Welcome Back</h2>
-  <p className="text-sm text-muted-foreground text-center -mt-2 mb-4">Access your unified NeuroSEO™ workspace.</p>
-        <form onSubmit={(e) => { void handleLogin(e); }} className="space-y-4" noValidate>
+        <h2 className="text-2xl font-bold text-center mb-2">Welcome Back</h2>
+        <p className="text-sm text-muted-foreground text-center -mt-2 mb-4">
+          Access your unified NeuroSEO™ workspace.
+        </p>
+        <form
+          onSubmit={(e) => {
+            void handleLogin(e);
+          }}
+          className="space-y-4"
+          noValidate
+        >
           <div>
             <label
               htmlFor="email"
@@ -161,12 +173,18 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               aria-invalid={errors.email ? true : undefined}
-              aria-describedby={errors.email ? 'login-email-error' : undefined}
-              className={`w-full px-3 py-2 border rounded-lg bg-background text-foreground ring-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background transition ${errors.email ? 'border-destructive ring-destructive focus-visible:ring-destructive' : 'border-input ring-border focus-visible:ring-ring'}`}
+              aria-describedby={errors.email ? "login-email-error" : undefined}
+              className={`w-full px-3 py-2 border rounded-lg bg-background text-foreground ring-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background transition ${errors.email ? "border-destructive ring-destructive focus-visible:ring-destructive" : "border-input ring-border focus-visible:ring-ring"}`}
               disabled={loading}
             />
             {errors.email && (
-              <p id="login-email-error" role="alert" className="text-destructive-foreground text-xs mt-1">{errors.email}</p>
+              <p
+                id="login-email-error"
+                role="alert"
+                className="text-destructive-foreground text-xs mt-1"
+              >
+                {errors.email}
+              </p>
             )}
           </div>
           <div className="relative">
@@ -184,8 +202,10 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               aria-invalid={errors.password ? true : undefined}
-              aria-describedby={errors.password ? 'login-password-error' : undefined}
-              className={`w-full px-3 py-2 border rounded-lg pr-10 bg-background text-foreground ring-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background transition ${errors.password ? 'border-destructive ring-destructive focus-visible:ring-destructive' : 'border-input ring-border focus-visible:ring-ring'}`}
+              aria-describedby={
+                errors.password ? "login-password-error" : undefined
+              }
+              className={`w-full px-3 py-2 border rounded-lg pr-10 bg-background text-foreground ring-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background transition ${errors.password ? "border-destructive ring-destructive focus-visible:ring-destructive" : "border-input ring-border focus-visible:ring-ring"}`}
               disabled={loading}
             />
             <button
@@ -197,11 +217,22 @@ export default function LoginPage() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
             {errors.password && (
-              <p id="login-password-error" role="alert" className="text-destructive-foreground text-xs mt-1">{errors.password}</p>
+              <p
+                id="login-password-error"
+                role="alert"
+                className="text-destructive-foreground text-xs mt-1"
+              >
+                {errors.password}
+              </p>
             )}
           </div>
           {errors.form && (
-            <p role="alert" className="text-destructive-foreground text-xs mt-1">{errors.form}</p>
+            <p
+              role="alert"
+              className="text-destructive-foreground text-xs mt-1"
+            >
+              {errors.form}
+            </p>
           )}
           <button
             type="submit"
@@ -211,7 +242,10 @@ export default function LoginPage() {
           >
             Login
           </button>
-          <p className="text-center text-xs text-muted-foreground mt-2">Secure session persists until you sign out. MFA & SSO available on higher tiers.</p>
+          <p className="text-center text-xs text-muted-foreground mt-2">
+            Secure session persists until you sign out. MFA & SSO available on
+            higher tiers.
+          </p>
         </form>
 
         <div className="relative my-4">
@@ -227,7 +261,9 @@ export default function LoginPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
-            onClick={() => { void handleGoogleSignIn(); }}
+            onClick={() => {
+              void handleGoogleSignIn();
+            }}
             className="w-full inline-flex items-center justify-center py-2 border border-input rounded-lg shadow-sm bg-card text-sm font-medium text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background"
             disabled={loading}
           >
@@ -235,18 +271,32 @@ export default function LoginPage() {
             Google
           </button>
           <button
-            onClick={() => { void handleGithubSignIn(); }}
+            onClick={() => {
+              void handleGithubSignIn();
+            }}
             className="w-full inline-flex items-center justify-center py-2 border border-input rounded-lg shadow-sm bg-card text-sm font-medium text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background"
             disabled={loading}
             aria-label="Sign in with GitHub"
           >
             {/* Simple GitHub mark */}
-            <svg className="mr-2 h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.01.08-2.1 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.09.16 1.9.08 2.1.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.92-.01 2.18 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" /></svg>
+            <svg
+              className="mr-2 h-4 w-4"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.01.08-2.1 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.09.16 1.9.08 2.1.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.92-.01 2.18 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+            </svg>
             GitHub
           </button>
         </div>
 
-  <p className="text-center text-sm text-muted-foreground">New here? <Link href="/register" className="text-primary hover:underline">Create an account</Link></p>
+        <p className="text-center text-sm text-muted-foreground">
+          New here?{" "}
+          <Link href="/register" className="text-primary hover:underline">
+            Create an account
+          </Link>
+        </p>
       </div>
     </div>
   );

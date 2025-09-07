@@ -254,6 +254,7 @@ state.json
 MCP_CONFIGURATION_PLAN.md
 MCP_CONFIGURATION_SUMMARY.md
 mcp.json
+scripts/agents/ingested-tools.json
 
 # API Integration Documentation (contains example keys)
 # ----------------------------------------------------

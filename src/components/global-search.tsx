@@ -1,9 +1,11 @@
 "use client";
 
-type SearchOutput = { results: Array<{ title: string; href: string; description: string }>; };
+type SearchOutput = {
+  results: Array<{ title: string; href: string; description: string }>;
+};
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useI18n } from '@/lib/i18n/internationalization-system';
+import { useI18n } from "@/lib/i18n/internationalization-system";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, Search } from "lucide-react";
 import Link from "next/link";
@@ -21,7 +23,12 @@ const placeholderQueries = [
 
 // Small internal hook to cycle/animate placeholder text deterministically.
 // Typing speed and pause replicates prior inline effect (80ms per char, 3s pause, 500ms initial delay).
-function useRotatingPlaceholder(queries: string[], typingMs = 80, pauseMs = 3000, initialDelay = 500) {
+function useRotatingPlaceholder(
+  queries: string[],
+  typingMs = 80,
+  pauseMs = 3000,
+  initialDelay = 500
+) {
   const [placeholder, setPlaceholder] = useState(() => queries[0] || "");
   const indexRef = useRef(0);
   useEffect(() => {
@@ -32,7 +39,10 @@ function useRotatingPlaceholder(queries: string[], typingMs = 80, pauseMs = 3000
     const typeNextCharacter = (text: string, i: number) => {
       if (i <= text.length) {
         setPlaceholder(text.substring(0, i));
-        typingTimeout = setTimeout(() => typeNextCharacter(text, i + 1), typingMs);
+        typingTimeout = setTimeout(
+          () => typeNextCharacter(text, i + 1),
+          typingMs
+        );
       } else {
         nextPlaceholderTimeout = setTimeout(() => {
           indexRef.current = (indexRef.current + 1) % queries.length;
@@ -62,7 +72,10 @@ export default function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const { translate } = useI18n();
-  const tr = (k: string, fallback: string) => { const v = translate(k); return v === k ? fallback : v; };
+  const tr = (k: string, fallback: string) => {
+    const v = translate(k);
+    return v === k ? fallback : v;
+  };
   const [results, setResults] = useState<SearchOutput["results"]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -79,17 +92,22 @@ export default function GlobalSearch() {
       }
       setIsLoading(true);
       try {
-        const resp = await fetch('/api/search/features', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: debouncedQuery })
+        const resp = await fetch("/api/search/features", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: debouncedQuery }),
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = (await resp.json()) as SearchOutput & { __provenance?: string };
+        const data = (await resp.json()) as SearchOutput & {
+          __provenance?: string;
+        };
         setResults(Array.isArray(data.results) ? data.results : []);
         // store history (dedupe & cap 10) - debounced write
-        setHistory(prev => {
-          const next = [debouncedQuery, ...prev.filter(q => q !== debouncedQuery)].slice(0,10);
+        setHistory((prev) => {
+          const next = [
+            debouncedQuery,
+            ...prev.filter((q) => q !== debouncedQuery),
+          ].slice(0, 10);
           return next;
         });
       } catch (error) {
@@ -122,7 +140,7 @@ export default function GlobalSearch() {
   // Load history
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('rp_search_history');
+      const raw = localStorage.getItem("rp_search_history");
       if (raw) setHistory(JSON.parse(raw));
     } catch {}
   }, []);
@@ -130,24 +148,31 @@ export default function GlobalSearch() {
   // Debounced write of history
   useEffect(() => {
     const t = setTimeout(() => {
-      try { localStorage.setItem('rp_search_history', JSON.stringify(history)); } catch {}
+      try {
+        localStorage.setItem("rp_search_history", JSON.stringify(history));
+      } catch {}
     }, 400);
     return () => clearTimeout(t);
   }, [history]);
 
   return (
     <div className="relative" ref={searchContainerRef}>
-      <Search aria-hidden="true" className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Search
+        aria-hidden="true"
+        className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
+      />
       <Input
         type="search"
         placeholder={placeholder}
-        aria-label={tr('globalSearch.search','Search')}
+        aria-label={tr("globalSearch.search", "Search")}
         className="pl-8 sm:w-[200px] lg:w-[300px] bg-background transition-all duration-300 ease-in-out focus:w-[300px] lg:focus:w-[400px]"
         value={query}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          setQuery(e.target.value)
+        }
         onFocus={() => setIsFocused(true)}
       />
-  <AnimatePresence>
+      <AnimatePresence>
         {isFocused && query.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -196,22 +221,37 @@ export default function GlobalSearch() {
                 {history.length > 0 && (
                   <div className="text-left">
                     <div className="flex items-center justify-between mb-1">
-                      <div className="text-xs uppercase tracking-wide">{tr('globalSearch.recent','Recent')}</div>
+                      <div className="text-xs uppercase tracking-wide">
+                        {tr("globalSearch.recent", "Recent")}
+                      </div>
                       <button
                         type="button"
-                        onClick={() => { setHistory([]); localStorage.removeItem('rp_search_history'); }}
+                        onClick={() => {
+                          setHistory([]);
+                          localStorage.removeItem("rp_search_history");
+                        }}
                         className="text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
-                        aria-label={tr('globalSearch.clearRecent','Clear recent searches')}
-                      >{tr('globalSearch.clear','Clear')}</button>
+                        aria-label={tr(
+                          "globalSearch.clearRecent",
+                          "Clear recent searches"
+                        )}
+                      >
+                        {tr("globalSearch.clear", "Clear")}
+                      </button>
                     </div>
                     <ul className="space-y-1">
-                      {history.map(h => (
+                      {history.map((h) => (
                         <li key={h}>
                           <button
                             type="button"
-                            onClick={() => { setQuery(h); setIsFocused(true); }}
+                            onClick={() => {
+                              setQuery(h);
+                              setIsFocused(true);
+                            }}
                             className="w-full text-left px-2 py-1 rounded hover:bg-accent text-sm"
-                          >{h}</button>
+                          >
+                            {h}
+                          </button>
                         </li>
                       ))}
                     </ul>

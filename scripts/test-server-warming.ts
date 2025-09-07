@@ -42,7 +42,9 @@ async function testServerWarming(): Promise<WarmingSummary> {
     while (!connectionSuccess && attempts < maxAttempts) {
       try {
         attempts++;
-        console.log(`   📡 Attempt ${attempts}/${maxAttempts}: Checking server availability...`);
+        console.log(
+          `   📡 Attempt ${attempts}/${maxAttempts}: Checking server availability...`
+        );
 
         const response = await page.goto("http://localhost:3000", {
           waitUntil: "domcontentloaded",
@@ -54,7 +56,8 @@ async function testServerWarming(): Promise<WarmingSummary> {
           console.log(`   ✅ Server responsive on attempt ${attempts}`);
         }
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         console.log(`   ❌ Attempt ${attempts} failed: ${errorMessage}`);
         if (attempts < maxAttempts) {
           console.log("   ⏳ Waiting 3 seconds before retry...");
@@ -103,7 +106,8 @@ async function testServerWarming(): Promise<WarmingSummary> {
           success: true,
         });
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         console.log(`   ⚠️  ${route.name} warming failed: ${errorMessage}`);
         warmingResults.push({
           route: route.path,
@@ -126,8 +130,10 @@ async function testServerWarming(): Promise<WarmingSummary> {
       });
       performanceTestTime = Date.now() - performanceTestStart;
       console.log(`⚡ Performance test completed in ${performanceTestTime}ms`);
-  } catch {
-      console.log("⚠️  Performance test timed out, but warming data is still valid");
+    } catch {
+      console.log(
+        "⚠️  Performance test timed out, but warming data is still valid"
+      );
       performanceTestTime = -1; // Indicate timeout
     }
 
@@ -153,14 +159,19 @@ async function testServerWarming(): Promise<WarmingSummary> {
     const averageWarmTime =
       successfulWarms.length > 0
         ? Math.round(
-            successfulWarms.reduce((sum, r) => sum + (r.loadTime || 0), 0) / successfulWarms.length
+            successfulWarms.reduce((sum, r) => sum + (r.loadTime || 0), 0) /
+              successfulWarms.length
           )
         : 0;
 
     console.log(`\n📈 Performance Metrics:`);
-    console.log(`   Successful route warms: ${successfulWarms.length}/${warmingResults.length}`);
+    console.log(
+      `   Successful route warms: ${successfulWarms.length}/${warmingResults.length}`
+    );
     console.log(`   Average warm time: ${averageWarmTime}ms`);
-    console.log(`   Post-warm performance: ${performanceTestTime > 0 ? performanceTestTime + "ms" : "Timed out"}`);
+    console.log(
+      `   Post-warm performance: ${performanceTestTime > 0 ? performanceTestTime + "ms" : "Timed out"}`
+    );
 
     // Determine overall result - success if we warmed at least some routes
     const isSuccess = successfulWarms.length > 0; // At least 1 successful warm
@@ -170,7 +181,9 @@ async function testServerWarming(): Promise<WarmingSummary> {
       console.log("🚀 Application is properly warmed and ready for testing.");
     } else {
       console.log("\n⚠️  Server warming test completed with issues.");
-      console.log("🔧 Some routes may need optimization or are not yet implemented.");
+      console.log(
+        "🔧 Some routes may need optimization or are not yet implemented."
+      );
     }
 
     return {

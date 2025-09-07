@@ -54,7 +54,8 @@ const sitemapSections = [
       {
         name: "Voice Agent",
         href: "/voice",
-        description: "Call prospects and auto-book appointments (feature gated)",
+        description:
+          "Call prospects and auto-book appointments (feature gated)",
       },
       {
         name: "Link Analysis",
@@ -212,8 +213,16 @@ const sitemapSections = [
     title: "Integrations",
     icon: <Zap className="h-5 w-5" />,
     links: [
-      { name: "Integration Hub", href: "/integration-hub", description: "Explore available integrations" },
-      { name: "All Integrations", href: "/integrations", description: "Browse integration catalog" },
+      {
+        name: "Integration Hub",
+        href: "/integration-hub",
+        description: "Explore available integrations",
+      },
+      {
+        name: "All Integrations",
+        href: "/integrations",
+        description: "Browse integration catalog",
+      },
     ],
   },
 ];
@@ -264,7 +273,9 @@ export default function Sitemap() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8 sm:mb-10"
         >
-          <h1 className="text-3xl sm:text-4xl font-bold font-headline mb-3">Site Map</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold font-headline mb-3">
+            Site Map
+          </h1>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
             Explore all pages and features available on RankPilot. Find exactly
             what you're looking for.
@@ -406,12 +417,19 @@ export default function Sitemap() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/search">
-                  <Button size="sm" className="sm:size-auto sm:px-6 sm:py-5 sm:text-base text-sm px-4 py-4">
+                  <Button
+                    size="sm"
+                    className="sm:size-auto sm:px-6 sm:py-5 sm:text-base text-sm px-4 py-4"
+                  >
                     <FileText className="h-4 w-4 mr-2" /> Search Site
                   </Button>
                 </Link>
                 <Link href="/contact">
-                  <Button variant="outline" size="sm" className="sm:size-auto sm:px-6 sm:py-5 sm:text-base text-sm px-4 py-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="sm:size-auto sm:px-6 sm:py-5 sm:text-base text-sm px-4 py-4"
+                  >
                     <Mail className="h-4 w-4 mr-2" /> Contact Support
                   </Button>
                 </Link>

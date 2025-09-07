@@ -1,17 +1,22 @@
+// QUARANTINE: Writes production configs and deployment files. Only run via scripts/agents CLI.
 // 🤖 RankPilot Production Deployment Agent - Phase 4
 // Implementation Date: July 30, 2025
 // Priority: CRITICAL - Production Deployment & Monitoring
 
-import { exec } from 'child_process';
-import * as fs from 'fs/promises';
-import { promisify } from 'util';
-import type { AgentCapability, RankPilotAgent, SafetyConstraint } from '../core/AgentFramework';
+import { exec } from "child_process";
+import * as fs from "fs/promises";
+import { promisify } from "util";
+import type {
+  AgentCapability,
+  RankPilotAgent,
+  SafetyConstraint,
+} from "../core/AgentFramework";
 
 const execAsync = promisify(exec);
 
 /**
  * Production Deployment Agent - Firebase hosting deployment to australia-southeast2
- * 
+ *
  * Targets:
  * 1. Firebase hosting deployment to australia-southeast2
  * 2. Environment variable optimization
@@ -20,57 +25,69 @@ const execAsync = promisify(exec);
  * 5. Performance monitoring setup
  */
 export class ProductionDeploymentAgent implements RankPilotAgent {
-  name = 'Production Deployment Agent';
-  version = '4.0.0';
+  name = "Production Deployment Agent";
+  version = "4.0.0";
 
   capabilities: AgentCapability[] = [
     {
-      name: 'Firebase Hosting Deployment',
-      description: 'Deploy to Firebase hosting in australia-southeast2',
+      name: "Firebase Hosting Deployment",
+      description: "Deploy to Firebase hosting in australia-southeast2",
       canAutoFix: true,
-      riskLevel: 'high'
+      riskLevel: "high",
     },
     {
-      name: 'Environment Variable Optimization',
-      description: 'Optimize production environment configuration',
+      name: "Environment Variable Optimization",
+      description: "Optimize production environment configuration",
       canAutoFix: true,
-      riskLevel: 'medium'
+      riskLevel: "medium",
     },
     {
-      name: 'Sentry Monitoring Integration',
-      description: 'Setup comprehensive error and performance monitoring',
+      name: "Sentry Monitoring Integration",
+      description: "Setup comprehensive error and performance monitoring",
       canAutoFix: true,
-      riskLevel: 'low'
+      riskLevel: "low",
     },
     {
-      name: 'CDN Performance Optimization',
-      description: 'Configure CDN caching and optimization',
+      name: "CDN Performance Optimization",
+      description: "Configure CDN caching and optimization",
       canAutoFix: true,
-      riskLevel: 'low'
+      riskLevel: "low",
     },
     {
-      name: 'Production Health Monitoring',
-      description: 'Setup production health checks and alerts',
+      name: "Production Health Monitoring",
+      description: "Setup production health checks and alerts",
       canAutoFix: true,
-      riskLevel: 'low'
-    }
+      riskLevel: "low",
+    },
   ];
 
   safetyConstraints: SafetyConstraint = {
     requiresBackup: true,
     requiresHumanApproval: false,
     rollbackAvailable: true,
-    maxConcurrentFixes: 1 // Production deployment should be sequential
+    maxConcurrentFixes: 1, // Production deployment should be sequential
   };
 
-  private backupPath = './.production-deployment-backups';
-  private deploymentMetrics: Array<{ component: string, deployed: boolean, deployTime: number; }> = [];
+  private backupPath = "./.production-deployment-backups";
+  private deploymentMetrics: Array<{
+    component: string;
+    deployed: boolean;
+    deployTime: number;
+  }> = [];
 
   /**
    * Main execution method - Phase 4 implementation
    */
   async execute(): Promise<boolean> {
-    console.log('🎯 Production Deployment Agent - Phase 4 Execution Starting...');
+    if (process.env.RANKPILOT_AGENTS_ENABLED !== "true") {
+      console.log(
+        "🛡️ Production Deployment Agent: Disabled (set RANKPILOT_AGENTS_ENABLED=true to enable)"
+      );
+      return false;
+    }
+    console.log(
+      "🎯 Production Deployment Agent - Phase 4 Execution Starting..."
+    );
 
     try {
       // Step 1: Prepare production environment
@@ -94,11 +111,10 @@ export class ProductionDeploymentAgent implements RankPilotAgent {
       // Step 7: Verify deployment and generate report
       await this.verifyDeploymentAndGenerateReport();
 
-      console.log('✅ Production Deployment Agent - Phase 4 Complete!');
+      console.log("✅ Production Deployment Agent - Phase 4 Complete!");
       return true;
-
     } catch (error) {
-      console.error('🚨 Production Deployment Agent execution failed:', error);
+      console.error("🚨 Production Deployment Agent execution failed:", error);
       await this.rollback();
       return false;
     }
@@ -108,7 +124,7 @@ export class ProductionDeploymentAgent implements RankPilotAgent {
    * Prepare production environment configuration
    */
   private async prepareProductionEnvironment(): Promise<void> {
-    console.log('🔧 Preparing production environment...');
+    console.log("🔧 Preparing production environment...");
 
     // Create production environment file
     const productionEnv = `# 🚀 RankPilot Production Environment
@@ -191,13 +207,13 @@ NEXT_PUBLIC_ERROR_REPORTING=true
 NEXT_PUBLIC_ANALYTICS_ENABLED=true
 `;
 
-    await fs.writeFile('.env.production', productionEnv);
-    console.log('✅ Production environment configuration created');
+    await fs.writeFile(".env.production", productionEnv);
+    console.log("✅ Production environment configuration created");
 
     this.deploymentMetrics.push({
-      component: 'Environment Configuration',
+      component: "Environment Configuration",
       deployed: true,
-      deployTime: Date.now()
+      deployTime: Date.now(),
     });
   }
 
@@ -205,7 +221,7 @@ NEXT_PUBLIC_ANALYTICS_ENABLED=true
    * Optimize build configuration for production
    */
   private async optimizeBuildConfiguration(): Promise<void> {
-    console.log('🔧 Optimizing build configuration for production...');
+    console.log("🔧 Optimizing build configuration for production...");
 
     // Create production-optimized next.config.ts
     const productionNextConfig = `/** @type {import('next').NextConfig} */
@@ -217,7 +233,7 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
-  
+
   // Performance optimizations
   swcMinify: true,
   experimental: {
@@ -381,12 +397,12 @@ const nextConfig = {
   // Output configuration
   output: 'standalone',
   trailingSlash: false,
-  
+
   // TypeScript configuration
   typescript: {
     ignoreBuildErrors: false,
   },
-  
+
   // ESLint configuration
   eslint: {
     ignoreDuringBuilds: false,
@@ -408,7 +424,7 @@ const sentryWebpackPluginOptions = {
 
 export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);`;
 
-    await fs.writeFile('next.config.production.ts', productionNextConfig);
+    await fs.writeFile("next.config.production.ts", productionNextConfig);
 
     // Create production build script
     const productionBuildScript = `#!/bin/bash
@@ -438,11 +454,11 @@ npx cross-env NODE_OPTIONS='--max-old-space-size=4096' npm run build
 # Verify build success
 if [ $? -eq 0 ]; then
     echo "✅ Production build completed successfully!"
-    
+
     # Generate build report
     echo "📊 Generating build report..."
     npx next build --profile > build-report.txt 2>&1
-    
+
     # Bundle analysis (optional)
     if [ "$ANALYZE_BUNDLE" = "true" ]; then
         echo "📈 Analyzing bundle size..."
@@ -453,15 +469,15 @@ else
     exit 1
 fi`;
 
-    await fs.writeFile('scripts/production-build.sh', productionBuildScript);
-    await execAsync('chmod +x scripts/production-build.sh');
+    await fs.writeFile("scripts/production-build.sh", productionBuildScript);
+    await execAsync("chmod +x scripts/production-build.sh");
 
-    console.log('✅ Production build configuration optimized');
+    console.log("✅ Production build configuration optimized");
 
     this.deploymentMetrics.push({
-      component: 'Build Configuration',
+      component: "Build Configuration",
       deployed: true,
-      deployTime: Date.now()
+      deployTime: Date.now(),
     });
   }
 
@@ -469,7 +485,7 @@ fi`;
    * Setup Sentry monitoring integration
    */
   private async setupSentryMonitoring(): Promise<void> {
-    console.log('🔧 Setting up Sentry monitoring integration...');
+    console.log("🔧 Setting up Sentry monitoring integration...");
 
     // Create Sentry configuration
     const sentryConfig = `// 🔍 Sentry Configuration for Production
@@ -483,36 +499,36 @@ const SENTRY_ENVIRONMENT = process.env.NODE_ENV || 'development';
 init({
   dsn: SENTRY_DSN,
   environment: SENTRY_ENVIRONMENT,
-  
+
   // Performance monitoring
   tracesSampleRate: SENTRY_ENVIRONMENT === 'production' ? 0.1 : 1.0,
-  
+
   // Session replay
   replaysSessionSampleRate: SENTRY_ENVIRONMENT === 'production' ? 0.01 : 0.1,
   replaysOnErrorSampleRate: 1.0,
-  
+
   // Error filtering
   beforeSend(event, hint) {
     // Filter out common non-critical errors
     const error = hint.originalException;
-    
+
     if (error && typeof error === 'object') {
       // Filter out network errors that are not actionable
       if (error.message?.includes('Network request failed') ||
           error.message?.includes('fetch')) {
         return null;
       }
-      
+
       // Filter out Firebase connection errors in development
-      if (SENTRY_ENVIRONMENT !== 'production' && 
+      if (SENTRY_ENVIRONMENT !== 'production' &&
           error.message?.includes('Firebase')) {
         return null;
       }
     }
-    
+
     return event;
   },
-  
+
   // Performance monitoring options
   beforeTransaction(context) {
     // Add custom context for RankPilot
@@ -525,10 +541,10 @@ init({
         region: 'australia-southeast2'
       });
     });
-    
+
     return context;
   },
-  
+
   // Integrations
   integrations: [
     // Web vitals integration
@@ -539,18 +555,18 @@ init({
         /^https:\\/\\/.*\\.rankpilot\\.ai/,
         /^https:\\/\\/.*\\.firebase\\.googleapis\\.com/,
       ],
-      
+
       // Capture interactions and navigation
       routingInstrumentation: require('@sentry/nextjs').nextRouterInstrumentation,
     }),
   ],
-  
+
   // Release tracking
   release: process.env.SENTRY_RELEASE,
-  
+
   // Debug options
   debug: SENTRY_ENVIRONMENT !== 'production',
-  
+
   // Transport options for australia-southeast2
   transportOptions: {
     // Use tunnel for better performance in australia-southeast2
@@ -567,7 +583,7 @@ configureScope((scope) => {
 
 export default {};`;
 
-    await fs.writeFile('sentry.client.config.ts', sentryConfig);
+    await fs.writeFile("sentry.client.config.ts", sentryConfig);
 
     // Create Sentry server configuration
     const sentryServerConfig = `// 🔍 Sentry Server Configuration for Production
@@ -580,32 +596,32 @@ const SENTRY_DSN = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
 init({
   dsn: SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
-  
+
   // Server-specific configuration
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-  
+
   // Server error filtering
   beforeSend(event, hint) {
     // Log server errors for debugging
     console.error('[Sentry Server]', hint.originalException);
-    
+
     return event;
   },
-  
+
   // Server integrations
   integrations: [
     // HTTP integration for API routes
     new (require('@sentry/tracing').Integrations.Http)({ tracing: true }),
   ],
-  
+
   // Release tracking
   release: process.env.SENTRY_RELEASE,
-  
+
   // Debug in development
   debug: process.env.NODE_ENV !== 'production',
 });`;
 
-    await fs.writeFile('sentry.server.config.ts', sentryServerConfig);
+    await fs.writeFile("sentry.server.config.ts", sentryServerConfig);
 
     // Create Sentry tunnel for better performance
     const sentryTunnelRoute = `/**
@@ -620,14 +636,14 @@ export async function POST(request: NextRequest) {
     const envelope = await request.text();
     const pieces = envelope.split('\\n');
     const header = JSON.parse(pieces[0]);
-    
+
     // Extract DSN information
     const dsn = header.dsn;
     const projectId = dsn.split('/').pop();
-    
+
     // Forward to Sentry
     const sentryUrl = \`https://o\${dsn.split('@')[1].split('.')[0]}.ingest.sentry.io/api/\${projectId}/envelope/\`;
-    
+
     const response = await fetch(sentryUrl, {
       method: 'POST',
       headers: {
@@ -635,7 +651,7 @@ export async function POST(request: NextRequest) {
       },
       body: envelope,
     });
-    
+
     return new NextResponse(null, { status: response.status });
   } catch (error) {
     console.error('[Sentry Tunnel] Error:', error);
@@ -643,15 +659,15 @@ export async function POST(request: NextRequest) {
   }
 }`;
 
-    await fs.mkdir('src/app/monitoring/tunnel', { recursive: true });
-    await fs.writeFile('src/app/monitoring/tunnel/route.ts', sentryTunnelRoute);
+    await fs.mkdir("src/app/monitoring/tunnel", { recursive: true });
+    await fs.writeFile("src/app/monitoring/tunnel/route.ts", sentryTunnelRoute);
 
-    console.log('✅ Sentry monitoring integration setup complete');
+    console.log("✅ Sentry monitoring integration setup complete");
 
     this.deploymentMetrics.push({
-      component: 'Sentry Monitoring',
+      component: "Sentry Monitoring",
       deployed: true,
-      deployTime: Date.now()
+      deployTime: Date.now(),
     });
   }
 
@@ -659,7 +675,7 @@ export async function POST(request: NextRequest) {
    * Deploy to Firebase hosting
    */
   private async deployToFirebaseHosting(): Promise<void> {
-    console.log('🔧 Deploying to Firebase hosting (australia-southeast2)...');
+    console.log("🔧 Deploying to Firebase hosting (australia-southeast2)...");
 
     // Create Firebase hosting configuration
     const firebaseConfig = `{
@@ -732,7 +748,7 @@ export async function POST(request: NextRequest) {
   }
 }`;
 
-    await fs.writeFile('firebase.production.json', firebaseConfig);
+    await fs.writeFile("firebase.production.json", firebaseConfig);
 
     // Create deployment script
     const deploymentScript = `#!/bin/bash
@@ -757,15 +773,15 @@ else
     exit 1
 fi`;
 
-    await fs.writeFile('scripts/deploy-hosting.sh', deploymentScript);
-    await execAsync('chmod +x scripts/deploy-hosting.sh');
+    await fs.writeFile("scripts/deploy-hosting.sh", deploymentScript);
+    await execAsync("chmod +x scripts/deploy-hosting.sh");
 
-    console.log('✅ Firebase hosting deployment configuration ready');
+    console.log("✅ Firebase hosting deployment configuration ready");
 
     this.deploymentMetrics.push({
-      component: 'Firebase Hosting',
+      component: "Firebase Hosting",
       deployed: true,
-      deployTime: Date.now()
+      deployTime: Date.now(),
     });
   }
 
@@ -773,7 +789,7 @@ fi`;
    * Deploy Firebase Cloud Functions
    */
   private async deployFirebaseFunctions(): Promise<void> {
-    console.log('🔧 Deploying Firebase Cloud Functions...');
+    console.log("🔧 Deploying Firebase Cloud Functions...");
 
     // Create functions deployment script
     const functionsDeployScript = `#!/bin/bash
@@ -808,8 +824,8 @@ fi
 # Return to root directory
 cd ..`;
 
-    await fs.writeFile('scripts/deploy-functions.sh', functionsDeployScript);
-    await execAsync('chmod +x scripts/deploy-functions.sh');
+    await fs.writeFile("scripts/deploy-functions.sh", functionsDeployScript);
+    await execAsync("chmod +x scripts/deploy-functions.sh");
 
     // Create functions TypeScript configuration
     const functionsTsConfig = `{
@@ -842,14 +858,14 @@ cd ..`;
   ]
 }`;
 
-    await fs.writeFile('functions/tsconfig.json', functionsTsConfig);
+    await fs.writeFile("functions/tsconfig.json", functionsTsConfig);
 
-    console.log('✅ Firebase Cloud Functions deployment ready');
+    console.log("✅ Firebase Cloud Functions deployment ready");
 
     this.deploymentMetrics.push({
-      component: 'Firebase Functions',
+      component: "Firebase Functions",
       deployed: true,
-      deployTime: Date.now()
+      deployTime: Date.now(),
     });
   }
 
@@ -857,7 +873,7 @@ cd ..`;
    * Setup production monitoring
    */
   private async setupProductionMonitoring(): Promise<void> {
-    console.log('🔧 Setting up production monitoring...');
+    console.log("🔧 Setting up production monitoring...");
 
     // Create comprehensive monitoring dashboard
     const monitoringDashboard = `/**
@@ -897,7 +913,7 @@ export default function ProductionMonitoringDashboard() {
         // Fetch health metrics
         const healthResponse = await fetch('/api/health');
         const healthData = await healthResponse.json();
-        
+
         setMetrics({
           status: healthData.status,
           responseTime: healthData.performance?.currentResponseTime || 0,
@@ -906,7 +922,7 @@ export default function ProductionMonitoringDashboard() {
           activeUsers: healthData.activeUsers || 0,
           lastUpdated: new Date().toISOString()
         });
-        
+
         // Extract service statuses
         const serviceStatuses: ServiceStatus[] = [
           {
@@ -934,10 +950,10 @@ export default function ProductionMonitoringDashboard() {
             lastCheck: new Date().toISOString()
           }
         ];
-        
+
         setServices(serviceStatuses);
         setLoading(false);
-        
+
       } catch (error) {
         console.error('Failed to fetch monitoring data:', error);
         setLoading(false);
@@ -945,10 +961,10 @@ export default function ProductionMonitoringDashboard() {
     };
 
     fetchMonitoringData();
-    
+
     // Refresh every 30 seconds
     const interval = setInterval(fetchMonitoringData, 30000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -1074,15 +1090,18 @@ export default function ProductionMonitoringDashboard() {
   );
 }`;
 
-    await fs.mkdir('src/app/(app)/monitoring', { recursive: true });
-    await fs.writeFile('src/app/(app)/monitoring/page.tsx', monitoringDashboard);
+    await fs.mkdir("src/app/(app)/monitoring", { recursive: true });
+    await fs.writeFile(
+      "src/app/(app)/monitoring/page.tsx",
+      monitoringDashboard
+    );
 
-    console.log('✅ Production monitoring dashboard created');
+    console.log("✅ Production monitoring dashboard created");
 
     this.deploymentMetrics.push({
-      component: 'Production Monitoring',
+      component: "Production Monitoring",
       deployed: true,
-      deployTime: Date.now()
+      deployTime: Date.now(),
     });
   }
 
@@ -1090,10 +1109,12 @@ export default function ProductionMonitoringDashboard() {
    * Verify deployment and generate comprehensive report
    */
   private async verifyDeploymentAndGenerateReport(): Promise<void> {
-    console.log('🔧 Verifying deployment and generating report...');
+    console.log("🔧 Verifying deployment and generating report...");
 
     const totalComponents = this.deploymentMetrics.length;
-    const deployedComponents = this.deploymentMetrics.filter(c => c.deployed).length;
+    const deployedComponents = this.deploymentMetrics.filter(
+      (c) => c.deployed
+    ).length;
     const deploymentSuccessRate = (deployedComponents / totalComponents) * 100;
 
     const report = `# 🚀 Production Deployment Agent Report - Phase 4
@@ -1105,13 +1126,16 @@ Region: australia-southeast2
 - **Total Components**: ${totalComponents}
 - **Successfully Deployed**: ${deployedComponents}
 - **Deployment Success Rate**: ${deploymentSuccessRate.toFixed(1)}%
-- **Phase 4 Status**: ${deploymentSuccessRate >= 80 ? '✅ COMPLETE' : '⚠️  NEEDS ATTENTION'}
+- **Phase 4 Status**: ${deploymentSuccessRate >= 80 ? "✅ COMPLETE" : "⚠️  NEEDS ATTENTION"}
 - **Production URL**: https://rankpilot.ai
 
 ## 🎯 Deployed Components
-${this.deploymentMetrics.map(component =>
-      `- **${component.component}**: ${component.deployed ? '✅ DEPLOYED' : '❌ FAILED'} (${new Date(component.deployTime).toLocaleTimeString()})`
-    ).join('\n')}
+${this.deploymentMetrics
+  .map(
+    (component) =>
+      `- **${component.component}**: ${component.deployed ? "✅ DEPLOYED" : "❌ FAILED"} (${new Date(component.deployTime).toLocaleTimeString()})`
+  )
+  .join("\n")}
 
 ## 🔥 Phase 4 Achievements
 
@@ -1218,8 +1242,10 @@ ${this.deploymentMetrics.map(component =>
 **🎉 RankPilot is now LIVE in production! 🎉**
 `;
 
-    await fs.writeFile('./production-deployment-report.md', report);
-    console.log('📊 Production deployment report generated: production-deployment-report.md');
+    await fs.writeFile("./production-deployment-report.md", report);
+    console.log(
+      "📊 Production deployment report generated: production-deployment-report.md"
+    );
 
     // Create deployment verification script
     const verificationScript = `#!/bin/bash
@@ -1257,15 +1283,17 @@ fi
 
 echo "🎉 Production deployment verification complete!"`;
 
-    await fs.writeFile('scripts/verify-deployment.sh', verificationScript);
-    await execAsync('chmod +x scripts/verify-deployment.sh');
+    await fs.writeFile("scripts/verify-deployment.sh", verificationScript);
+    await execAsync("chmod +x scripts/verify-deployment.sh");
   }
 
   /**
    * Validate fix implementation
    */
   async validateFix(): Promise<boolean> {
-    const deploymentSuccessRate = this.deploymentMetrics.filter(c => c.deployed).length / this.deploymentMetrics.length;
+    const deploymentSuccessRate =
+      this.deploymentMetrics.filter((c) => c.deployed).length /
+      this.deploymentMetrics.length;
     return deploymentSuccessRate >= 0.8; // 80% deployment success rate threshold
   }
 
@@ -1273,20 +1301,20 @@ echo "🎉 Production deployment verification complete!"`;
    * Rollback changes if needed
    */
   async rollback(): Promise<boolean> {
-    console.log('🔄 Rolling back Production Deployment changes...');
+    console.log("🔄 Rolling back Production Deployment changes...");
 
     try {
       // In production, we would implement proper rollback mechanisms
-      console.log('⚠️  Production rollback requires manual intervention');
-      console.log('📋 Rollback checklist:');
-      console.log('   1. Revert Firebase hosting deployment');
-      console.log('   2. Restore previous functions deployment');
-      console.log('   3. Check environment variables');
-      console.log('   4. Verify monitoring systems');
+      console.log("⚠️  Production rollback requires manual intervention");
+      console.log("📋 Rollback checklist:");
+      console.log("   1. Revert Firebase hosting deployment");
+      console.log("   2. Restore previous functions deployment");
+      console.log("   3. Check environment variables");
+      console.log("   4. Verify monitoring systems");
 
       return true;
     } catch (error) {
-      console.error('❌ Rollback preparation failed:', error);
+      console.error("❌ Rollback preparation failed:", error);
       return false;
     }
   }

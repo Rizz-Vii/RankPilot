@@ -82,10 +82,7 @@ export default function ContentAnalyzerForm({
   const keywordsLength = form.watch("targetKeywords")?.length || 0;
 
   return (
-    <EnhancedCard
-      className="h-full"
-      variant="elevated"
-    >
+    <EnhancedCard className="h-full" variant="elevated">
       <EnhancedCardHeader>
         <EnhancedCardTitle className="font-headline flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />

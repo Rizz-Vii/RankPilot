@@ -86,13 +86,23 @@ function createMockUser(userType: keyof typeof DEV_USERS): User {
     emailVerified: true,
     isAnonymous: false,
     providerData: [],
-    refreshToken: 'mock-refresh-token',
-    metadata: { creationTime: String(Date.now()), lastSignInTime: String(Date.now()) } as unknown as User['metadata'],
+    refreshToken: "mock-refresh-token",
+    metadata: {
+      creationTime: String(Date.now()),
+      lastSignInTime: String(Date.now()),
+    } as unknown as User["metadata"],
     tenantId: null,
-    delete: async () => { /* noop */ },
-    getIdToken: async () => 'mock-id-token',
-    getIdTokenResult: async () => ({ token: 'mock-id-token' } as unknown),
-    reload: async () => { /* noop */ },
-    toJSON: () => ({ uid: DEV_USERS[userType].uid, email: DEV_USERS[userType].email })
+    delete: async () => {
+      /* noop */
+    },
+    getIdToken: async () => "mock-id-token",
+    getIdTokenResult: async () => ({ token: "mock-id-token" }) as unknown,
+    reload: async () => {
+      /* noop */
+    },
+    toJSON: () => ({
+      uid: DEV_USERS[userType].uid,
+      email: DEV_USERS[userType].email,
+    }),
   } as unknown as User;
 }

@@ -1,5 +1,5 @@
 export type ScheduleConfig = {
-    cron?: string
-    interval?: 'daily' | 'hourly'
-    lastRun?: number
-}
+  cron?: string;
+  interval?: "daily" | "hourly";
+  lastRun?: number;
+};

@@ -1,6 +1,6 @@
 /**
  * FIXED Comprehensive Database Seeder
- * 
+ *
  * Fixes the WriteBatch reuse issue by creating new batch instances after commits
  */
 
@@ -37,23 +37,23 @@ class FixedDatabaseSeeder {
 
   async seedUsers() {
     console.log("👥 Seeding 1,000 realistic users...");
-    
+
     let batch = this.createBatch();
     let totalUsers = 0;
     const BATCH_SIZE = 100; // Reduced for stability
 
-    const tiers = ['free', 'starter', 'agency', 'enterprise', 'admin'];
+    const tiers = ["free", "starter", "agency", "enterprise", "admin"];
     const tierDistribution = [0.7, 0.2, 0.08, 0.02, 0.001]; // Realistic distribution
 
     for (let i = 0; i < 1000; i++) {
-      const userId = `user_${String(i + 1).padStart(4, '0')}`;
+      const userId = `user_${String(i + 1).padStart(4, "0")}`;
       this.userIds.push(userId);
 
       // Assign tier based on distribution
       const random = Math.random();
       let cumulativeProb = 0;
-      let tier = 'free';
-      
+      let tier = "free";
+
       for (let j = 0; j < tierDistribution.length; j++) {
         cumulativeProb += tierDistribution[j];
         if (random <= cumulativeProb) {
@@ -76,16 +76,20 @@ class FixedDatabaseSeeder {
         profileCompleted: true,
         subscription: {
           tier,
-          status: 'active',
-          startDate: Timestamp.now()
+          status: "active",
+          startDate: Timestamp.now(),
         },
         usage: {
-          analysesThisMonth: Math.floor(Math.random() * this.getTierLimit(tier, 'analyses')),
-          keywordSearchesThisMonth: Math.floor(Math.random() * this.getTierLimit(tier, 'keywords'))
-        }
+          analysesThisMonth: Math.floor(
+            Math.random() * this.getTierLimit(tier, "analyses")
+          ),
+          keywordSearchesThisMonth: Math.floor(
+            Math.random() * this.getTierLimit(tier, "keywords")
+          ),
+        },
       };
 
-      const userRef = db.collection('users').doc(userId);
+      const userRef = db.collection("users").doc(userId);
       batch.set(userRef, user);
       totalUsers++;
 
@@ -107,30 +111,36 @@ class FixedDatabaseSeeder {
 
   async seedNeuroSeoAnalyses() {
     console.log("🧠 Seeding NeuroSEO analyses...");
-    
+
     let batch = this.createBatch();
     let totalAnalyses = 0;
     const BATCH_SIZE = 100;
 
-    for (const userId of this.userIds.slice(0, 200)) { // Limit for efficiency
+    for (const userId of this.userIds.slice(0, 200)) {
+      // Limit for efficiency
       const analysisCount = Math.floor(Math.random() * 10) + 1;
-      
+
       for (let i = 0; i < analysisCount; i++) {
         const analysis = {
           userId,
           url: `https://example-${totalAnalyses}.com`,
-          status: Math.random() > 0.3 ? 'completed' : 'processing',
+          status: Math.random() > 0.3 ? "completed" : "processing",
           completedAt: Math.random() > 0.3 ? Timestamp.now() : null,
           createdAt: Timestamp.fromDate(
             new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000)
           ),
-          results: Math.random() > 0.3 ? {
-            score: Math.floor(Math.random() * 100),
-            recommendations: [`Improve ${Math.random() > 0.5 ? 'SEO' : 'content'}`]
-          } : null
+          results:
+            Math.random() > 0.3
+              ? {
+                  score: Math.floor(Math.random() * 100),
+                  recommendations: [
+                    `Improve ${Math.random() > 0.5 ? "SEO" : "content"}`,
+                  ],
+                }
+              : null,
         };
 
-        const analysisRef = db.collection('neuroSeoAnalyses').doc();
+        const analysisRef = db.collection("neuroSeoAnalyses").doc();
         batch.set(analysisRef, analysis);
         totalAnalyses++;
 
@@ -151,34 +161,46 @@ class FixedDatabaseSeeder {
 
   async seedKeywordResearch() {
     console.log("🔍 Seeding keyword research...");
-    
+
     let batch = this.createBatch();
     let totalKeywords = 0;
     const BATCH_SIZE = 100;
 
     const keywords = [
-      'seo tools', 'keyword research', 'content marketing', 'digital marketing',
-      'website optimization', 'search engine', 'ranking factors', 'backlinks',
-      'meta tags', 'page speed', 'mobile optimization', 'local seo'
+      "seo tools",
+      "keyword research",
+      "content marketing",
+      "digital marketing",
+      "website optimization",
+      "search engine",
+      "ranking factors",
+      "backlinks",
+      "meta tags",
+      "page speed",
+      "mobile optimization",
+      "local seo",
     ];
 
     for (const userId of this.userIds.slice(0, 300)) {
       const keywordCount = Math.floor(Math.random() * 15) + 5;
-      
+
       for (let i = 0; i < keywordCount; i++) {
         const keyword = {
           userId,
-          keyword: keywords[Math.floor(Math.random() * keywords.length)] + ` ${i + 1}`,
+          keyword:
+            keywords[Math.floor(Math.random() * keywords.length)] + ` ${i + 1}`,
           createdAt: Timestamp.fromDate(
             new Date(Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000)
           ),
           difficulty: Math.floor(Math.random() * 100),
           volume: Math.floor(Math.random() * 100000),
           cpc: Math.random() * 10,
-          trends: Array.from({ length: 12 }, () => Math.floor(Math.random() * 100))
+          trends: Array.from({ length: 12 }, () =>
+            Math.floor(Math.random() * 100)
+          ),
         };
 
-        const keywordRef = db.collection('keywordResearch').doc();
+        const keywordRef = db.collection("keywordResearch").doc();
         batch.set(keywordRef, keyword);
         totalKeywords++;
 
@@ -194,19 +216,21 @@ class FixedDatabaseSeeder {
       await batch.commit();
     }
 
-    console.log(`✅ Successfully seeded ${totalKeywords} keyword research entries`);
+    console.log(
+      `✅ Successfully seeded ${totalKeywords} keyword research entries`
+    );
   }
 
   async seedSeoAudits() {
     console.log("🔍 Seeding SEO audits...");
-    
+
     let batch = this.createBatch();
     let totalAudits = 0;
     const BATCH_SIZE = 100;
 
     for (const userId of this.userIds.slice(0, 250)) {
       const auditCount = Math.floor(Math.random() * 8) + 2;
-      
+
       for (let i = 0; i < auditCount; i++) {
         const audit = {
           userId,
@@ -216,11 +240,13 @@ class FixedDatabaseSeeder {
           ),
           score: Math.floor(Math.random() * 100),
           issues: Math.floor(Math.random() * 20),
-          recommendations: Array.from({ length: Math.floor(Math.random() * 5) + 1 }, 
-            (_, idx) => `Fix issue ${idx + 1}`)
+          recommendations: Array.from(
+            { length: Math.floor(Math.random() * 5) + 1 },
+            (_, idx) => `Fix issue ${idx + 1}`
+          ),
         };
 
-        const auditRef = db.collection('seoAudits').doc();
+        const auditRef = db.collection("seoAudits").doc();
         batch.set(auditRef, audit);
         totalAudits++;
 
@@ -241,14 +267,14 @@ class FixedDatabaseSeeder {
 
   async seedLinkAnalyses() {
     console.log("🔗 Seeding link analyses...");
-    
+
     let batch = this.createBatch();
     let totalLinks = 0;
     const BATCH_SIZE = 100;
 
     for (const userId of this.userIds.slice(0, 200)) {
       const linkCount = Math.floor(Math.random() * 5) + 1;
-      
+
       for (let i = 0; i < linkCount; i++) {
         const linkAnalysis = {
           userId,
@@ -258,10 +284,10 @@ class FixedDatabaseSeeder {
           ),
           backlinks: Math.floor(Math.random() * 10000),
           domainRating: Math.floor(Math.random() * 100),
-          organicTraffic: Math.floor(Math.random() * 1000000)
+          organicTraffic: Math.floor(Math.random() * 1000000),
         };
 
-        const linkRef = db.collection('linkAnalyses').doc();
+        const linkRef = db.collection("linkAnalyses").doc();
         batch.set(linkRef, linkAnalysis);
         totalLinks++;
 
@@ -282,10 +308,26 @@ class FixedDatabaseSeeder {
 
   private getTierLimit(tier: string, type: string): number {
     const limits = {
-      analyses: { free: 5, starter: 25, agency: 100, enterprise: 500, admin: 9999 },
-      keywords: { free: 20, starter: 100, agency: 500, enterprise: 2000, admin: 9999 }
+      analyses: {
+        free: 5,
+        starter: 25,
+        agency: 100,
+        enterprise: 500,
+        admin: 9999,
+      },
+      keywords: {
+        free: 20,
+        starter: 100,
+        agency: 500,
+        enterprise: 2000,
+        admin: 9999,
+      },
     };
-    return limits[type as keyof typeof limits][tier as keyof typeof limits.analyses] || 5;
+    return (
+      limits[type as keyof typeof limits][
+        tier as keyof typeof limits.analyses
+      ] || 5
+    );
   }
 
   async seedAll() {
@@ -323,7 +365,6 @@ Starting comprehensive seeding...
 
 Database is now fully populated and ready!
       `);
-
     } catch (error) {
       console.error(`
 ❌ Database seeding failed: ${error}

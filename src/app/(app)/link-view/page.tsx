@@ -12,8 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type {
-  ChartConfig} from "@/components/ui/chart";
+import type { ChartConfig } from "@/components/ui/chart";
 import {
   ChartContainer,
   ChartTooltip,
@@ -32,22 +31,13 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { cn, safeErrorMessage } from "@/lib/utils";
 import { analyzeLinks } from "@/lib/utils/content-functions";
-import { FeatureGate } from '@/components/subscription/FeatureGate';
-import type {
-  LinkAnalysisInput,
-  LinkAnalysisOutput
-} from "@/types";
+import { FeatureGate } from "@/components/subscription/FeatureGate";
+import type { LinkAnalysisInput, LinkAnalysisOutput } from "@/types";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, BarChart3 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 const DomainAuthorityChart = ({
   backlinks,
@@ -110,7 +100,7 @@ const DomainAuthorityChart = ({
   );
 };
 
-const LinkAnalysisResults = ({ results }: { results: LinkAnalysisOutput; }) => (
+const LinkAnalysisResults = ({ results }: { results: LinkAnalysisOutput }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
@@ -183,7 +173,7 @@ export default function LinkViewPage() {
 
   const { provenance, setProvenance, markLive, markFallback } = useProvenance();
 
-  const handleSubmit = async (values: { url: string; }) => {
+  const handleSubmit = async (values: { url: string }) => {
     setIsLoading(true);
     setSubmitted(true);
     setResults(null);
@@ -193,12 +183,12 @@ export default function LinkViewPage() {
       // Transform form values to LinkAnalysisInput
       const analysisInput: LinkAnalysisInput = {
         url: values.url,
-        analysisType: 'comprehensive',
-        limit: 100
+        analysisType: "comprehensive",
+        limit: 100,
       };
-  const result = await analyzeLinks(analysisInput);
+      const result = await analyzeLinks(analysisInput);
       setResults(result);
-  markLive();
+      markLive();
 
       if (user) {
         const userActivitiesRef = collection(
@@ -216,7 +206,10 @@ export default function LinkViewPage() {
         });
       }
     } catch (e: unknown) {
-      setError(safeErrorMessage(e) || "An unexpected error occurred during link analysis.");
+      setError(
+        safeErrorMessage(e) ||
+          "An unexpected error occurred during link analysis."
+      );
       if (!results) markFallback();
     } finally {
       setIsLoading(false);
@@ -225,68 +218,68 @@ export default function LinkViewPage() {
 
   return (
     <FeatureGate feature="link_view" requiredTier="agency" showUpgrade>
-    <main className="container mx-auto py-6 space-y-6">
-      <ToolPageHeader
-        title="Link View Analyzer"
-        description="Evaluate backlink quality and domain authority distribution."
-  badges={composeToolHeaderBadges("link-view", provenance)}
-        showBreadcrumb
-      />
-    <div
-      className={cn(
-        "mx-auto transition-all duration-500",
-        submitted ? "max-w-7xl" : "max-w-xl"
-      )}
-    >
-      <div
-        className={cn(
-          "grid gap-8 transition-all duration-500",
-          submitted ? "lg:grid-cols-3" : "lg:grid-cols-1"
-        )}
-      >
-        <motion.div layout className="lg:col-span-1">
-          <LinkAnalysisForm
-            onFormSubmitAction={handleSubmit}
-            isLoading={isLoading}
-          />
-        </motion.div>
+      <main className="container mx-auto py-6 space-y-6">
+        <ToolPageHeader
+          title="Link View Analyzer"
+          description="Evaluate backlink quality and domain authority distribution."
+          badges={composeToolHeaderBadges("link-view", provenance)}
+          showBreadcrumb
+        />
+        <div
+          className={cn(
+            "mx-auto transition-all duration-500",
+            submitted ? "max-w-7xl" : "max-w-xl"
+          )}
+        >
+          <div
+            className={cn(
+              "grid gap-8 transition-all duration-500",
+              submitted ? "lg:grid-cols-3" : "lg:grid-cols-1"
+            )}
+          >
+            <motion.div layout className="lg:col-span-1">
+              <LinkAnalysisForm
+                onFormSubmitAction={handleSubmit}
+                isLoading={isLoading}
+              />
+            </motion.div>
 
-        <div className="lg:col-span-2" ref={resultsRef}>
-          <AnimatePresence mode="wait">
-            {isLoading && (
-              <motion.div key="loading">
-                <LoadingScreen text="Discovering backlinks..." />
-              </motion.div>
-            )}
-            {error && (
-              <motion.div
-                key="error"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                <Card className="border-destructive">
-                  <CardHeader>
-                    <CardTitle className="text-destructive font-headline flex items-center gap-2">
-                      <AlertTriangle /> Analysis Failed
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>{error}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-            {results && (
-              <motion.div key="results">
-                <LinkAnalysisResults results={results} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <div className="lg:col-span-2" ref={resultsRef}>
+              <AnimatePresence mode="wait">
+                {isLoading && (
+                  <motion.div key="loading">
+                    <LoadingScreen text="Discovering backlinks..." />
+                  </motion.div>
+                )}
+                {error && (
+                  <motion.div
+                    key="error"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <Card className="border-destructive">
+                      <CardHeader>
+                        <CardTitle className="text-destructive font-headline flex items-center gap-2">
+                          <AlertTriangle /> Analysis Failed
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p>{error}</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+                {results && (
+                  <motion.div key="results">
+                    <LinkAnalysisResults results={results} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </main>
-  </FeatureGate>
+      </main>
+    </FeatureGate>
   );
 }

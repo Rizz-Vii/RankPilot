@@ -3,12 +3,7 @@
  * This script will find users with old tier names and update them to new ones
  */
 
-import {
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 /* diagnostics removed during lint remediation */

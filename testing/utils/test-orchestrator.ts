@@ -1,6 +1,6 @@
-import type { Page} from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
-import type { UserTier, UnifiedTestUser} from "./enhanced-auth";
+import type { UserTier, UnifiedTestUser } from "./enhanced-auth";
 import { EnhancedAuth, TEST_USERS } from "./enhanced-auth";
 import { GracefulTestUtils } from "./graceful-test-utils";
 
@@ -18,7 +18,7 @@ export interface UserFlow {
 }
 
 export interface FlowStep {
-  action: 'navigate' | 'click' | 'fill' | 'wait' | 'verify' | 'screenshot';
+  action: "navigate" | "click" | "fill" | "wait" | "verify" | "screenshot";
   target?: string;
   value?: string;
   timeout?: number;
@@ -59,28 +59,33 @@ export class UserManager {
   /**
    * Verify user has access to feature
    */
-  async verifyAccess(route: string, expectedAccess: boolean = true): Promise<void> {
+  async verifyAccess(
+    route: string,
+    expectedAccess: boolean = true
+  ): Promise<void> {
     try {
       await this.gracefulUtils.navigateGracefully(route);
 
       if (expectedAccess) {
         // Should have access - verify no upgrade prompts
         const upgradePrompts = [
-          'text=/upgrade|premium|subscribe/i',
+          "text=/upgrade|premium|subscribe/i",
           '[data-testid="upgrade-prompt"]',
-          '[data-testid="limited-access-message"]'
+          '[data-testid="limited-access-message"]',
         ];
 
         for (const prompt of upgradePrompts) {
-          await expect(this.page.locator(prompt)).not.toBeVisible({ timeout: 5000 });
+          await expect(this.page.locator(prompt)).not.toBeVisible({
+            timeout: 5000,
+          });
         }
         console.log(`✅ Access granted to ${route}`);
       } else {
         // Should be blocked - verify upgrade prompts or redirects
         const blockIndicators = [
-          'text=/upgrade|premium|subscribe/i',
+          "text=/upgrade|premium|subscribe/i",
           '[data-testid="upgrade-prompt"]',
-          '[data-testid="limited-access-message"]'
+          '[data-testid="limited-access-message"]',
         ];
 
         let foundBlockIndicator = false;
@@ -95,8 +100,11 @@ export class UserManager {
         console.log(`🚫 Access properly blocked for ${route}`);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Access verification failed for ${route}: ${errorMessage}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Access verification failed for ${route}: ${errorMessage}`
+      );
     }
   }
 }
@@ -129,7 +137,9 @@ export class TestOrchestrator {
     // Execute each step in the flow
     for (let i = 0; i < flow.steps.length; i++) {
       const step = flow.steps[i];
-      console.log(`📋 Step ${i + 1}/${flow.steps.length}: ${step.action} ${step.target || ''}`);
+      console.log(
+        `📋 Step ${i + 1}/${flow.steps.length}: ${step.action} ${step.target || ""}`
+      );
 
       try {
         await this.executeStep(step);
@@ -139,11 +149,14 @@ export class TestOrchestrator {
           continue;
         }
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         await this.page.screenshot({
-          path: `test-results/flow-failure-${flow.name}-step-${i + 1}-${Date.now()}.png`
+          path: `test-results/flow-failure-${flow.name}-step-${i + 1}-${Date.now()}.png`,
         });
-        throw new Error(`Flow "${flow.name}" failed at step ${i + 1}: ${errorMessage}`);
+        throw new Error(
+          `Flow "${flow.name}" failed at step ${i + 1}: ${errorMessage}`
+        );
       }
     }
 
@@ -162,19 +175,24 @@ export class TestOrchestrator {
     const timeout = step.timeout || 20000;
 
     switch (step.action) {
-      case 'navigate':
-        if (!step.target) throw new Error('Navigate step requires target URL');
+      case "navigate":
+        if (!step.target) throw new Error("Navigate step requires target URL");
         await this.gracefulUtils.navigateGracefully(step.target, { timeout });
         break;
 
-      case 'click':
-        if (!step.target) throw new Error('Click step requires target selector');
+      case "click":
+        if (!step.target)
+          throw new Error("Click step requires target selector");
         await this.gracefulUtils.clickGracefully(step.target, { timeout });
         break;
 
-      case 'fill':
-        if (!step.target || !step.value) throw new Error('Fill step requires target and value');
-        const element = await this.gracefulUtils.waitForElementGracefully(step.target, { timeout });
+      case "fill":
+        if (!step.target || !step.value)
+          throw new Error("Fill step requires target and value");
+        const element = await this.gracefulUtils.waitForElementGracefully(
+          step.target,
+          { timeout }
+        );
         if (element) {
           await element.fill(step.value);
         } else {
@@ -182,23 +200,28 @@ export class TestOrchestrator {
         }
         break;
 
-      case 'wait':
+      case "wait":
         if (step.target) {
-          await this.gracefulUtils.waitForElementGracefully(step.target, { timeout });
+          await this.gracefulUtils.waitForElementGracefully(step.target, {
+            timeout,
+          });
         } else {
           await this.page.waitForTimeout(step.timeout || 2000);
         }
         break;
 
-      case 'verify':
-        if (!step.target) throw new Error('Verify step requires target selector');
-        await this.gracefulUtils.waitForElementGracefully(step.target, { timeout });
+      case "verify":
+        if (!step.target)
+          throw new Error("Verify step requires target selector");
+        await this.gracefulUtils.waitForElementGracefully(step.target, {
+          timeout,
+        });
         break;
 
-      case 'screenshot':
+      case "screenshot":
         await this.page.screenshot({
           path: `test-results/flow-screenshot-${Date.now()}.png`,
-          fullPage: true
+          fullPage: true,
         });
         break;
 
@@ -214,11 +237,16 @@ export class TestOrchestrator {
     console.log(`🎯 Verifying outcome: ${outcome}`);
 
     // Common outcome patterns
-    if (outcome.includes('dashboard')) {
+    if (outcome.includes("dashboard")) {
       await expect(this.page).toHaveURL(/.*dashboard.*/);
-      await this.gracefulUtils.waitForElementGracefully('[data-testid="dashboard-content"]');
-    } else if (outcome.includes('error') || outcome.includes('blocked')) {
-      const errorIndicators = ['text=/error|blocked|unauthorized/i', '.error-message'];
+      await this.gracefulUtils.waitForElementGracefully(
+        '[data-testid="dashboard-content"]'
+      );
+    } else if (outcome.includes("error") || outcome.includes("blocked")) {
+      const errorIndicators = [
+        "text=/error|blocked|unauthorized/i",
+        ".error-message",
+      ];
       let foundError = false;
       for (const indicator of errorIndicators) {
         if (await this.page.locator(indicator).isVisible({ timeout: 5000 })) {
@@ -229,7 +257,9 @@ export class TestOrchestrator {
       expect(foundError).toBeTruthy();
     } else {
       // Generic text verification
-      await expect(this.page.locator('body')).toContainText(outcome, { timeout: 10000 });
+      await expect(this.page.locator("body")).toContainText(outcome, {
+        timeout: 10000,
+      });
     }
   }
 
@@ -250,12 +280,14 @@ export class TestOrchestrator {
   /**
    * Run data-driven navigation test
    */
-  async testNavigation(navigationItems: Array<{
-    name: string;
-    url: string;
-    requiredTier?: UserTier;
-    shouldBeVisible?: boolean;
-  }>): Promise<void> {
+  async testNavigation(
+    navigationItems: Array<{
+      name: string;
+      url: string;
+      requiredTier?: UserTier;
+      shouldBeVisible?: boolean;
+    }>
+  ): Promise<void> {
     console.log(`🧭 Testing navigation for ${navigationItems.length} items`);
 
     for (const item of navigationItems) {
@@ -267,7 +299,9 @@ export class TestOrchestrator {
 
       if (item.shouldBeVisible !== false) {
         await this.gracefulUtils.navigateGracefully(item.url);
-        await expect(this.page).toHaveURL(new RegExp(item.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+        await expect(this.page).toHaveURL(
+          new RegExp(item.url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+        );
         console.log(`✅ Successfully navigated to ${item.name}`);
       } else {
         // Should not be accessible
@@ -283,16 +317,18 @@ export class TestOrchestrator {
     console.log(`📱 Running comprehensive mobile performance tests`);
 
     const viewports = [
-      { name: 'Mobile Small', width: 320, height: 568 },
-      { name: 'Mobile Large', width: 414, height: 896 },
-      { name: 'Tablet', width: 768, height: 1024 }
+      { name: "Mobile Small", width: 320, height: 568 },
+      { name: "Mobile Large", width: 414, height: 896 },
+      { name: "Tablet", width: 768, height: 1024 },
     ];
 
     for (const viewport of viewports) {
-      console.log(`📐 Testing ${viewport.name} (${viewport.width}x${viewport.height})`);
+      console.log(
+        `📐 Testing ${viewport.name} (${viewport.width}x${viewport.height})`
+      );
 
       await this.page.setViewportSize(viewport);
-      await this.gracefulUtils.navigateGracefully('/');
+      await this.gracefulUtils.navigateGracefully("/");
 
       // Test touch targets (minimum 48px)
       const buttons = this.page.locator('button, a, [role="button"]');
@@ -326,32 +362,32 @@ export const commonFlows: UserFlow[] = [
     description: "Login and verify dashboard loads correctly",
     requiredTier: "free",
     steps: [
-      { action: 'navigate', target: '/dashboard' },
-      { action: 'verify', target: '[data-testid="dashboard-content"]' },
-      { action: 'verify', target: 'h1' }
+      { action: "navigate", target: "/dashboard" },
+      { action: "verify", target: '[data-testid="dashboard-content"]' },
+      { action: "verify", target: "h1" },
     ],
-    expectedOutcome: "dashboard"
+    expectedOutcome: "dashboard",
   },
   {
     name: "NeuroSEO Access Test",
     description: "Test access to NeuroSEO features",
     requiredTier: "agency",
     steps: [
-      { action: 'navigate', target: '/neuroseo' },
-      { action: 'verify', target: '[data-testid="neuroseo-dashboard"]' },
-      { action: 'wait', timeout: 3000 }
-    ]
+      { action: "navigate", target: "/neuroseo" },
+      { action: "verify", target: '[data-testid="neuroseo-dashboard"]' },
+      { action: "wait", timeout: 3000 },
+    ],
   },
   {
     name: "Feature Restriction Test",
     description: "Verify tier restrictions work correctly",
     requiredTier: "free",
     steps: [
-      { action: 'navigate', target: '/enterprise-features' },
-      { action: 'verify', target: 'text=/upgrade|premium/i' }
+      { action: "navigate", target: "/enterprise-features" },
+      { action: "verify", target: "text=/upgrade|premium/i" },
     ],
-    expectedOutcome: "blocked"
-  }
+    expectedOutcome: "blocked",
+  },
 ];
 
 /**

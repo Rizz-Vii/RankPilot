@@ -2,7 +2,7 @@ name: Preview Deploy + Provenance Audit (Runtime)
 
 on:
   pull_request:
-    branches: [ master, main, workshop/* ]
+    branches: [master, main, workshop/*]
 
 jobs:
   deploy-and-audit:
@@ -80,8 +80,8 @@ jobs:
         if: steps.guard.outputs.missing_sa == 'false' && steps.origin.outputs.origin != ''
         env:
           PROV_ORIGIN: ${{ steps.origin.outputs.origin }}
-          PROV_REQUIRE_SERVER: '1'
-          PROV_STRICT: '1'
+          PROV_REQUIRE_SERVER: "1"
+          PROV_STRICT: "1"
         run: npm run test:provenance-audit:runtime:env
 
       - name: Note skipped audit

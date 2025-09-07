@@ -98,33 +98,33 @@ components/
 ```typescript
 // Tailwind CSS responsive breakpoints
 const breakpoints = {
-  'xs': '320px',              // Small phones
-  'sm': '640px',              // Large phones
-  'md': '768px',              // Tablets
-  'lg': '1024px',             // Small laptops
-  'xl': '1280px',             // Desktops
-  '2xl': '1536px',            // Large screens
+  xs: "320px", // Small phones
+  sm: "640px", // Large phones
+  md: "768px", // Tablets
+  lg: "1024px", // Small laptops
+  xl: "1280px", // Desktops
+  "2xl": "1536px", // Large screens
 };
 
 // Mobile-first component patterns
 interface ResponsiveComponent {
   mobile: {
     columns: 1;
-    spacing: 'tight';
-    navigation: 'bottom-sheet';
-    touchTargets: '48px';
+    spacing: "tight";
+    navigation: "bottom-sheet";
+    touchTargets: "48px";
   };
   tablet: {
     columns: 2;
-    spacing: 'normal';
-    navigation: 'sidebar-collapsed';
-    touchTargets: '44px';
+    spacing: "normal";
+    navigation: "sidebar-collapsed";
+    touchTargets: "44px";
   };
   desktop: {
     columns: 3;
-    spacing: 'comfortable';
-    navigation: 'sidebar-expanded';
-    touchTargets: '40px';
+    spacing: "comfortable";
+    navigation: "sidebar-expanded";
+    touchTargets: "40px";
   };
 }
 ```
@@ -135,21 +135,21 @@ interface ResponsiveComponent {
 // Touch target specifications
 interface TouchTargetSpecs {
   minimum: {
-    size: '44px';             // WCAG 2.1 minimum
-    spacing: '8px';           // Between targets
-    areas: ['buttons', 'links', 'form-controls'];
+    size: "44px"; // WCAG 2.1 minimum
+    spacing: "8px"; // Between targets
+    areas: ["buttons", "links", "form-controls"];
   };
-  
+
   enhanced: {
-    size: '48px';             // RankPilot standard
-    spacing: '12px';          // Enhanced spacing
-    areas: ['primary-actions', 'navigation', 'critical-controls'];
+    size: "48px"; // RankPilot standard
+    spacing: "12px"; // Enhanced spacing
+    areas: ["primary-actions", "navigation", "critical-controls"];
   };
-  
+
   implementation: {
-    tapTargetSize: 'min-h-[48px] min-w-[48px]';
-    tapTargetSpacing: 'gap-3';
-    tapTargetPadding: 'p-3';
+    tapTargetSize: "min-h-[48px] min-w-[48px]";
+    tapTargetSpacing: "gap-3";
+    tapTargetPadding: "p-3";
   };
 }
 ```
@@ -163,52 +163,52 @@ interface TouchTargetSpecs {
 ```typescript
 interface NavigationStructure {
   neuroSeoSuite: {
-    label: 'NeuroSEO™ Suite';
+    label: "NeuroSEO™ Suite";
     icon: Brain;
-    badge: 'AI';
+    badge: "AI";
     collapsible: true;
     defaultOpen: true;
     items: [
       {
-        title: 'NeuroSEO™ Dashboard',
-        href: '/neuroseo',
-        icon: Brain,
-        badge: 'AI',
-        requiredTier: 'free'
+        title: "NeuroSEO™ Dashboard";
+        href: "/neuroseo";
+        icon: Brain;
+        badge: "AI";
+        requiredTier: "free";
       },
       {
-        title: 'NeuralCrawler™',
-        href: '/neuroseo/neural-crawler',
-        icon: Globe,
-        requiredTier: 'free'
+        title: "NeuralCrawler™";
+        href: "/neuroseo/neural-crawler";
+        icon: Globe;
+        requiredTier: "free";
       },
       {
-        title: 'AI Visibility Engine',
-        href: '/neuroseo/ai-visibility',
-        icon: Eye,
-        requiredTier: 'agency'
-      }
+        title: "AI Visibility Engine";
+        href: "/neuroseo/ai-visibility";
+        icon: Eye;
+        requiredTier: "agency";
+      },
     ];
   };
-  
+
   seoTools: {
-    label: 'SEO Tools';
+    label: "SEO Tools";
     icon: Search;
     collapsible: true;
     defaultOpen: false;
     items: [
       {
-        title: 'Keyword Research',
-        href: '/keywords',
-        icon: Target,
-        requiredTier: 'starter'
+        title: "Keyword Research";
+        href: "/keywords";
+        icon: Target;
+        requiredTier: "starter";
       },
       {
-        title: 'Content Analyzer',
-        href: '/content',
-        icon: FileText,
-        requiredTier: 'starter'
-      }
+        title: "Content Analyzer";
+        href: "/content";
+        icon: FileText;
+        requiredTier: "starter";
+      },
     ];
   };
 }
@@ -219,29 +219,28 @@ interface NavigationStructure {
 ```typescript
 class NavigationController {
   static filterNavigationByTier(
-    navigation: NavigationItem[], 
+    navigation: NavigationItem[],
     userTier: SubscriptionTier
   ): NavigationItem[] {
-    
     const tierHierarchy = {
       free: 1,
       starter: 2,
       agency: 3,
       enterprise: 4,
-      admin: 5
+      admin: 5,
     };
-    
+
     const userLevel = tierHierarchy[userTier];
-    
+
     return navigation
-      .map(group => ({
+      .map((group) => ({
         ...group,
-        items: group.items.filter(item => {
+        items: group.items.filter((item) => {
           const requiredLevel = tierHierarchy[item.requiredTier];
           return userLevel >= requiredLevel;
-        })
+        }),
       }))
-      .filter(group => group.items.length > 0);
+      .filter((group) => group.items.length > 0);
   }
 }
 ```
@@ -253,7 +252,7 @@ class NavigationController {
 const MobileNavigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
-  
+
   return (
     <>
       {/* Mobile Header */}
@@ -270,14 +269,14 @@ const MobileNavigation: React.FC = () => {
           </Button>
         </div>
       </header>
-      
+
       {/* Bottom Sheet */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent 
-          side="bottom" 
+        <SheetContent
+          side="bottom"
           className="h-[80vh] overflow-y-auto"
         >
-          <NavigationMenu 
+          <NavigationMenu
             items={filterNavigationByTier(navigationItems, user.tier)}
             isMobile={true}
           />
@@ -446,10 +445,10 @@ const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
-  tier: 'free',
+  tier: "free",
   permissions: [],
   usage: { credits: 0, apiCalls: 0, storage: 0 },
-  
+
   // Actions
   login: async (credentials) => {
     set({ isLoading: true });
@@ -461,18 +460,18 @@ const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         tier: response.user.tier,
         permissions: response.permissions,
         usage: response.usage,
-        isLoading: false
+        isLoading: false,
       });
     } catch (error) {
       set({ isLoading: false });
       throw error;
     }
   },
-  
+
   checkPermission: (permission) => {
     const { permissions } = get();
     return permissions.includes(permission);
-  }
+  },
 }));
 ```
 
@@ -485,15 +484,15 @@ interface UIState {
   sidebarOpen: boolean;
   sidebarCollapsed: boolean;
   mobileMenuOpen: boolean;
-  
+
   // Theme
-  theme: 'light' | 'dark' | 'system';
-  
+  theme: "light" | "dark" | "system";
+
   // Mobile
   isMobile: boolean;
   isTablet: boolean;
   touchDevice: boolean;
-  
+
   // Navigation
   currentPath: string;
   breadcrumbs: BreadcrumbItem[];
@@ -504,28 +503,30 @@ const useUIStore = create<UIState & UIActions>((set, get) => ({
   sidebarOpen: true,
   sidebarCollapsed: false,
   mobileMenuOpen: false,
-  theme: 'system',
+  theme: "system",
   isMobile: false,
   isTablet: false,
   touchDevice: false,
-  currentPath: '/',
+  currentPath: "/",
   breadcrumbs: [],
-  
+
   // Actions
-  toggleSidebar: () => set(state => ({ 
-    sidebarOpen: !state.sidebarOpen 
-  })),
-  
-  updateDeviceType: (deviceInfo) => set({
-    isMobile: deviceInfo.isMobile,
-    isTablet: deviceInfo.isTablet,
-    touchDevice: deviceInfo.touchDevice
-  }),
-  
+  toggleSidebar: () =>
+    set((state) => ({
+      sidebarOpen: !state.sidebarOpen,
+    })),
+
+  updateDeviceType: (deviceInfo) =>
+    set({
+      isMobile: deviceInfo.isMobile,
+      isTablet: deviceInfo.isTablet,
+      touchDevice: deviceInfo.touchDevice,
+    }),
+
   updateBreadcrumbs: (path) => {
     const breadcrumbs = generateBreadcrumbs(path);
     set({ currentPath: path, breadcrumbs });
-  }
+  },
 }));
 ```
 
@@ -537,43 +538,43 @@ const useUIStore = create<UIState & UIActions>((set, get) => ({
 // NeuroSEO™ analysis queries
 const useNeuroSeoAnalysis = (analysisId: string) => {
   return useQuery({
-    queryKey: ['neuroseo-analysis', analysisId],
+    queryKey: ["neuroseo-analysis", analysisId],
     queryFn: () => neuroSeoService.getAnalysis(analysisId),
     enabled: !!analysisId,
     refetchInterval: (data) => {
       // Poll while processing
-      return data?.status === 'processing' ? 5000 : false;
+      return data?.status === "processing" ? 5000 : false;
     },
     retry: (failureCount, error) => {
       // Don't retry on 404s
       if (error.status === 404) return false;
       return failureCount < 3;
-    }
+    },
   });
 };
 
 // Dashboard data with prefetching
 const useDashboardData = () => {
   const { user } = useAuth();
-  
+
   return useQueries({
     queries: [
       {
-        queryKey: ['dashboard', 'overview', user.uid],
+        queryKey: ["dashboard", "overview", user.uid],
         queryFn: () => dashboardService.getOverview(user.uid),
         staleTime: 5 * 60 * 1000, // 5 minutes
       },
       {
-        queryKey: ['dashboard', 'recent-activity', user.uid],
+        queryKey: ["dashboard", "recent-activity", user.uid],
         queryFn: () => dashboardService.getRecentActivity(user.uid),
         staleTime: 2 * 60 * 1000, // 2 minutes
       },
       {
-        queryKey: ['dashboard', 'usage', user.uid],
+        queryKey: ["dashboard", "usage", user.uid],
         queryFn: () => dashboardService.getUsage(user.uid),
         staleTime: 10 * 60 * 1000, // 10 minutes
-      }
-    ]
+      },
+    ],
   });
 };
 ```
@@ -586,25 +587,27 @@ const useDashboardData = () => {
 
 ```typescript
 // Lazy load major route components
-const Dashboard = lazy(() => import('@/app/(app)/dashboard/page'));
-const NeuroSeoSuite = lazy(() => import('@/app/(app)/neuroseo/page'));
-const CompetitiveIntelligence = lazy(() => import('@/app/(app)/competitors/page'));
-const Analytics = lazy(() => import('@/app/(app)/analytics/page'));
+const Dashboard = lazy(() => import("@/app/(app)/dashboard/page"));
+const NeuroSeoSuite = lazy(() => import("@/app/(app)/neuroseo/page"));
+const CompetitiveIntelligence = lazy(
+  () => import("@/app/(app)/competitors/page")
+);
+const Analytics = lazy(() => import("@/app/(app)/analytics/page"));
 
 // Preload critical routes
 const routePreloadMap = {
-  '/dashboard': () => import('@/app/(app)/dashboard/page'),
-  '/neuroseo': () => import('@/app/(app)/neuroseo/page')
+  "/dashboard": () => import("@/app/(app)/dashboard/page"),
+  "/neuroseo": () => import("@/app/(app)/neuroseo/page"),
 };
 
 // Intelligent preloading based on user behavior
 const useRoutePreloader = () => {
   const { user } = useAuth();
-  
+
   useEffect(() => {
     // Preload likely next routes based on user tier
     const likelyRoutes = getPriorityRoutes(user.tier);
-    likelyRoutes.forEach(route => {
+    likelyRoutes.forEach((route) => {
       if (routePreloadMap[route]) {
         routePreloadMap[route]();
       }
@@ -619,14 +622,14 @@ const useRoutePreloader = () => {
 // Virtualized lists for large datasets
 const VirtualizedAnalysisList: React.FC<{ analyses: Analysis[] }> = ({ analyses }) => {
   const parentRef = useRef<HTMLDivElement>(null);
-  
+
   const rowVirtualizer = useVirtualizer({
     count: analyses.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 120, // Estimated row height
     overscan: 5
   });
-  
+
   return (
     <div ref={parentRef} className="h-[400px] overflow-auto">
       <div
@@ -662,11 +665,11 @@ const VirtualizedAnalysisList: React.FC<{ analyses: Analysis[] }> = ({ analyses 
 
 ```typescript
 // Responsive image component
-const OptimizedImage: React.FC<ImageProps> = ({ 
-  src, 
-  alt, 
+const OptimizedImage: React.FC<ImageProps> = ({
+  src,
+  alt,
   priority = false,
-  ...props 
+  ...props
 }) => {
   return (
     <Image
@@ -694,30 +697,31 @@ const OptimizedImage: React.FC<ImageProps> = ({
 const useKeyboardNavigation = () => {
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     // Arrow key navigation for menus
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       const focusableElements = getFocusableElements();
       const currentIndex = focusableElements.indexOf(document.activeElement);
-      
-      if (event.key === 'ArrowDown') {
+
+      if (event.key === "ArrowDown") {
         const nextIndex = (currentIndex + 1) % focusableElements.length;
         focusableElements[nextIndex]?.focus();
       } else {
-        const prevIndex = currentIndex > 0 ? currentIndex - 1 : focusableElements.length - 1;
+        const prevIndex =
+          currentIndex > 0 ? currentIndex - 1 : focusableElements.length - 1;
         focusableElements[prevIndex]?.focus();
       }
-      
+
       event.preventDefault();
     }
-    
+
     // Escape key handling
-    if (event.key === 'Escape') {
+    if (event.key === "Escape") {
       closeActiveModals();
     }
   }, []);
-  
+
   useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 };
 ```
@@ -742,8 +746,8 @@ const ScreenReaderAnnouncement: React.FC<{ message: string }> = ({ message }) =>
 // Loading states with screen reader support
 const LoadingState: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => {
   return (
-    <div 
-      role="status" 
+    <div
+      role="status"
       aria-label={message}
       className="flex items-center justify-center p-4"
     >
@@ -762,7 +766,7 @@ const LoadingState: React.FC<{ message?: string }> = ({ message = 'Loading...' }
 ✅ **Largest Contentful Paint**: 1.2s (Target: <2.5s)  
 ✅ **Cumulative Layout Shift**: 0.05 (Target: <0.1)  
 ✅ **Time to Interactive**: 1.8s (Target: <3.0s)  
-✅ **Lighthouse Score**: 94/100 (Target: >90)  
+✅ **Lighthouse Score**: 94/100 (Target: >90)
 
 ### Mobile Performance
 
@@ -770,7 +774,7 @@ const LoadingState: React.FC<{ message?: string }> = ({ message = 'Loading...' }
 ✅ **Touch Targets**: 48px minimum (WCAG 2.1 AA)  
 ✅ **Responsive Images**: Automatic optimization  
 ✅ **Progressive Loading**: Intelligent prioritization  
-✅ **Touch Interactions**: Enhanced gesture support  
+✅ **Touch Interactions**: Enhanced gesture support
 
 ### Component Efficiency
 
@@ -778,9 +782,9 @@ const LoadingState: React.FC<{ message?: string }> = ({ message = 'Loading...' }
 ✅ **Code Splitting**: 95% route-level optimization  
 ✅ **Tree Shaking**: 87% unused code eliminated  
 ✅ **Component Reuse**: 73% reusability score  
-✅ **Accessibility**: 100% WCAG 2.1 AA compliance  
+✅ **Accessibility**: 100% WCAG 2.1 AA compliance
 
 ---
 
-*Frontend Reference: COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md - Mobile-First Component Architecture*  
-*Last Updated: July 30, 2025*
+_Frontend Reference: COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md - Mobile-First Component Architecture_  
+_Last Updated: July 30, 2025_

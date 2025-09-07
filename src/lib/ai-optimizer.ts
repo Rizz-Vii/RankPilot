@@ -2,7 +2,10 @@
  * AI Response Optimization - Caching, Batching, and Smart Retry
  */
 
-import { performanceMonitor, withPerformanceMonitoring } from "./performance-monitor";
+import {
+  performanceMonitor,
+  withPerformanceMonitoring,
+} from "./performance-monitor";
 import type { TimeoutResult } from "./timeout";
 import { withAITimeout } from "./timeout";
 
@@ -225,14 +228,20 @@ class AIResponseOptimizer {
   private caches: Map<string, ResponseCache<unknown>> = new Map();
   private batchers: Map<string, RequestBatcher<unknown>> = new Map();
 
-  private getCache<T>(operationType: string, options: CacheOptions): ResponseCache<T> {
+  private getCache<T>(
+    operationType: string,
+    options: CacheOptions
+  ): ResponseCache<T> {
     if (!this.caches.has(operationType)) {
       this.caches.set(operationType, new ResponseCache<unknown>(options));
     }
     return this.caches.get(operationType)! as ResponseCache<T>;
   }
 
-  private getBatcher<T>(operationType: string, options: BatchOptions): RequestBatcher<T> {
+  private getBatcher<T>(
+    operationType: string,
+    options: BatchOptions
+  ): RequestBatcher<T> {
     if (!this.batchers.has(operationType)) {
       this.batchers.set(operationType, new RequestBatcher<unknown>(options));
     }
@@ -258,7 +267,7 @@ class AIResponseOptimizer {
       try {
         cacheKey = keyGenerator(...args);
       } catch {
-        cacheKey = `${operationType}:${args.map(a => typeof a === 'string' ? a.slice(0, 50) : JSON.stringify(a).slice(0, 50)).join('|')}`;
+        cacheKey = `${operationType}:${args.map((a) => (typeof a === "string" ? a.slice(0, 50) : JSON.stringify(a).slice(0, 50))).join("|")}`;
       }
 
       // Try cache first
@@ -277,9 +286,15 @@ class AIResponseOptimizer {
       // Use batching if enabled
       if (enableBatching) {
         const batcher = this.getBatcher<T>(operationType, options);
-        resultPromise = batcher.batch(operationType, args, async (batchedArgs: A[]) => {
-          return Promise.all(batchedArgs.map(batchArgs => operation(...batchArgs)));
-        });
+        resultPromise = batcher.batch(
+          operationType,
+          args,
+          async (batchedArgs: A[]) => {
+            return Promise.all(
+              batchedArgs.map((batchArgs) => operation(...batchArgs))
+            );
+          }
+        );
       } else {
         resultPromise = operation(...args);
       }
@@ -317,10 +332,17 @@ class AIResponseOptimizer {
       keyGenerator: (p: unknown) => {
         const str = String(p);
         const slice = str.slice(0, 200);
-        if (typeof window !== 'undefined' && typeof window.btoa === 'function') {
+        if (
+          typeof window !== "undefined" &&
+          typeof window.btoa === "function"
+        ) {
           return `openai:${window.btoa(slice)}`;
         }
-        try { return `openai:${Buffer.from(slice, 'utf-8').toString('base64')}`; } catch { return `openai:${slice}`; }
+        try {
+          return `openai:${Buffer.from(slice, "utf-8").toString("base64")}`;
+        } catch {
+          return `openai:${slice}`;
+        }
       },
       ...options,
     });
@@ -336,7 +358,8 @@ class AIResponseOptimizer {
       enableBatching: true,
       maxBatchSize: 3,
       operationType: "data-processing",
-      keyGenerator: (data: unknown) => `data:${JSON.stringify(data).slice(0, 100)}`,
+      keyGenerator: (data: unknown) =>
+        `data:${JSON.stringify(data).slice(0, 100)}`,
       ...options,
     });
   }
@@ -402,12 +425,29 @@ class AIResponseOptimizer {
 export const aiOptimizer = new AIResponseOptimizer();
 
 // Convenience functions
-export async function optimizeAICall<T>(operationType: string, operation: () => Promise<T>, options: OptimizationOptions = {}): Promise<T> {
-  const result = await aiOptimizer.optimizeRequest(operationType, operation, [], options);
+export async function optimizeAICall<T>(
+  operationType: string,
+  operation: () => Promise<T>,
+  options: OptimizationOptions = {}
+): Promise<T> {
+  const result = await aiOptimizer.optimizeRequest(
+    operationType,
+    operation,
+    [],
+    options
+  );
   return result.result as T;
 }
 
-export async function optimizeOpenAI<T>(operation: (prompt: string) => Promise<T>, prompt: string, options: Partial<OptimizationOptions> = {}): Promise<T> {
-  const result = await aiOptimizer.optimizeOpenAIRequest(operation, prompt, options);
+export async function optimizeOpenAI<T>(
+  operation: (prompt: string) => Promise<T>,
+  prompt: string,
+  options: Partial<OptimizationOptions> = {}
+): Promise<T> {
+  const result = await aiOptimizer.optimizeOpenAIRequest(
+    operation,
+    prompt,
+    options
+  );
   return result.result as T;
 }
