@@ -1,3 +1,4 @@
+"use client";
 
 /**
  * Feature Gate Component - Robust Tier-Based Access Control
@@ -161,6 +162,8 @@ function UnknownFeatureCard({ feature }: { feature: string; }) {
         </Card>
     );
 }
+
+export default FeatureGate;
 
 /**
  * Higher-order component version of FeatureGate

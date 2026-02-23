@@ -1,5 +1,5 @@
 import React from 'react';
-import FeatureGate from '@/components/feature-gate';
+import FeatureGate from '@/components/ui/feature-gate';
 
 // Marketplace Discovery UI Skeleton (T40 / DQ3)
 export default function TemplateMarketplacePage() {
