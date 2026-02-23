@@ -20,7 +20,7 @@ jobs:
           node-version: 20
 
       - name: Ensure Firebase CLI
-        run: npm i -g firebase-tools@13
+        run: npm i -g firebase-tools@15
 
       - name: Guard secrets present
         id: guard

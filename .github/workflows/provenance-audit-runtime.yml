@@ -22,4 +22,4 @@ jobs:
           PROV_ORIGIN: ${{ github.event.inputs.origin }}
           PROV_REQUIRE_SERVER: '1'
           PROV_STRICT: '1'
-        run: npm run test:provenance-audit:runtime
+        run: npm run test:provenance-audit:runtime:env

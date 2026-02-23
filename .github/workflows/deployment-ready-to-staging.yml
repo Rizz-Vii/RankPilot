@@ -23,7 +23,7 @@ env:
 jobs:
   final-validation-testing:
     name: 🧪 Final Validation Testing
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'push'
     
@@ -80,7 +80,7 @@ jobs:
       - name: 🛡️ Production Security Validation
         run: |
           npm run lint
-          npm run type-check
+          npm run typecheck
           echo "✅ Production security validation passed"
 
       - name: 📊 Final Validation Report

@@ -28,9 +28,9 @@ on:
         type: boolean
 
 env:
-  NODE_VERSION: "20"
+  NODE_VERSION: "20.x"
   FIREBASE_PROJECT_ID: "rankpilot-h3jpc"
-  FIREBASE_TOOLS_VERSION: "13.31.2"
+  FIREBASE_TOOLS_VERSION: "15.7.0"
 
 jobs:
   # Job 1: Build and Test
@@ -178,7 +178,7 @@ jobs:
 
       - name: 🔥 Deploy to Firebase Channel
         id: firebase_deploy
-        uses: FirebaseExtended/action-hosting-deploy@v0
+        uses: FirebaseExtended/action-hosting-deploy@v0.11.0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RANKPILOT_H3JPC }}
