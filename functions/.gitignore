@@ -2,12 +2,13 @@
 # Firebase Functions - .gitignore
 # ================================
 
-# TypeScript Compilation Output
+# TypeScript Compilation Output (build output is functions/lib/ only --
+# anchored with a leading slash so it does NOT also ignore src/lib/ source).
 # -----------------------------
-lib/
-lib/**/*.js
-lib/**/*.js.map
-lib/**/*.d.ts
+/lib/
+/lib/**/*.js
+/lib/**/*.js.map
+/lib/**/*.d.ts
 *.tsbuildinfo
 
 # Node.js Dependencies
