@@ -12,5 +12,13 @@
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "lib", "dist", "build"]
+  "exclude": [
+    "node_modules",
+    "lib",
+    "dist",
+    "build",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/test/**"
+  ]
 }

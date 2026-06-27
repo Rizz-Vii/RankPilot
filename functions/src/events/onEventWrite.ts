@@ -20,7 +20,9 @@ export const onEventWrite = functions
           id: snapshot.id,
           data: () => snapshot.data() as Record<string, unknown>,
         },
-        context: { params: context.params as Record<string, string> },
+        context: {
+          params: context.params as { orgId: string; eventId: string },
+        },
       });
     }
   );
@@ -44,7 +46,9 @@ export const onEventWriteAU = functions
           id: snapshot.id,
           data: () => snapshot.data() as Record<string, unknown>,
         },
-        context: { params: context.params as Record<string, string> },
+        context: {
+          params: context.params as { orgId: string; eventId: string },
+        },
       });
     }
   );
