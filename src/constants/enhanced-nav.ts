@@ -349,7 +349,8 @@ export const managementItems: NavItem[] = [
     title: "Sales Dashboard",
     href: "/sales",
     icon: Target,
-    description: "Funnel velocity & deal health overview",
+    description:
+      "Pipeline analytics: stage conversion funnel, forecast vs actual, pipeline coverage & health, and stage velocity",
     requiredTier: "starter",
     feature: "sales_dashboard",
   },
@@ -357,7 +358,8 @@ export const managementItems: NavItem[] = [
     title: "Finance Dashboard",
     href: "/finance",
     icon: DollarSign,
-    description: "Billing, revenue & quota spend summary",
+    description:
+      "Revenue analytics: MRR trend, invoice aging, and finance workbench",
     requiredTier: "starter",
     feature: "finance_dashboard",
   },
@@ -365,7 +367,8 @@ export const managementItems: NavItem[] = [
     title: "Marketing Dashboard",
     href: "/marketing",
     icon: Megaphone,
-    description: "Enterprise marketing automation intelligence",
+    description:
+      "Marketing performance: impressions & leads, channel performance, recent campaigns, and growth actions",
     requiredTier: "enterprise",
     feature: "marketing_dashboard",
   },
