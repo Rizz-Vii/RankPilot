@@ -13,13 +13,13 @@
 
 // Use the MCPServiceManager provided by the local MCP shim (default import fallback for TS resolution)
 import type { MCPServiceManager as MCPServiceManagerTypeHint } from "../mcp";
-import MCPShim from "../mcp";
+import * as MCPShim from "../mcp";
 const MCPServiceManager =
   (
     MCPShim as unknown as {
       MCPServiceManager?: new (config: unknown) => MCPServiceManagerTypeHint;
     }
-  ).MCPServiceManager ??
+  )?.MCPServiceManager ??
   // If tree-shaken, use a local stub class to satisfy runtime
   class LocalMCPServiceManagerStub {
     constructor(_config: unknown) {}
