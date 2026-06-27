@@ -327,7 +327,7 @@ export const getKeywordSuggestionsEnhanced = onCall(
         }
       }
 
-      const suggestions = await generateKeywords(
+      const { suggestions, source: genSource } = await generateKeywords(
         query,
         language,
         count,
@@ -353,7 +353,7 @@ export const getKeywordSuggestionsEnhanced = onCall(
           used,
           remaining: quotaLimit === -1 ? -1 : quotaLimit - used - 1,
         },
-        source: "live",
+        source: genSource,
       };
 
       // Cache the result
@@ -435,7 +435,7 @@ async function generateKeywords(
     corpusSummary?: string;
     crawlContext?: string;
   }
-): Promise<KeywordSuggestion[]> {
+): Promise<{ suggestions: KeywordSuggestion[]; source: "live" | "fallback" }> {
   try {
     const prompt = `ROLE: Senior SEO & Keyword Research Strategist.
 TASK: Generate ${count} high-quality keyword suggestions for "${query}" (${language}).
@@ -450,6 +450,7 @@ OUTPUT REQUIREMENTS:
 
     const useReal = context?.forceReal || process.env.USE_REAL_AI === "true";
     let rawOutput: unknown;
+    let usedRealAI = false;
     if (useReal) {
       try {
         const ai = getRealAI();
@@ -458,6 +459,7 @@ OUTPUT REQUIREMENTS:
             | { text?: () => string }
             | string;
           rawOutput = typeof gen === "string" ? gen : gen?.text?.();
+          if (rawOutput) usedRealAI = true;
         } else {
           throw new Error("Real AI unavailable");
         }
@@ -475,14 +477,27 @@ OUTPUT REQUIREMENTS:
     }
     let parsedResult: unknown = {};
     try {
-      parsedResult = typeof rawOutput === "string" ? JSON.parse(rawOutput) : {};
+      // LLMs often wrap JSON in ```json fences or add prose; extract the object.
+      const cleaned =
+        typeof rawOutput === "string"
+          ? (() => {
+              const f = rawOutput.replace(/```json|```/gi, "").trim();
+              const s = f.indexOf("{");
+              const e = f.lastIndexOf("}");
+              return s >= 0 && e > s ? f.slice(s, e + 1) : f;
+            })()
+          : "";
+      parsedResult = cleaned ? JSON.parse(cleaned) : {};
     } catch {
       const snippet =
         typeof rawOutput === "string" ? rawOutput.slice(0, 120) : undefined;
       logger.warn("AI returned non-JSON content, using fallback generation", {
         snippet,
       });
-      return getFallbackKeywords(query, count);
+      return {
+        suggestions: getFallbackKeywords(query, count),
+        source: "fallback" as const,
+      };
     }
     const raw: KeywordSuggestion[] =
       parsedResult &&
@@ -495,7 +510,10 @@ OUTPUT REQUIREMENTS:
       logger.warn(
         "AI returned empty keywords array, using fallback generation"
       );
-      return getFallbackKeywords(query, count);
+      return {
+        suggestions: getFallbackKeywords(query, count),
+        source: "fallback" as const,
+      };
     }
     const normalized = raw.map((k) => ({
       ...k,
@@ -506,13 +524,19 @@ OUTPUT REQUIREMENTS:
         ? k.opportunities.slice(0, 3)
         : [],
     }));
-    return normalized;
+    return {
+      suggestions: normalized,
+      source: usedRealAI ? "live" : "fallback",
+    };
   } catch (error) {
     logger.warn("AI keyword generation failed, using fallback", {
       error: error instanceof Error ? error.message : String(error),
       query: query.substring(0, 50),
     });
-    return getFallbackKeywords(query, count);
+    return {
+        suggestions: getFallbackKeywords(query, count),
+        source: "fallback" as const,
+      };
   }
 }
 
