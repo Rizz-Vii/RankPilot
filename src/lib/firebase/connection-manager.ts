@@ -15,29 +15,50 @@ import {
 
 // Firebase configuration - production requires env; dev falls back to defaults for local convenience
 const firebaseConfig = (() => {
-  const fromEnv = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  } as Record<string, string | undefined>;
-  const missing = Object.entries(fromEnv)
-    .filter(([, v]) => !v)
-    .map(([k]) => k);
-  if (process.env.NODE_ENV === "production" && missing.length) {
-    throw new Error(
-      `[Firebase] Missing required env in production: ${missing.join(", ")}`
+  // Treat empty OR placeholder env values (e.g. ".env" templates such as
+  // "firebase_public_api_key") as missing, so the known-good public project
+  // config below is used instead of passing an invalid key to the Firebase
+  // SDK — which otherwise throws auth/api-key-not-valid. Firebase web config
+  // values are public by design, so embedding them as a fallback is safe.
+  const isPlaceholder = (v?: string): boolean =>
+    !v ||
+    v.trim() === "" ||
+    /^(firebase_|your[_-]|placeholder|example|changeme|xxx|<)/i.test(v.trim());
+  const pick = (envVal: string | undefined, fallback: string): string =>
+    isPlaceholder(envVal) ? fallback : (envVal as string).trim();
+
+  if (
+    process.env.NODE_ENV === "production" &&
+    isPlaceholder(process.env.NEXT_PUBLIC_FIREBASE_API_KEY)
+  ) {
+    // Non-fatal: fall back to the built-in public config rather than crashing.
+    console.warn(
+      "[Firebase] NEXT_PUBLIC_FIREBASE_* missing/placeholder; using built-in public project config."
     );
   }
+
   return {
-    apiKey: fromEnv.apiKey || "AIzaSyB_HzRrVdysW3o-UXUdCkPqW9rH4fWWjyY",
-    authDomain: fromEnv.authDomain || "rankpilot-h3jpc.firebaseapp.com",
-    projectId: fromEnv.projectId || "rankpilot-h3jpc",
-    storageBucket: fromEnv.storageBucket || "rankpilot-h3jpc.appspot.com",
-    messagingSenderId: fromEnv.messagingSenderId || "283736429782",
-    appId: fromEnv.appId || "1:283736429782:web:a3e387a3a79a592121e577",
+    apiKey: pick(
+      process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      "AIzaSyB_HzRrVdysW3o-UXUdCkPqW9rH4fWWjyY"
+    ),
+    authDomain: pick(
+      process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      "rankpilot-h3jpc.firebaseapp.com"
+    ),
+    projectId: pick(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID, "rankpilot-h3jpc"),
+    storageBucket: pick(
+      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      "rankpilot-h3jpc.appspot.com"
+    ),
+    messagingSenderId: pick(
+      process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      "283736429782"
+    ),
+    appId: pick(
+      process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+      "1:283736429782:web:a3e387a3a79a592121e577"
+    ),
   };
 })();
 
