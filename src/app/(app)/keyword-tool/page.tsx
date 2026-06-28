@@ -374,7 +374,11 @@ export default function KeywordToolPage() {
           includeMetrics: true,
           language: "en",
         }),
-        20000,
+        // Real AI keyword generation makes two sequential Gemini calls (suggestions +
+        // related queries) and can take ~35-40s for 20 keywords; the backend function timeout
+        // is 120s. A 20s client timeout was firing first and showing demo data even though the
+        // backend returned real ("live") results. Allow 60s.
+        60000,
         "Keyword analysis is taking longer than expected. Using demo data instead."
       );
 
