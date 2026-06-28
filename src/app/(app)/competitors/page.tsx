@@ -40,6 +40,7 @@ import { db } from "@/lib/firebase";
 import type { NeuroSEOAnalysisRequest, NeuroSEOReport } from "@/lib/neuroseo";
 import { queueAnalysisRequest, submitOrQueue } from "@/lib/offline-queue";
 import { TimeoutError } from "@/lib/timeout";
+import { ensureHttpUrl } from "@/lib/url-validation";
 import { cn } from "@/lib/utils";
 import type { CompetitorAnalysisOutput } from "@/types";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
@@ -142,21 +143,7 @@ const RankingsChart = ({
   );
 };
 
-// Safe helpers local to this page (avoid broader refactors)
-const ensureHttpUrl = (raw: unknown): string | null => {
-  const s = typeof raw === "string" ? raw.trim() : "";
-  if (!s) return null;
-  const withProto = /^https?:\/\//i.test(s) ? s : `https://${s}`;
-  try {
-    const u = new URL(withProto);
-    // only allow http/https
-    if (u.protocol === "http:" || u.protocol === "https:") return u.toString();
-    return null;
-  } catch {
-    return null;
-  }
-};
-
+// ensureHttpUrl is now shared via @/lib/url-validation (single source of truth).
 const safeHostname = (raw: unknown): string => {
   const u = ensureHttpUrl(raw);
   if (!u) return String(raw ?? "");
