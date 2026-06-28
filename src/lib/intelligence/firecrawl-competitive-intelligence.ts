@@ -12,6 +12,15 @@
 
 import { EventEmitter } from "events";
 
+import {
+  deleteCompetitorDoc,
+  loadCompetitor,
+  loadReport,
+  loadUserCompetitors,
+  saveCompetitor,
+  saveReport,
+} from "./competitor-store";
+
 /**
  * Crawl response/page structures (simplified from Firecrawl MCP expected shape)
  */
@@ -265,14 +274,17 @@ export interface PerformanceCompetitionData {
 }
 
 export class FirecrawlCompetitiveIntelligence extends EventEmitter {
-  private competitors: Map<string, CompetitorProfile> = new Map();
-  private reports: Map<string, CompetitiveAnalysisReport> = new Map();
+  // Competitor profiles and reports are persisted in Firestore (see competitor-store.ts), not
+  // in-memory, so they survive restarts / serverless cold starts. The analysis queue stays
+  // in-process: it only coordinates work within a single invocation.
   private analysisQueue: string[] = [];
   private isProcessing = false;
 
   constructor() {
     super();
-    this.startPeriodicAnalysis();
+    // NOTE: periodic re-analysis is intentionally NOT scheduled here. An in-process setInterval is
+    // meaningless (and leaks) in a serverless/Next.js context; recurring crawls belong in a Cloud
+    // Scheduler job (Phase 4 automation engine), not the module-load singleton.
   }
 
   /**
@@ -315,7 +327,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
       },
     };
 
-    this.competitors.set(competitorId, competitor);
+    await saveCompetitor(competitor);
     this.emit("competitor-added", { competitorId, domain, userId });
 
     // Queue initial analysis
@@ -328,7 +340,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
    * Perform comprehensive competitor analysis using Firecrawl MCP
    */
   async analyzeCompetitor(competitorId: string): Promise<void> {
-    const competitor = this.competitors.get(competitorId);
+    const competitor = await loadCompetitor(competitorId);
     if (!competitor) {
       throw new Error(`Competitor ${competitorId} not found`);
     }
@@ -378,6 +390,9 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
       competitor.metadata.updated = Date.now();
       competitor.metadata.analysisCount++;
 
+      // Persist the updated profile (previously this mutation only lived in memory).
+      await saveCompetitor(competitor);
+
       // Check for alerts
       await this.checkAlerts(competitor, changes);
 
@@ -393,6 +408,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         metrics: {},
         changes: [],
       };
+      await saveCompetitor(competitor);
 
       this.emit("analysis-error", {
         competitorId,
@@ -815,9 +831,10 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
     const reportId = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const startTime = Date.now();
 
-    const competitors = competitorIds
-      .map((id) => this.competitors.get(id))
-      .filter(Boolean) as CompetitorProfile[];
+    const loaded = await Promise.all(
+      competitorIds.map((id) => loadCompetitor(id))
+    );
+    const competitors = loaded.filter(Boolean) as CompetitorProfile[];
 
     if (competitors.length === 0) {
       throw new Error("No valid competitors found for report generation");
@@ -849,7 +866,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
     // Calculate report size
     report.metadata.size = JSON.stringify(report).length;
 
-    this.reports.set(reportId, report);
+    await saveReport(report);
     this.emit("report-generated", {
       reportId,
       userId,
@@ -1144,33 +1161,6 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
   }
 
   /**
-   * Start periodic analysis
-   */
-  private startPeriodicAnalysis(): void {
-    // Run analysis every hour for competitors that need updates
-    setInterval(
-      () => {
-        const now = Date.now();
-
-        this.competitors.forEach((competitor) => {
-          const lastAnalysis = competitor.lastAnalysis?.timestamp || 0;
-          const frequency = competitor.trackingConfig.crawlFrequency;
-
-          let interval = 24 * 60 * 60 * 1000; // daily default
-          if (frequency === "weekly") interval = 7 * 24 * 60 * 60 * 1000;
-          if (frequency === "monthly") interval = 30 * 24 * 60 * 60 * 1000;
-
-          if (now - lastAnalysis >= interval) {
-            // Fire-and-forget queue enqueue (synchronous) – safe
-            this.queueAnalysis(competitor.id);
-          }
-        });
-      },
-      60 * 60 * 1000
-    ); // Check every hour
-  }
-
-  /**
    * Normalize domain name
    */
   private normalizeDomain(domain: string): string {
@@ -1183,38 +1173,41 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
   /**
    * Get competitor profile
    */
-  getCompetitor(competitorId: string): CompetitorProfile | undefined {
-    return this.competitors.get(competitorId);
+  async getCompetitor(
+    competitorId: string
+  ): Promise<CompetitorProfile | undefined> {
+    return loadCompetitor(competitorId);
   }
 
   /**
    * Get all competitors for a user
    */
-  getUserCompetitors(userId: string): CompetitorProfile[] {
-    return Array.from(this.competitors.values()).filter(
-      (c) => c.metadata.userId === userId
-    );
+  async getUserCompetitors(userId: string): Promise<CompetitorProfile[]> {
+    return loadUserCompetitors(userId);
   }
 
   /**
    * Get analysis report
    */
-  getReport(reportId: string): CompetitiveAnalysisReport | undefined {
-    return this.reports.get(reportId);
+  async getReport(
+    reportId: string
+  ): Promise<CompetitiveAnalysisReport | undefined> {
+    return loadReport(reportId);
   }
 
   /**
    * Update competitor configuration
    */
-  updateCompetitor(
+  async updateCompetitor(
     competitorId: string,
     updates: Partial<CompetitorProfile>
-  ): boolean {
-    const competitor = this.competitors.get(competitorId);
+  ): Promise<boolean> {
+    const competitor = await loadCompetitor(competitorId);
     if (!competitor) return false;
 
     Object.assign(competitor, updates);
     competitor.metadata.updated = Date.now();
+    await saveCompetitor(competitor);
 
     this.emit("competitor-updated", { competitorId, updates });
     return true;
@@ -1223,13 +1216,16 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
   /**
    * Delete competitor
    */
-  deleteCompetitor(competitorId: string, userId: string): boolean {
-    const competitor = this.competitors.get(competitorId);
+  async deleteCompetitor(
+    competitorId: string,
+    userId: string
+  ): Promise<boolean> {
+    const competitor = await loadCompetitor(competitorId);
     if (!competitor || competitor.metadata.userId !== userId) {
       return false;
     }
 
-    this.competitors.delete(competitorId);
+    await deleteCompetitorDoc(competitorId);
     this.emit("competitor-deleted", { competitorId, userId });
     return true;
   }

@@ -227,7 +227,7 @@ export const POST = withProvenance(
             Math.min(100, Number.isFinite(pageSizeRaw) ? pageSizeRaw : 25)
           );
           const userCompetitors =
-            firecrawlCompetitiveIntelligence.getUserCompetitors(userId);
+            await firecrawlCompetitiveIntelligence.getUserCompetitors(userId);
           const total = userCompetitors.length;
           const start = (page - 1) * pageSize;
           const end = Math.min(total, start + pageSize);
@@ -278,7 +278,7 @@ export const POST = withProvenance(
             );
           }
 
-          const updated = firecrawlCompetitiveIntelligence.updateCompetitor(
+          const updated = await firecrawlCompetitiveIntelligence.updateCompetitor(
             body.competitorId,
             {
               name: body.name,
@@ -328,7 +328,7 @@ export const POST = withProvenance(
             );
           }
 
-          const deleted = firecrawlCompetitiveIntelligence.deleteCompetitor(
+          const deleted = await firecrawlCompetitiveIntelligence.deleteCompetitor(
             body.competitorId,
             userId
           );
@@ -423,7 +423,7 @@ export const POST = withProvenance(
             );
           }
 
-          const competitorData = firecrawlCompetitiveIntelligence.getCompetitor(
+          const competitorData = await firecrawlCompetitiveIntelligence.getCompetitor(
             body.competitorId
           );
 
@@ -566,7 +566,7 @@ export const GET = withProvenance(
         Math.min(100, Number.isFinite(pageSizeRaw) ? pageSizeRaw : 25)
       );
       const userCompetitors =
-        firecrawlCompetitiveIntelligence.getUserCompetitors(userId);
+        await firecrawlCompetitiveIntelligence.getUserCompetitors(userId);
       const total = userCompetitors.length;
       const start = (page - 1) * pageSize;
       const end = Math.min(total, start + pageSize);
