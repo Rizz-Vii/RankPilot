@@ -1,4 +1,4 @@
-import { gemini15Flash } from "@genkit-ai/googleai"; // Import the model reference
+import { gemini20Flash } from "@genkit-ai/googleai"; // Import the model reference (gemini-1.5 retired)
 import OpenAI from "openai";
 import type { ZodType } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -30,7 +30,7 @@ export async function generateJson(
   try {
     // Using the configured `ai` instance with a schema directly returns the parsed object.
     const result = await ai.generate({
-      model: gemini15Flash,
+      model: gemini20Flash,
       prompt: `${systemPrompt}\n\n${userPrompt}`,
       output: {
         schema: outputSchema,

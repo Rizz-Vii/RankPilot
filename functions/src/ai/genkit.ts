@@ -1,4 +1,4 @@
-import { gemini15Flash, googleAI } from "@genkit-ai/googleai";
+import { gemini20Flash, googleAI } from "@genkit-ai/googleai";
 import { genkit } from "genkit";
 
 // Minimal surface we rely on from Genkit
@@ -21,7 +21,7 @@ export function getAI(): GenkitAI {
           apiKey: process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY,
         }),
       ],
-      model: gemini15Flash,
+      model: gemini20Flash,
     }) as unknown as GenkitAI;
   }
   return _ai;
