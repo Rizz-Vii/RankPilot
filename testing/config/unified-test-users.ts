@@ -28,6 +28,20 @@ export interface UnifiedTestUser {
 }
 
 /**
+ * SECURITY: Test-account passwords are injected via environment variables and are
+ * never hard-coded in source (these map to real Firebase Auth accounts). Set
+ * TEST_PASSWORD_<TIER> (e.g. TEST_PASSWORD_ADMIN), or the shared TEST_ADMIN_PASSWORD /
+ * TEST_USER_PASSWORD, in CI or a local .env — see SECRETS.md. A missing value resolves
+ * to "" so auth fails loudly instead of relying on a baked-in default.
+ */
+function resolveTestPassword(tier: UserTier): string {
+  const perTier = process.env[`TEST_PASSWORD_${tier.toUpperCase()}`];
+  if (perTier) return perTier;
+  if (tier === "admin") return process.env.TEST_ADMIN_PASSWORD ?? "";
+  return process.env.TEST_USER_PASSWORD ?? "";
+}
+
+/**
  * UNIFIED TEST USERS - Single Source of Truth
  * FIXED: Now matches test.config.ts email addresses exactly
  * These users will be created in Firebase Auth and have corresponding Firestore documents
@@ -36,7 +50,7 @@ export const UNIFIED_TEST_USERS: Record<UserTier, UnifiedTestUser> = {
   free: {
     uid: "vGZSfZA7yPOOCgUGtAS2ywvwP8l1",
     email: "abbas_ali_rizvi@hotmail.com",
-    password: "123456",
+    password: resolveTestPassword("free"),
     displayName: "Abbas Ali (Free)",
     tier: "free",
     role: "user",
@@ -50,7 +64,7 @@ export const UNIFIED_TEST_USERS: Record<UserTier, UnifiedTestUser> = {
   starter: {
     uid: "Y0hv244mtsYk4dwsxBCS1xBOhab2",
     email: "starter@rankpilot.com",
-    password: "starter123",
+    password: resolveTestPassword("starter"),
     displayName: "Starter User",
     tier: "starter",
     role: "user",
@@ -64,7 +78,7 @@ export const UNIFIED_TEST_USERS: Record<UserTier, UnifiedTestUser> = {
   agency: {
     uid: "test_agency_user",
     email: "agency@rankpilot.com",
-    password: "agency123",
+    password: resolveTestPassword("agency"),
     displayName: "Agency User",
     tier: "agency",
     role: "user",
@@ -78,7 +92,7 @@ export const UNIFIED_TEST_USERS: Record<UserTier, UnifiedTestUser> = {
   enterprise: {
     uid: "m7nbs1tNrxYIlaclebE5sKI6ok53",
     email: "enterprise@rankpilot.com",
-    password: "enterprise123",
+    password: resolveTestPassword("enterprise"),
     displayName: "Enterprise User",
     tier: "enterprise",
     role: "user",
@@ -92,7 +106,7 @@ export const UNIFIED_TEST_USERS: Record<UserTier, UnifiedTestUser> = {
   admin: {
     uid: "UFGrzIf2N3UTPd5Xz7vT8tMZpHJ3",
     email: "admin@rankpilot.com",
-    password: "admin123",
+    password: resolveTestPassword("admin"),
     displayName: "Admin User",
     tier: "admin",
     role: "admin",
@@ -112,7 +126,7 @@ export const UNIFIED_TEST_USERS: Record<UserTier, UnifiedTestUser> = {
 export const DEV_USER: UnifiedTestUser = {
   uid: "vGZSfZA7yPOOCgUGtAS2ywvwP8l1",
   email: "abbas_ali_rizvi@hotmail.com",
-  password: "123456",
+  password: resolveTestPassword("free"),
   displayName: "Abbas (Dev)",
   tier: "free",
   role: "admin", // Dev user gets admin access

@@ -264,3 +264,17 @@ docs/integrations/mcp-full/configuration-summary.md
 docs/integrations/mcp/success-complete.md
 docs/integrations/stripe/integration-complete.md
 .aider*
+
+# --- Security hygiene (Phase 0): never commit credential exports or generated artifacts ---
+# Firebase Auth user export — contains password hashes, salts, and real user emails.
+users.json
+auth-export*.json
+firebase-auth-export*.json
+# Generated CI/build artifacts (regenerated on demand; were committed by mistake).
+lint-report*.json
+typecheck-output.txt
+artifacts/route-crawl-report.json
+
+# SECRETS.md is intentional public documentation (names only) — exempt it from the broad
+# `**/*secret*.md` rule (line ~76) so it stays tracked. (That rule is a Phase-2 cleanup candidate.)
+!/SECRETS.md

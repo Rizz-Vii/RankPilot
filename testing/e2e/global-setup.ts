@@ -98,12 +98,16 @@ async function setupTestUser(page: Page) {
   try {
     // Prefer env-provided credentials; otherwise fall back to a known working dev account from users.json
     // users.json entries include:
-    //  - abbas_ali_rizvi@hotmail.com (email/password auth) → dev password "123456"
+    //  - abbas_ali_rizvi@hotmail.com (email/password auth) → password injected via env (see SECRETS.md)
     //  - abba7254@gmail.com (Google auth) → not suitable for headless email/password login
     if (!process.env.TEST_USER_EMAIL)
       process.env.TEST_USER_EMAIL = "abbas_ali_rizvi@hotmail.com";
     if (!process.env.TEST_USER_PASSWORD)
-      process.env.TEST_USER_PASSWORD = "123456";
+      // Password must come from the environment (CI secret / local .env) — never hard-coded.
+      // See SECRETS.md. If unset, auth-dependent tests fail loudly rather than using a default.
+      console.warn(
+        "[global-setup] TEST_USER_PASSWORD is not set — auth-dependent tests will fail until it is provided via CI/.env.",
+      );
 
     // Light ping to ensure app is responsive and AuthContext can initialize in tests
     await page
