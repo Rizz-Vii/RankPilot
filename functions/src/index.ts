@@ -7,6 +7,12 @@ import { testMinimal } from "./test-minimal.js";
 // NodeNext requires explicit .js extension in source imports for ESM correctness
 import { exportUserData, requestAccountDeletion } from "./user-data.js";
 
+// Background jobs (restored from prod to prevent accidental deletion)
+import { kpiDailySnapshotV2 } from "./background-jobs/kpi-daily-snapshot.js";
+import { adsExportBatch } from "./background-jobs/ads-export-batch.js";
+import { dispatchDueMarketingCampaigns } from "./background-jobs/dispatch-due-marketing-campaigns.js";
+import { socialPost } from "./background-jobs/social-post.js";
+
 // Export keyword suggestions (production)
 export { getKeywordSuggestionsEnhanced } from "./api/production-keyword-suggestions.js";
 
@@ -50,6 +56,14 @@ export {
   exportUserData,
   requestAccountDeletion,
   testMinimal,
+};
+
+// Background jobs (restored from prod to prevent accidental deletion on future deploys)
+export {
+  kpiDailySnapshotV2 as kpiDailySnapshotV2_bg,
+  adsExportBatch,
+  dispatchDueMarketingCampaigns,
+  socialPost,
 };
 
 // Minimal health endpoint to validate cold start and module load
