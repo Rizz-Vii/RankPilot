@@ -23,10 +23,11 @@ const baseConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
-  // Disable TypeScript checking during build for deployment
+  // Type safety is enforced at build time. `tsc --noEmit` currently reports 0 errors, so the
+  // production build fails fast on regressions instead of silently shipping broken types.
+  // (ESLint is still skipped below until the lint debt is measured/cleaned in Phase 2.)
   typescript: {
-    // Do not fail the production build on type errors; separate typecheck scripts handle this
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   // Configure image domains
