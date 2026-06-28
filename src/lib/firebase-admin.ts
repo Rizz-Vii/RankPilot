@@ -42,14 +42,36 @@ try {
   }
 }
 
+/**
+ * The client (connection-manager.ts) treats placeholder NEXT_PUBLIC_FIREBASE_* values as missing and
+ * falls back to the known public project config. The admin SDK MUST resolve the SAME project id, or
+ * verifyIdToken rejects otherwise-valid tokens with an audience mismatch — every Bearer-auth SSR
+ * route then 401s. The project id is public (not a secret), so a built-in fallback is safe and must
+ * match the client's fallback in connection-manager.ts.
+ */
+function isPlaceholderProjectId(v?: string): boolean {
+  return (
+    !v ||
+    v.trim() === "" ||
+    /^(firebase_|your[_-]|placeholder|example|changeme|xxx|<)/i.test(v.trim())
+  );
+}
+function resolveAdminProjectId(): string {
+  for (const candidate of [
+    process.env.FIREBASE_ADMIN_PROJECT_ID,
+    process.env.FIREBASE_PROJECT_ID,
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  ]) {
+    if (!isPlaceholderProjectId(candidate)) return (candidate as string).trim();
+  }
+  return "rankpilot-h3jpc";
+}
+
 function initializeFirebaseAdmin(name?: string): admin.app.App {
   // Try different configuration methods
 
   // Prefer explicit admin env vars first (more reliable in CI/tests)
-  const envProjectId =
-    process.env.FIREBASE_ADMIN_PROJECT_ID ||
-    process.env.FIREBASE_PROJECT_ID ||
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const envProjectId = resolveAdminProjectId();
   const envPrivateKey = (
     process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY
   )?.replace(/\\n/g, "\n");
@@ -127,9 +149,7 @@ function initializeFirebaseAdmin(name?: string): admin.app.App {
     return admin.initializeApp(
       {
         credential: admin.credential.applicationDefault(),
-        projectId:
-          process.env.FIREBASE_PROJECT_ID ||
-          process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        projectId: resolveAdminProjectId(),
       },
       name
     );
