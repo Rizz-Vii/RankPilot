@@ -43,7 +43,13 @@ function getOpenAIKey() {
   return process.env.OPENAI_API_KEY || "";
 }
 function getGeminiKey() {
-  return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+  // Prefer the billed key; GEMINI_API_KEY's project is free-tier-only (quota limit 0).
+  return (
+    process.env.GOOGLE_AI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GEMINI_API_KEY ||
+    ""
+  );
 }
 
 /** Perform a chat style completion with fallback. Returns raw text content. */
