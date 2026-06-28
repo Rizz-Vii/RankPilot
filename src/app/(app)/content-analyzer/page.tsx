@@ -180,10 +180,26 @@ export default function ContentAnalyzerPage() {
         return;
       }
 
-      // result reserved for future live typing; keep as unknown locally
-      const _data = result as unknown;
+      // The /api/neuroseo route runs the LIVE NeuroSEO suite and returns
+      // { success, data: NeuroSEOReport, provenance }. Display the real report when present; its
+      // trustMeta.dataIntegrity ('estimated' once the AI insight pass runs over the crawled page,
+      // 'simulated' if it fell back) honestly communicates provenance.
+      const apiReport = (result as { data?: NeuroSEOReport } | null)?.data;
+      if (
+        apiReport &&
+        Array.isArray(apiReport.keyInsights) &&
+        apiReport.keyInsights.length
+      ) {
+        setReport(apiReport);
+        toast({
+          title: "Analysis complete",
+          description: "NeuroSEO report is ready.",
+        });
+        setIsAnalyzing(false);
+        return;
+      }
 
-      // Only allow mock report when demo content is enabled
+      // No live data returned — only show a demo mock when demo content is explicitly enabled.
       if (!allowContentAnalyzerMocks()) {
         setError(
           "Live NeuroSEO analysis is not yet available in this environment. Enable demo content to preview with mock data."
