@@ -456,9 +456,9 @@ OUTPUT REQUIREMENTS:
         const ai = getRealAI();
         if (ai) {
           const gen = (await ai.generate(prompt)) as
-            | { text?: () => string }
+            | { text?: string }
             | string;
-          rawOutput = typeof gen === "string" ? gen : gen?.text?.();
+          rawOutput = typeof gen === "string" ? gen : gen?.text;
           if (rawOutput) usedRealAI = true;
         } else {
           throw new Error("Real AI unavailable");
@@ -553,9 +553,9 @@ async function generateRelatedQueries(
         const ai = getRealAI();
         if (ai) {
           const gen = (await ai.generate(prompt)) as
-            | { text?: () => string }
+            | { text?: string }
             | string;
-          output = typeof gen === "string" ? gen : gen?.text?.();
+          output = typeof gen === "string" ? gen : gen?.text;
         }
       }
     } catch (e) {
