@@ -17,7 +17,7 @@ export const kpiDailySnapshotV2 = onSchedule(
   },
   async (context) => {
     logger.info("kpiDailySnapshotV2 triggered", {
-      executionTime: context.executionTime,
+      scheduleTime: context.scheduleTime,
     });
 
     try {

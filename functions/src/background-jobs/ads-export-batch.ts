@@ -17,7 +17,7 @@ export const adsExportBatch = onSchedule(
   },
   async (context) => {
     logger.info("adsExportBatch triggered", {
-      executionTime: context.executionTime,
+      scheduleTime: context.scheduleTime,
     });
 
     try {

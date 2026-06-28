@@ -17,7 +17,7 @@ export const socialPost = onSchedule(
   },
   async (context) => {
     logger.info("socialPost triggered", {
-      executionTime: context.executionTime,
+      scheduleTime: context.scheduleTime,
     });
 
     try {

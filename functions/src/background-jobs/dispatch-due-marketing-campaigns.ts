@@ -17,7 +17,7 @@ export const dispatchDueMarketingCampaigns = onSchedule(
   },
   async (context) => {
     logger.info("dispatchDueMarketingCampaigns triggered", {
-      executionTime: context.executionTime,
+      scheduleTime: context.scheduleTime,
     });
 
     try {
