@@ -1,5 +1,5 @@
 // import the Genkit and Google AI plugin libraries
-import { gemini20Flash, googleAI } from "@genkit-ai/googleai";
+import { googleAI } from "@genkit-ai/googleai";
 import { genkit } from "genkit";
 
 // configure a Genkit instance.
@@ -14,5 +14,8 @@ export const ai = genkit({
       apiKey: process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY,
     }),
   ],
-  model: gemini20Flash, // set default model
+  // gemini-1.5-flash retired (404); gemini-2.0-flash sunset on the billed project ("no longer
+  // available") — gemini-2.5-flash is the current GA fast model. Use the string helper since there
+  // is no `gemini25Flash` named export in @genkit-ai/googleai 1.17.x.
+  model: googleAI.model("gemini-2.5-flash"),
 });
