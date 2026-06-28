@@ -352,11 +352,13 @@ export class NeuroSEOSuite {
       // content. Falls back to the heuristic insights above on any failure, keeping the report's
       // dataIntegrity honestly 'simulated'.
       try {
-        const primary = report.crawlResults[0];
-        if (primary?.content) {
+        const primaryUrl = report.request.urls[0] || "";
+        if (primaryUrl) {
+          // Always attempt the AI pass: it self-fetches the page when the crawler returned no
+          // content (which it does in the deployed environment).
           const aiInsights = await generateAiKeyInsights({
-            url: report.request.urls[0] || "",
-            pageContent: primary.content,
+            url: primaryUrl,
+            pageContent: report.crawlResults[0]?.content || "",
             targetKeywords: report.request.targetKeywords || [],
           });
           if (aiInsights && aiInsights.length) {

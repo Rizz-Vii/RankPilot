@@ -9,6 +9,33 @@
  */
 
 import { ai } from "@/ai/genkit";
+import * as cheerio from "cheerio";
+import fetch from "node-fetch";
+
+/**
+ * Fetch + extract readable text from a URL (same approach as the working SEO-audit flow). Used when
+ * the suite's neural-crawler returns no content in the deployed environment, so the AI pass is
+ * self-sufficient rather than depending on the crawler.
+ */
+async function fetchPageText(url: string): Promise<string> {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+      },
+      // @ts-ignore node-fetch v2 supports timeout
+      timeout: 15000,
+    });
+    if (!res.ok) return "";
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    $("script, style, noscript").remove();
+    return $("body").text().replace(/\s+/g, " ").trim();
+  } catch {
+    return "";
+  }
+}
 
 export type NeuroInsightCategory =
   | "seo"
@@ -47,7 +74,10 @@ const IMPACTS: NeuroInsightImpact[] = ["critical", "high", "medium", "low"];
 export async function generateAiKeyInsights(
   input: AiInsightInput
 ): Promise<NeuroAiInsight[] | null> {
-  const content = (input.pageContent || "").trim();
+  let content = (input.pageContent || "").trim();
+  if (!content && input.url) {
+    content = await fetchPageText(input.url);
+  }
   if (!content) return null;
 
   const prompt = `You are a senior SEO and content strategist powering the "NeuroSEO" analysis engine. Analyze the page below and produce 5-7 SPECIFIC, high-value insights grounded in the ACTUAL content (its topics, structure, gaps) — not generic advice.
