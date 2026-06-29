@@ -191,13 +191,20 @@ export async function generateAiCompetitive(
     .slice(0, 4);
   if (!competitorUrls.length) return null;
 
-  let ourContent = (input.pageContent || "").trim();
-  if (!ourContent && input.url) ourContent = await fetchPageText(input.url);
+  // Fetch OUR page (if not already provided) and all competitor pages concurrently.
+  const provided = (input.pageContent || "").trim();
+  const [ourContent, fetched] = await Promise.all([
+    provided
+      ? Promise.resolve(provided)
+      : input.url
+        ? fetchPageText(input.url)
+        : Promise.resolve(""),
+    Promise.all(
+      competitorUrls.map(async (u) => ({ url: u, content: await fetchPageText(u) }))
+    ),
+  ]);
   if (!ourContent) return null;
 
-  const fetched = await Promise.all(
-    competitorUrls.map(async (u) => ({ url: u, content: await fetchPageText(u) }))
-  );
   const competitors = fetched.filter((c) => c.content);
   if (!competitors.length) return null;
 

@@ -442,6 +442,25 @@ export default function ContentAnalyzerPage() {
         {/* Results */}
         {report && (
           <div ref={resultRef} className="space-y-6">
+            {report.trustMeta?.dataIntegrity && (
+              <div
+                className={`rounded-md border px-3 py-2 text-sm ${
+                  report.trustMeta.dataIntegrity === "measured"
+                    ? "border-green-500/40 bg-green-500/10"
+                    : "border-amber-500/40 bg-amber-500/10"
+                }`}
+              >
+                <strong className="capitalize">
+                  {report.trustMeta.dataIntegrity}
+                </strong>{" "}
+                data —{" "}
+                {report.trustMeta.dataIntegrity === "estimated"
+                  ? "AI analysis of your live page (insights are real; scores are heuristic)."
+                  : report.trustMeta.dataIntegrity === "measured"
+                    ? "from connected, measured data sources."
+                    : "deterministic heuristic sample — connect data sources for measured results."}
+              </div>
+            )}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
