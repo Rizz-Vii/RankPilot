@@ -2,7 +2,7 @@
  * Server-side Usage Quota Manager (Firebase Admin)
  * Mirrors client UsageQuotaManager API using firebase-admin Firestore.
  */
-import { adminDb } from "@/lib/firebase-admin";
+import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import type { PlanType } from "./stripe";
 import { FREE_PLAN, STRIPE_PLANS } from "./stripe";
 
@@ -40,6 +40,47 @@ export type UsageType = "audit" | "keyword" | "report" | "competitor";
 const QUOTAS = "quotas";
 
 export class AdminUsageQuotaManager {
+  // Small in-process cache so the admin lookup doesn't add a Firestore/Auth round-trip to every
+  // quota check.
+  private static adminCache = new Map<
+    string,
+    { isAdmin: boolean; ts: number }
+  >();
+  private static ADMIN_TTL_MS = 1000 * 60 * 10;
+
+  /**
+   * Mirrors {@link requireAdminFromHeaders}'s non-token check: admin if the user's custom claim
+   * `admin === true` OR `users/{uid}.role === 'admin'`. Admins are unlimited across all usage types
+   * (matches the 999999 `expectedQuotas` in the test fixtures). Never throws.
+   */
+  private async isAdminUser(userId: string): Promise<boolean> {
+    if (!userId) return false;
+    const cached = AdminUsageQuotaManager.adminCache.get(userId);
+    if (cached && Date.now() - cached.ts < AdminUsageQuotaManager.ADMIN_TTL_MS) {
+      return cached.isAdmin;
+    }
+    let isAdmin = false;
+    try {
+      const user = await adminAuth.getUser(userId);
+      if (user.customClaims && user.customClaims["admin"] === true) {
+        isAdmin = true;
+      }
+    } catch {
+      // user not found / auth unavailable → fall through to the users-collection check
+    }
+    if (!isAdmin) {
+      try {
+        const snap = await adminDb.collection("users").doc(userId).get();
+        const role = (snap.data() as { role?: string } | undefined)?.role;
+        if (role === "admin") isAdmin = true;
+      } catch {
+        // ignore — default to non-admin
+      }
+    }
+    AdminUsageQuotaManager.adminCache.set(userId, { isAdmin, ts: Date.now() });
+    return isAdmin;
+  }
+
   private col() {
     return adminDb.collection(QUOTAS);
   }
@@ -154,6 +195,16 @@ export class AdminUsageQuotaManager {
         limit: 0,
         remainingQuota: 0,
         resetDate: new Date(),
+      };
+    }
+    // Admins bypass all usage limits.
+    if (await this.isAdminUser(userId)) {
+      return {
+        allowed: true,
+        remaining: -1,
+        limit: -1,
+        remainingQuota: -1,
+        resetDate: quota.currentPeriodEnd,
       };
     }
     const now = new Date();
