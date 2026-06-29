@@ -3,6 +3,7 @@
  * Build-safe implementation
  */
 
+import { adminAuth } from "@/lib/firebase-admin";
 import { enforceProvenance, withProvenance } from "@/lib/middleware/provenance";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -17,15 +18,46 @@ export const POST = withProvenance(
   async function POST(request: Request) {
     const nreq = request as NextRequest;
     try {
+      // Require a verified Firebase ID token; derive identity SERVER-SIDE. The userId/plan must never
+      // come from the request body (that let any caller spoof another user's identity and quota).
+      const authHeader =
+        nreq.headers.get("authorization") || nreq.headers.get("Authorization");
+      if (!authHeader || !/^Bearer\s+/i.test(authHeader)) {
+        return NextResponse.json(
+          enforceProvenance(
+            {
+              success: false,
+              error: "Missing or invalid authorization header",
+              provenance: "synthetic",
+            },
+            { path: "neuroseo", note: "auth" }
+          ),
+          { status: 401 }
+        );
+      }
+      const idToken = authHeader.replace(/^Bearer\s+/i, "");
+      let decoded: { uid: string; tier?: string };
+      try {
+        decoded = (await adminAuth.verifyIdToken(idToken)) as {
+          uid: string;
+          tier?: string;
+        };
+      } catch {
+        return NextResponse.json(
+          enforceProvenance(
+            {
+              success: false,
+              error: "Invalid authentication token",
+              provenance: "synthetic",
+            },
+            { path: "neuroseo", note: "auth" }
+          ),
+          { status: 401 }
+        );
+      }
+
       const body = await nreq.json();
-      const {
-        urls,
-        targetKeywords,
-        analysisType,
-        userPlan,
-        userId,
-        competitorUrls,
-      } = body;
+      const { urls, targetKeywords, analysisType, competitorUrls } = body;
 
       // Validate required fields
       if (!urls || !Array.isArray(urls) || urls.length === 0) {
@@ -59,8 +91,8 @@ export const POST = withProvenance(
             ? [competitorUrls]
             : undefined,
         analysisType: analysisType || "comprehensive",
-        userPlan: userPlan || "free",
-        userId: userId || "anonymous",
+        userPlan: decoded.tier || "free",
+        userId: decoded.uid,
       });
       const validated = NeuroSEOReportSchema.safeParse(report);
       if (!validated.success) {

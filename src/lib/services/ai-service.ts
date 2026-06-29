@@ -302,10 +302,12 @@ export async function runNeuroSEOAnalysis(request: {
   userId?: string;
 }) {
   try {
+    const idToken = await auth.currentUser?.getIdToken();
     const response = await fetch("/api/neuroseo", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
       },
       body: JSON.stringify(request),
     });

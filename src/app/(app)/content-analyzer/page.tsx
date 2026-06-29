@@ -149,10 +149,12 @@ export default function ContentAnalyzerPage() {
       };
 
       const submit = async () => {
+        const token = await user.getIdToken?.();
         const response = await fetch("/api/neuroseo", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify(analysisRequest),
         });
