@@ -149,3 +149,118 @@ Rules: reference the real content; no duplicates; no markdown fences.`;
   }
   return insights.length ? insights : null;
 }
+
+export interface AiCompetitiveInput {
+  /** Our (the user's) site URL. */
+  url: string;
+  competitorUrls: string[];
+  targetKeywords: string[];
+  /** Our page content if already fetched; otherwise it is self-fetched. */
+  pageContent?: string;
+}
+
+export interface AiCompetitivePositioning {
+  overallRanking: number;
+  totalCompetitors: number;
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+  threats: string[];
+  recommendations: string[];
+}
+
+function strArray(v: unknown, max = 5): string[] {
+  return Array.isArray(v)
+    ? v
+        .filter((x): x is string => typeof x === "string" && !!x.trim())
+        .slice(0, max)
+    : [];
+}
+
+/**
+ * Real competitive positioning: self-fetches OUR page + each competitor page and asks
+ * gemini-2.5-flash to compare them. Replaces the suite's jittered/simulated positioning. Returns
+ * `null` on any failure (no competitors reachable, AI error, bad JSON) so the suite falls back to its
+ * heuristic positioning and keeps provenance honest.
+ */
+export async function generateAiCompetitive(
+  input: AiCompetitiveInput
+): Promise<AiCompetitivePositioning | null> {
+  const competitorUrls = (input.competitorUrls || [])
+    .filter((u) => typeof u === "string" && !!u)
+    .slice(0, 4);
+  if (!competitorUrls.length) return null;
+
+  let ourContent = (input.pageContent || "").trim();
+  if (!ourContent && input.url) ourContent = await fetchPageText(input.url);
+  if (!ourContent) return null;
+
+  const fetched = await Promise.all(
+    competitorUrls.map(async (u) => ({ url: u, content: await fetchPageText(u) }))
+  );
+  const competitors = fetched.filter((c) => c.content);
+  if (!competitors.length) return null;
+
+  const fieldCount = competitors.length + 1;
+  const compBlocks = competitors
+    .map(
+      (c, i) => `COMPETITOR ${i + 1} (${c.url}):\n${c.content.slice(0, 5000)}`
+    )
+    .join("\n\n");
+
+  const prompt = `You are a competitive SEO and content strategist. Compare OUR page against the competitor pages below and produce a competitive positioning assessment grounded in the ACTUAL content (real topics, depth, gaps) — not generic advice.
+
+OUR SITE: ${input.url}
+TARGET KEYWORDS: ${input.targetKeywords.join(", ") || "(none provided)"}
+OUR CONTENT (truncated):
+${ourContent.slice(0, 6000)}
+
+${compBlocks}
+
+Return STRICT JSON ONLY:
+{ "overallRanking": <integer, OUR rank among ${fieldCount} sites where 1 = best>, "strengths": ["where OUR page beats competitors"], "weaknesses": ["where competitors beat OUR page"], "opportunities": ["concrete gaps OUR page can exploit"], "threats": ["competitor advantages that threaten us"], "recommendations": ["specific, actionable next steps"] }
+Each array: 2-5 concrete items referencing the real content. No markdown fences.`;
+
+  let raw: unknown;
+  try {
+    const gen = await ai.generate(prompt);
+    raw = typeof gen === "string" ? gen : (gen as { text?: string })?.text;
+  } catch {
+    return null;
+  }
+  if (typeof raw !== "string") return null;
+
+  let parsed: Record<string, unknown>;
+  try {
+    const f = raw.replace(/```json|```/gi, "").trim();
+    const s = f.indexOf("{");
+    const e = f.lastIndexOf("}");
+    parsed = JSON.parse(
+      s >= 0 && e > s ? f.slice(s, e + 1) : f
+    ) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+
+  const strengths = strArray(parsed.strengths);
+  const weaknesses = strArray(parsed.weaknesses);
+  const recommendations = strArray(parsed.recommendations);
+  if (!strengths.length && !weaknesses.length && !recommendations.length) {
+    return null;
+  }
+  const rankRaw =
+    typeof parsed.overallRanking === "number"
+      ? parsed.overallRanking
+      : fieldCount;
+  const overallRanking = Math.max(1, Math.min(fieldCount, Math.round(rankRaw)));
+
+  return {
+    overallRanking,
+    totalCompetitors: fieldCount,
+    strengths,
+    weaknesses,
+    opportunities: strArray(parsed.opportunities),
+    threats: strArray(parsed.threats),
+    recommendations,
+  };
+}

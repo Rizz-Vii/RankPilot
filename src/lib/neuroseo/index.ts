@@ -25,7 +25,7 @@ import {
 } from "./rewrite-gen";
 import { SemanticMap, type SemanticAnalysisResult } from "./semantic-map";
 import { TrustBlockEngine, type TrustReport } from "./trust-block";
-import { generateAiKeyInsights } from "./ai-insights";
+import { generateAiKeyInsights, generateAiCompetitive } from "./ai-insights";
 
 // Canonical collections & sampling constants (colocated for clarity)
 const CANONICAL_COLLECTION = "neuroSeoAnalyses";
@@ -626,45 +626,75 @@ export class NeuroSEOSuite {
       avgSemantic: number;
     }
   ): Promise<CompetitivePositioning> {
-    const ourScores = {
-      seo: this.calculateAverageSEOScore(report),
-      visibility: this.calculateAverageVisibilityScore(report),
-      trust: this.calculateAverageTrustScore(report),
-      semantic: this.calculateAverageSemanticScore(report),
-    };
-    // Derive competitor baselines from corpus averages with slight variance
-    const competitorScores = competitorUrls.map((url) => ({
-      url,
-      seo: this.jitter(corpusStats.avgSeo, 5, 15),
-      visibility: this.jitter(corpusStats.avgVisibility, 5, 20),
-      trust: this.jitter(corpusStats.avgTrust, 3, 10),
-      semantic: this.jitter(corpusStats.avgSemantic, 5, 15),
-    }));
-    const ourOverallScore =
-      (ourScores.seo +
-        ourScores.visibility +
-        ourScores.trust +
-        ourScores.semantic) /
-      4;
-    const competitorOverallScores = competitorScores.map(
-      (c) => (c.seo + c.visibility + c.trust + c.semantic) / 4
-    );
-    const betterCompetitors = competitorOverallScores.filter(
-      (score) => score > ourOverallScore
-    ).length;
-    const ranking = betterCompetitors + 1;
-    const positioning: CompetitivePositioning = {
-      overallRanking: ranking,
-      totalCompetitors: competitorUrls.length + 1,
-      strengths: this.identifyStrengths(ourScores, competitorScores),
-      weaknesses: this.identifyWeaknesses(ourScores, competitorScores),
-      opportunities: this.identifyOpportunities(report),
-      threats: this.identifyThreats(competitorScores),
-      recommendations: this.generateCompetitiveRecommendations(
-        ourScores,
-        competitorScores
-      ),
-    };
+    // Try REAL AI competitive comparison over the actually-fetched pages first (gemini-2.5-flash
+    // over OUR page + each competitor page). Falls back to the heuristic/jittered positioning below
+    // on any failure, keeping provenance honest.
+    let positioning: CompetitivePositioning | null = null;
+    try {
+      const aiPos = await generateAiCompetitive({
+        url: report.request.urls[0] || "",
+        competitorUrls,
+        targetKeywords: report.request.targetKeywords || [],
+        pageContent: report.crawlResults[0]?.content || "",
+      });
+      if (aiPos) {
+        positioning = { ...aiPos };
+        if (report.trustMeta) {
+          report.trustMeta.dataIntegrity = "estimated";
+          report.trustMeta.modelTag = "neuroseo-suite:gemini-2.5-flash";
+          report.trustMeta.deterministic = false;
+        }
+        getLogger("neuroseo-suite").info("phase.competitive.ai", {
+          competitors: aiPos.totalCompetitors - 1,
+        });
+      }
+    } catch (e) {
+      getLogger("neuroseo-suite").info("phase.competitive.ai_failed", {
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+
+    if (!positioning) {
+      const ourScores = {
+        seo: this.calculateAverageSEOScore(report),
+        visibility: this.calculateAverageVisibilityScore(report),
+        trust: this.calculateAverageTrustScore(report),
+        semantic: this.calculateAverageSemanticScore(report),
+      };
+      // Derive competitor baselines from corpus averages with slight variance
+      const competitorScores = competitorUrls.map((url) => ({
+        url,
+        seo: this.jitter(corpusStats.avgSeo, 5, 15),
+        visibility: this.jitter(corpusStats.avgVisibility, 5, 20),
+        trust: this.jitter(corpusStats.avgTrust, 3, 10),
+        semantic: this.jitter(corpusStats.avgSemantic, 5, 15),
+      }));
+      const ourOverallScore =
+        (ourScores.seo +
+          ourScores.visibility +
+          ourScores.trust +
+          ourScores.semantic) /
+        4;
+      const competitorOverallScores = competitorScores.map(
+        (c) => (c.seo + c.visibility + c.trust + c.semantic) / 4
+      );
+      const betterCompetitors = competitorOverallScores.filter(
+        (score) => score > ourOverallScore
+      ).length;
+      const ranking = betterCompetitors + 1;
+      positioning = {
+        overallRanking: ranking,
+        totalCompetitors: competitorUrls.length + 1,
+        strengths: this.identifyStrengths(ourScores, competitorScores),
+        weaknesses: this.identifyWeaknesses(ourScores, competitorScores),
+        opportunities: this.identifyOpportunities(report),
+        threats: this.identifyThreats(competitorScores),
+        recommendations: this.generateCompetitiveRecommendations(
+          ourScores,
+          competitorScores
+        ),
+      };
+    }
 
     // Phase 1 keyword gap analysis (best-effort; silent degradation)
     try {

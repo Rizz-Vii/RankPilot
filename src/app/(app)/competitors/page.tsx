@@ -279,6 +279,94 @@ const CompetitorResults = ({
   );
 };
 
+/**
+ * Honest renderer for the NeuroSEO competitive result. Surfaces the real AI competitive positioning
+ * (gemini-2.5-flash over the actually-fetched pages) + key insights, with a provenance label. Unlike
+ * the legacy CompetitorResults it does not fabricate rankings/traffic/backlinks we don't measure.
+ */
+const CompetitiveReport = ({ report }: { report: NeuroSEOReport }) => {
+  const cp = report.competitivePositioning;
+  const integrity = report.trustMeta?.dataIntegrity;
+  const Section = ({ title, items }: { title: string; items?: string[] }) =>
+    items && items.length ? (
+      <div>
+        <h4 className="font-semibold mb-1">{title}</h4>
+        <ul className="list-disc pl-5 space-y-1 text-sm">
+          {items.map((it, i) => (
+            <li key={`${title}-${i}`}>{it}</li>
+          ))}
+        </ul>
+      </div>
+    ) : null;
+
+  return (
+    <motion.div
+      className="space-y-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="shadow-xl">
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2">
+            <Users /> Competitive Positioning
+          </CardTitle>
+          <CardDescription>
+            {cp
+              ? `You rank #${cp.overallRanking} of ${cp.totalCompetitors} analyzed sites.`
+              : "AI comparison of your page vs. competitor pages."}
+            {integrity ? ` · data: ${integrity}` : ""}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-5 md:grid-cols-2">
+          {cp ? (
+            <>
+              <Section title="Strengths" items={cp.strengths} />
+              <Section title="Weaknesses" items={cp.weaknesses} />
+              <Section title="Opportunities" items={cp.opportunities} />
+              <Section title="Threats" items={cp.threats} />
+              <div className="md:col-span-2">
+                <Section title="Recommendations" items={cp.recommendations} />
+              </div>
+            </>
+          ) : (
+            <p className="text-muted-foreground md:col-span-2">
+              No competitive positioning was produced. Add competitor URLs and
+              retry.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {Array.isArray(report.keyInsights) && report.keyInsights.length ? (
+        <Card className="shadow-xl">
+          <CardHeader>
+            <CardTitle className="font-headline">AI Insights</CardTitle>
+            <CardDescription>
+              Generated for {report.request?.urls?.[0]}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3">
+              {report.keyInsights.slice(0, 8).map((ins, i) => (
+                <li key={`ins-${i}`} className="border-l-2 border-primary/40 pl-3">
+                  <p className="font-medium">{ins.title}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {ins.description}
+                  </p>
+                  {ins.recommendation ? (
+                    <p className="text-sm mt-1">→ {ins.recommendation}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
+    </motion.div>
+  );
+};
+
 export default function CompetitorsPage() {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -442,7 +530,11 @@ export default function CompetitorsPage() {
         return;
       }
 
-      setReport(result as NeuroSEOReport);
+      // The route returns { success, data: NeuroSEOReport, provenance }; display the real report.
+      setReport(
+        ((result as { data?: NeuroSEOReport } | null)?.data ??
+          null) as NeuroSEOReport | null
+      );
       toast({
         title: "Analysis complete",
         description: "Competitive analysis results are ready.",
@@ -665,9 +757,7 @@ export default function CompetitorsPage() {
                   )}
                   {report && (
                     <motion.div key="results">
-                      <CompetitorResults
-                        results={report as unknown as CompetitorAnalysisOutput}
-                      />
+                      <CompetitiveReport report={report} />
                     </motion.div>
                   )}
                 </AnimatePresence>
