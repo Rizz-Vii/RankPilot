@@ -557,15 +557,15 @@ export default function DashboardPage() {
           <div>
             <p className="font-medium">Get measured data</p>
             <p className="text-sm text-muted-foreground">
-              Connect Google Search Console to replace estimates with your real
-              impressions, clicks, and average positions.
+              Connect your accounts (Search Console, Stripe, …) to replace
+              estimates with real, measured numbers.
             </p>
           </div>
           <a
-            href="/integrations/search-console"
+            href="/integrations/connections"
             className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
           >
-            Connect Search Console
+            Connect data sources
           </a>
         </CardContent>
       </Card>

@@ -425,7 +425,7 @@ export async function POST(req: NextRequest): Promise<Response> {
                 info: "provider_selected",
                 provider,
                 openaiCircuitOpen: openAICircuitOpen(),
-                provenance: provider === "openai" ? "live" : "synthetic",
+                provenance: "live",
               },
               { path: "chat/customer/stream" }
             )
@@ -437,7 +437,7 @@ export async function POST(req: NextRequest): Promise<Response> {
                 fullResponse += content;
                 client.send({
                   token: content,
-                  provenance: provider === "openai" ? "live" : "synthetic",
+                  provenance: "live",
                 });
               }
             }
@@ -448,10 +448,15 @@ export async function POST(req: NextRequest): Promise<Response> {
               message,
               800
             );
+            // The Gemini one-shot is REAL AI; only aiClient's canned error strings are synthetic.
+            const cannedFailure =
+              /^AI (service temporarily unavailable|response unavailable|fallback failed)\.?$/i.test(
+                fullResponse.trim()
+              );
             client.send({
               token: fullResponse,
               fallback: true,
-              provenance: "synthetic",
+              provenance: cannedFailure ? "synthetic" : "live",
             });
           }
           // Persist conversation to Firestore
@@ -573,7 +578,7 @@ export async function POST(req: NextRequest): Promise<Response> {
                 provider,
                 fallback: provider !== "openai",
                 openaiCircuitOpen: openAICircuitOpen(),
-                provenance: provider === "openai" ? "live" : "synthetic",
+                provenance: "live",
               },
               { path: "chat/customer/stream" }
             )
