@@ -270,13 +270,16 @@ export default function SemanticMapPage() {
       let result: SemanticMapResult | null = null;
       try {
         // Prefer live orchestrator path
+        const token = await user.getIdToken?.();
         const resp = await fetch("/api/neuroseo/live", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({
             urls: [analysisUrl],
             analysisType: "semantic-map",
-            userId: user.uid,
           }),
         });
         if (resp.ok) {

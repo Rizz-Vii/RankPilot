@@ -1,3 +1,4 @@
+import { adminAuth } from "@/lib/firebase-admin";
 import { handleCors } from "@/lib/http/cors";
 import { getLogger } from "@/lib/logging/app-logger";
 import { recordError, recordRouteLatency } from "@/lib/metrics/unified-metrics";
@@ -46,6 +47,42 @@ export const POST = withProvenance(
         { status: 503, headers: baseHeaders }
       );
     }
+
+    // Require a verified Firebase ID token; identity comes from the token, never the request body.
+    const authHeader =
+      req.headers.get("authorization") || req.headers.get("Authorization");
+    if (!authHeader || !/^Bearer\s+/i.test(authHeader)) {
+      return NextResponse.json(
+        enforceProvenance(
+          {
+            success: false,
+            error: "Missing or invalid authorization header",
+            provenance: "synthetic",
+          },
+          { path: "neuroseo/live", note: "auth" }
+        ),
+        { status: 401, headers: baseHeaders }
+      );
+    }
+    let authedUid: string;
+    try {
+      const decoded = await adminAuth.verifyIdToken(
+        authHeader.replace(/^Bearer\s+/i, "")
+      );
+      authedUid = decoded.uid;
+    } catch {
+      return NextResponse.json(
+        enforceProvenance(
+          {
+            success: false,
+            error: "Invalid authentication token",
+            provenance: "synthetic",
+          },
+          { path: "neuroseo/live", note: "auth" }
+        ),
+        { status: 401, headers: baseHeaders }
+      );
+    }
     try {
       let body: unknown = {};
       try {
@@ -60,7 +97,7 @@ export const POST = withProvenance(
         forceRefresh?: unknown;
         teamId?: unknown;
       }
-      const { urls, analysisType, userId, forceRefresh, teamId } =
+      const { urls, analysisType, forceRefresh, teamId } =
         (body as IncomingBody) || {};
       const urlArray: string[] = Array.isArray(urls)
         ? (urls.filter((u) => typeof u === "string") as string[])
@@ -71,7 +108,7 @@ export const POST = withProvenance(
         (allowedTypes as readonly string[]).includes(analysisType)
           ? (analysisType as (typeof allowedTypes)[number])
           : undefined;
-      const uid = typeof userId === "string" && userId ? userId : "anonymous";
+      const uid = authedUid;
       const force = typeof forceRefresh === "boolean" ? forceRefresh : false;
       if (!Array.isArray(urls) || urls.length === 0) {
         return NextResponse.json(
