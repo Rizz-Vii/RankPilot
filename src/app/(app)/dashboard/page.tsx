@@ -551,6 +551,25 @@ export default function DashboardPage() {
         {executiveSummary}
       </section>
 
+      {/* Onboarding: guide users toward MEASURED data (the GSC wedge). */}
+      <Card className="border-green-500/30 bg-green-500/5">
+        <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-medium">Get measured data</p>
+            <p className="text-sm text-muted-foreground">
+              Connect Google Search Console to replace estimates with your real
+              impressions, clicks, and average positions.
+            </p>
+          </div>
+          <a
+            href="/integrations/search-console"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Connect Search Console
+          </a>
+        </CardContent>
+      </Card>
+
       <div aria-live="polite" aria-atomic="true">
         {dataLoading ? (
           <div className={styles.metricsGrid}>

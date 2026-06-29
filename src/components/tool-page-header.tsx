@@ -34,7 +34,7 @@ export function ToolPageHeader({
       )}
       <div className="flex flex-col gap-3 text-center md:text-left md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-headline text-primary mb-2">
+          <h1 className="text-3xl font-bold font-headline text-foreground mb-2">
             {title}
           </h1>
           {description && (
