@@ -136,8 +136,15 @@ export async function executeNeuroLive(
       })
       .then((r) => r as LiveNeuroSEOReport);
     const report = await Promise.race([orchestratorPromise, timeoutPromise]);
+    // Honest provenance: the orchestrator only earns 'live' when it actually MEASURED (crawl +
+    // semantic succeeded). When it falls back to its deterministic heuristic (e.g. the crawler
+    // returns no content, as it does in the deployed environment) it self-labels
+    // trustMeta.dataIntegrity = 'simulated' — surface that as 'synthetic' rather than claiming 'live'.
+    const measured =
+      (report as { trustMeta?: { dataIntegrity?: string } })?.trustMeta
+        ?.dataIntegrity === "measured";
     const result: LiveExecResult = {
-      provenance: "live",
+      provenance: measured ? "live" : "synthetic",
       report,
       generatedAt: new Date().toISOString(),
       latencyMs: Math.round(performance.now() - start),
