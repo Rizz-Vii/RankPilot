@@ -4,6 +4,7 @@
  * LOG-01 Phase 1: Integrated unified structured app logger.
  */
 import { getLogger } from "@/lib/logging/app-logger";
+import { fetchPageText } from "./ai-insights";
 import { NeuralCrawler, type CrawlResult } from "./neural-crawler";
 import { SemanticMap, type SemanticAnalysisResult } from "./semantic-map";
 const logger = getLogger("neuroseo-orchestrator").withTrace();
@@ -66,6 +67,8 @@ interface NeuroSEOReport {
     externalAnchors: Array<{ href: string; text: string }>;
     missingAltSamples: string[];
   }>;
+  /** Real semantic analysis per measured URL (topic clusters, gaps, graph). */
+  semanticAnalysis?: SemanticAnalysisResult[];
 }
 
 // Internal per-URL analysis result shape (Phase 0 deterministic mock)
@@ -87,6 +90,10 @@ interface UrlAnalysisResult {
     externalAnchors: Array<{ href: string; text: string }>;
     missingAltSamples: string[];
   };
+  /** True when this URL was analyzed on real fetched content (not the deterministic fallback). */
+  measured?: boolean;
+  /** Real semantic analysis for this URL (present only when measured). */
+  semantic?: SemanticAnalysisResult;
 }
 
 interface CacheEntry {
@@ -339,8 +346,14 @@ export class EnhancedNeuroSEOOrchestrator {
           respectRobots: true,
           cacheTtlMs: 5 * 60 * 1000,
         });
+        // The crawler returns no content in the deployed environment; self-fetch so the semantic
+        // engine analyzes REAL page text. With no content at all we throw → the deterministic
+        // fallback below, which is honestly tagged measured:false.
+        let content = crawl.content || "";
+        if (!content) content = await fetchPageText(url);
+        if (!content) throw new Error("no_content");
         const semantic = await this.semantic!.analyzeContent(
-          crawl.content || "",
+          content,
           crawl.title || "Untitled",
           []
         );
@@ -357,6 +370,8 @@ export class EnhancedNeuroSEOOrchestrator {
           bestPractices: scores.bestPractices,
           keywords,
           backlinks,
+          measured: true,
+          semantic,
           provenance: crawl.provenance
             ? {
                 firstH1: crawl.provenance.firstH1,
@@ -390,6 +405,7 @@ export class EnhancedNeuroSEOOrchestrator {
           bestPractices: val(88, 10, 65, 100),
           keywords,
           backlinks: this.generateMockBacklinks(url, request.analysisType),
+          measured: false,
         };
       }
     });
@@ -431,8 +447,12 @@ export class EnhancedNeuroSEOOrchestrator {
       missingAltSamples: r.provenance?.missingAltSamples || [],
     }));
 
-    // If any measured derivation was used (presence of backlinks.quality.high not matching mock pattern), mark measured
-    const measured = true; // We attempted measured first; if all failed fallback still okay to tag deterministic below
+    // Honest: 'measured' only if at least one URL was analyzed on real fetched content (not the
+    // deterministic fallback). Previously hardcoded true, which mislabeled simulated data as live.
+    const measured = analysisResults.some((r) => r.measured === true);
+    const semanticAnalysis = analysisResults
+      .map((r) => r.semantic)
+      .filter((s): s is SemanticAnalysisResult => !!s);
 
     return {
       analysisId,
@@ -455,6 +475,7 @@ export class EnhancedNeuroSEOOrchestrator {
         },
       },
       recommendations: this.generateRecommendations(overallScore),
+      semanticAnalysis,
       cached: false,
       trustMeta: {
         modelTag: "enhanced-orchestrator:phase0",

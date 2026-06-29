@@ -93,7 +93,9 @@ export async function executeNeuroLive(
 ): Promise<LiveExecResult> {
   const start = performance.now();
   const key = cacheKey(req);
-  const timeoutMs = opts?.timeoutMs ?? 12_000;
+  // Real analysis now self-fetches the page + runs the semantic engine, which exceeds the old 12s
+  // budget. The route allows 60s; give live work room before the synthetic fallback trips.
+  const timeoutMs = opts?.timeoutMs ?? 30_000;
 
   if (!opts?.forceRefresh) {
     const hit = cache.get(key);

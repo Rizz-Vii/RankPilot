@@ -17,7 +17,7 @@ import fetch from "node-fetch";
  * the suite's neural-crawler returns no content in the deployed environment, so the AI pass is
  * self-sufficient rather than depending on the crawler.
  */
-async function fetchPageText(url: string): Promise<string> {
+export async function fetchPageText(url: string): Promise<string> {
   try {
     const res = await fetch(url, {
       headers: {
