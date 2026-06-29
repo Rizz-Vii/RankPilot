@@ -271,3 +271,114 @@ Each array: 2-5 concrete items referencing the real content. No markdown fences.
     recommendations,
   };
 }
+
+export interface AiVisibilityInput {
+  url: string;
+  query: string;
+  targetAudience?: string;
+  pageContent?: string;
+}
+
+export interface AiVisibilityResult {
+  /** 0-100: likelihood an AI assistant answering the query surfaces/cites OUR page. */
+  score: number;
+  /** 0-100. */
+  citationRate: number;
+  recommendations: string[];
+  /** Domains an AI assistant would likely cite for this query (position 1 = most likely). */
+  citedDomains: Array<{ name: string; position: number }>;
+  ourCitationSnippet: string;
+  ourCited: boolean;
+}
+
+/**
+ * Real AI-search-visibility assessment: asks gemini-2.5-flash to reason about how an AI assistant
+ * would answer the query and whether OUR page (real fetched content) would be cited. Replaces the
+ * engine's Math.random() simulation. Returns `null` on failure so callers can fall back + label
+ * honestly. Provenance is 'estimated' (AI judgment, not a guaranteed multi-LLM measurement).
+ */
+export async function generateAiVisibility(
+  input: AiVisibilityInput
+): Promise<AiVisibilityResult | null> {
+  if (!input.query) return null;
+  let content = (input.pageContent || "").trim();
+  if (!content && input.url) content = await fetchPageText(input.url);
+  if (!content) return null;
+
+  let host = input.url;
+  try {
+    host = new URL(input.url).hostname.replace(/^www\./, "");
+  } catch {
+    /* keep raw */
+  }
+
+  const prompt = `You assess "AI Search Visibility": how likely a modern AI assistant (an LLM that answers with web-grounded knowledge) is to surface or cite a SPECIFIC page when a user asks a query. Reason about authority, depth, specificity, and topical match — grounded in the ACTUAL page content below.
+
+USER QUERY: ${input.query}
+TARGET AUDIENCE: ${input.targetAudience || "(general)"}
+OUR PAGE: ${input.url} (domain: ${host})
+OUR PAGE CONTENT (truncated):
+${content.slice(0, 10000)}
+
+Return STRICT JSON ONLY:
+{ "visibilityScore": <0-100 likelihood OUR page is surfaced/cited for this query>, "citationLikelihood": <0.0-1.0>, "ourCited": <true|false: would a well-grounded assistant plausibly cite OUR domain>, "ourCitationSnippet": "<short text from OUR page an assistant would quote, or '' if unlikely>", "citedDomains": [ { "name": "<domain an assistant would likely cite for this query>", "position": <1=most likely> } ], "recommendations": [ "specific change to OUR page to improve its AI-citation likelihood for this query" ] }
+Rules: citedDomains = 3-6 realistic authoritative sources for THIS query; recommendations = 4-8 concrete items grounded in the real content; no markdown fences.`;
+
+  let raw: unknown;
+  try {
+    const gen = await ai.generate(prompt);
+    raw = typeof gen === "string" ? gen : (gen as { text?: string })?.text;
+  } catch {
+    return null;
+  }
+  if (typeof raw !== "string") return null;
+
+  let parsed: Record<string, unknown>;
+  try {
+    const f = raw.replace(/```json|```/gi, "").trim();
+    const s = f.indexOf("{");
+    const e = f.lastIndexOf("}");
+    parsed = JSON.parse(
+      s >= 0 && e > s ? f.slice(s, e + 1) : f
+    ) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+
+  const recommendations = strArray(parsed.recommendations, 8);
+  if (!recommendations.length) return null;
+
+  const scoreRaw =
+    typeof parsed.visibilityScore === "number" ? parsed.visibilityScore : 0;
+  const score = Math.max(0, Math.min(100, Math.round(scoreRaw)));
+  const likeRaw =
+    typeof parsed.citationLikelihood === "number"
+      ? parsed.citationLikelihood
+      : score / 100;
+  const citationRate = Math.max(0, Math.min(100, Math.round(likeRaw * 100)));
+
+  const citedDomains = Array.isArray(parsed.citedDomains)
+    ? (parsed.citedDomains as unknown[])
+        .map((d, i) => {
+          const o = (d || {}) as Record<string, unknown>;
+          return {
+            name: typeof o.name === "string" ? o.name : "",
+            position: typeof o.position === "number" ? o.position : i + 1,
+          };
+        })
+        .filter((d) => d.name)
+        .slice(0, 6)
+    : [];
+
+  return {
+    score,
+    citationRate,
+    recommendations,
+    citedDomains,
+    ourCitationSnippet:
+      typeof parsed.ourCitationSnippet === "string"
+        ? parsed.ourCitationSnippet
+        : "",
+    ourCited: parsed.ourCited === true,
+  };
+}

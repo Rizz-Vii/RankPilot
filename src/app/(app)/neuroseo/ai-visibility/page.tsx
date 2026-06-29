@@ -100,9 +100,13 @@ export default function AIVisibilityEnginePage() {
         userId: user?.uid,
       };
       const submit = async () => {
+        const token = await user?.getIdToken?.();
         const response = await fetch("/api/neuroseo/ai-visibility", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify(payload),
         });
         if (!response.ok) throw new Error("Analysis failed");
@@ -132,7 +136,12 @@ export default function AIVisibilityEnginePage() {
 
       const data = result as AnalysisResult;
       setResults(data);
-      setProvenance("live");
+      // Honest provenance: real AI assessment → 'live'; heuristic fallback → 'fallback'.
+      setProvenance(
+        (data as { dataIntegrity?: string }).dataIntegrity === "simulated"
+          ? "fallback"
+          : "live"
+      );
       toast({
         title: "Analysis Complete",
         description: "AI visibility analysis has been completed successfully",

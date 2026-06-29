@@ -1,5 +1,7 @@
 import { extractErrorMessage } from "@/lib/errors/extract-error-message";
+import { adminAuth } from "@/lib/firebase-admin";
 import { enforceProvenance, withProvenance } from "@/lib/middleware/provenance";
+import { generateAiVisibility } from "@/lib/neuroseo/ai-insights";
 import {
   AIVisibilityEngine,
   type CitationAnalysis,
@@ -18,14 +20,36 @@ export const runtime = "nodejs";
 export const POST = withProvenance(
   async function POST(req: Request) {
     try {
+      // Require a verified Firebase ID token; identity from the token, not the body.
+      const authHeader =
+        req.headers.get("authorization") || req.headers.get("Authorization");
+      if (!authHeader || !/^Bearer\s+/i.test(authHeader)) {
+        return NextResponse.json(
+          enforceProvenance(
+            { error: "Missing or invalid authorization header" },
+            { path: "neuroseo/ai-visibility", note: "auth" }
+          ),
+          { status: 401 }
+        );
+      }
+      let uid: string;
+      try {
+        const decoded = await adminAuth.verifyIdToken(
+          authHeader.replace(/^Bearer\s+/i, "")
+        );
+        uid = decoded.uid;
+      } catch {
+        return NextResponse.json(
+          enforceProvenance(
+            { error: "Invalid authentication token" },
+            { path: "neuroseo/ai-visibility", note: "auth" }
+          ),
+          { status: 401 }
+        );
+      }
+
       const body = (await req.json().catch(() => ({}))) ?? {};
-      const {
-        url,
-        query,
-        targetAudience,
-        analysisType = "quick",
-        userId,
-      } = body;
+      const { url, query, targetAudience, analysisType = "quick" } = body;
 
       if (!url || !query) {
         return NextResponse.json(
@@ -38,6 +62,64 @@ export const POST = withProvenance(
       const cached = cache.get(cacheKey);
       if (cached && Date.now() - cached.ts < TTL_MS) {
         return NextResponse.json(cached.data);
+      }
+
+      // REAL AI-visibility assessment (gemini-2.5-flash reasoning over the live page). Falls back to
+      // the heuristic engine (honestly labeled 'simulated') on any failure.
+      try {
+        const aiv = await generateAiVisibility({ url, query, targetAudience });
+        if (aiv) {
+          const aiPlatforms = aiv.citedDomains.map((d) => ({
+            name: d.name,
+            citations: Math.max(1, 7 - d.position),
+            position: d.position,
+            trend: "stable" as const,
+          }));
+          const aiVisibility = [
+            {
+              citation: {
+                platform: "AI assistants (Gemini)",
+                position: aiv.ourCited ? 1 : 0,
+                snippet: aiv.ourCitationSnippet,
+                confidence: aiv.citationRate / 100,
+                url,
+              },
+              optimization: {
+                recommendations: aiv.recommendations.slice(0, 5),
+                priority: (aiv.score >= 60
+                  ? "low"
+                  : aiv.score >= 35
+                    ? "medium"
+                    : "high") as "low" | "medium" | "high",
+                impact: Math.max(0, 100 - aiv.score),
+              },
+            },
+          ];
+          const aiPayload = enforceProvenance(
+            {
+              score: aiv.score,
+              citationRate: aiv.citationRate,
+              visibility: aiVisibility,
+              recommendations: aiv.recommendations,
+              platforms: aiPlatforms,
+              dataIntegrity: "estimated",
+              meta: {
+                targetAudience: targetAudience || null,
+                analysisType,
+                userId: uid,
+                generatedAt: new Date().toISOString(),
+              },
+            },
+            { path: "neuroseo/ai-visibility", note: "ai" }
+          );
+          cache.set(cacheKey, { ts: Date.now(), data: aiPayload });
+          return NextResponse.json(aiPayload);
+        }
+      } catch (e) {
+        console.error(
+          "[AI Visibility API] AI path failed; using heuristic fallback",
+          extractErrorMessage(e)
+        );
       }
 
       const engine = new AIVisibilityEngine();
@@ -123,10 +205,11 @@ export const POST = withProvenance(
           visibility,
           recommendations,
           platforms,
+          dataIntegrity: "simulated",
           meta: {
             targetAudience: targetAudience || null,
             analysisType,
-            userId: userId || null,
+            userId: uid,
             generatedAt: new Date().toISOString(),
           },
         },
