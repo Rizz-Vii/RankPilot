@@ -10,6 +10,7 @@ import { TrendSparkline } from "@/components/metrics/TrendSparkline";
 import { ActionCard } from "@/components/shared/action-card";
 import { FeatureGate } from "@/components/subscription/FeatureGate";
 import { ToolPageHeader } from "@/components/tool-page-header";
+import StripeRevenueCard from "@/components/finance/StripeRevenueCard";
 import { AdaptiveProgress } from "@/components/ui/adaptive-progress";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -378,6 +379,7 @@ export default function FinanceDashboardRoot() {
                 </Button>
               </div>
             </ToolPageHeader>
+            <StripeRevenueCard />
             {/* Banner: show whenever mocks are allowed AND we either have no metrics yet OR metrics loaded but no KPI rows (indicates mock fallback). */}
             {allowFinanceMocks() &&
               (!metrics || !(metrics.kpis && metrics.kpis.length > 0)) && (
