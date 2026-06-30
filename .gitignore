@@ -80,6 +80,13 @@ serviceAccount.*.json
 # --------------------------------------------------
 docs/integrations/
 **/integrations/
+# Source integration code (routes, libs, pages) MUST be tracked — the rule above targets docs/config:
+!src/lib/integrations/
+!src/lib/integrations/**
+!src/app/api/integrations/
+!src/app/api/integrations/**
+!src/app/(app)/integrations/
+!src/app/(app)/integrations/**
 *MCP*
 *mcp*
 **/*MCP*
