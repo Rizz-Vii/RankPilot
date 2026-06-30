@@ -98,7 +98,7 @@ function VariantDialog({ open, base, onClose }: VariantDialogProps) {
   const [variants, setVariants] = useState<string[]>([]);
   useEffect(() => {
     if (open) {
-      setVariants(generateVariants(base, 4));
+      void generateVariants(base, 4).then(setVariants);
     }
   }, [open, base]);
   if (!open) return null;
@@ -138,7 +138,7 @@ function ToneDialog({ open, content, onClose }: ToneDialogProps) {
   const [adjusted, setAdjusted] = useState("");
   useEffect(() => {
     if (open) {
-      setAdjusted(adjustTone(content, tone));
+      void adjustTone(content, tone).then(setAdjusted);
     }
   }, [open, content, tone]);
   if (!open) return null;
@@ -157,8 +157,8 @@ function ToneDialog({ open, content, onClose }: ToneDialogProps) {
             className="h-8 border rounded px-2"
             value={tone}
             onChange={(e) => {
+              // The useEffect above re-runs on `tone` and calls the real-AI route once.
               setTone(e.target.value);
-              setAdjusted(adjustTone(content, e.target.value));
             }}
           >
             <option value="formal">Formal</option>

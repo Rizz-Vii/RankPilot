@@ -127,8 +127,7 @@ function OptimizeDialog({
   const [variant, setVariant] = useState<string>("");
   useEffect(() => {
     if (open) {
-      const r = optimizeCopy(original, channel);
-      setVariant(r.variant);
+      void optimizeCopy(original, channel).then((r) => setVariant(r.variant));
     }
   }, [open, original, channel]);
   if (!open) return null;

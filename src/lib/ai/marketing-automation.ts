@@ -217,35 +217,13 @@ export async function schedulePost(input: ScheduledPostInput) {
   return { impressions, clicks, leads };
 }
 
-export function optimizeCopy(original: string, channel: string) {
-  const improvements = [
-    "Boost engagement",
-    "Maximize reach",
-    "High-impact",
-    "AI-Optimized",
-  ];
-  const seed = hash(original + channel);
-  const pick = improvements[seed % improvements.length];
-  const platformTwists: Record<string, string[]> = {
-    instagram: [
-      "Add carousel hint",
-      "Include reel CTA",
-      "Use trending audio note",
-    ],
-    facebook: ["Encourage discussion", "Community angle", "Story cross-post"],
-    x: ["Hashtag density optimize", "Thread opener", "Hook refine"],
-    linkedin: [
-      "Thought-leadership framing",
-      "Value hook",
-      "Metric-driven angle",
-    ],
+export async function optimizeCopy(original: string, channel: string) {
+  const gen = await callGenerate({ task: "optimize", original, channel });
+  return {
+    variant: gen?.text?.trim() || original,
+    // We no longer fabricate a "score lift" — real measurement would need A/B data.
+    scoreLift: null as number | null,
   };
-  const p = platformTwists[channel?.toLowerCase()] || [];
-  const twist = p.length ? " " + p[seed % p.length] : "";
-  const variant = original.replace(/\.$/, "") + " — " + pick + "!" + twist;
-  const scoreLift = (seed % 12) + 5; // percent improvement
-  // Not creating campaign record (creative assist only)
-  return { variant, scoreLift };
 }
 
 export async function generateContentAsset(
@@ -287,19 +265,14 @@ export async function generateContentAsset(
   return { id: docRef.id, body };
 }
 
-export function generateVariants(base: string, count = 3) {
-  return Array.from({ length: count }).map(
-    (_, i) => base.replace(/\.$/, "") + ` (Variant ${i + 1})`
-  );
+export async function generateVariants(base: string, count = 3) {
+  const gen = await callGenerate({ task: "variants", base, count });
+  return gen?.items?.length ? gen.items : [base];
 }
 
-export function adjustTone(content: string, tone: string) {
-  return (
-    content.replace(
-      /\b(we|our|us)\b/gi,
-      tone.toLowerCase() === "formal" ? "the organization" : "our team"
-    ) + `\n\n[Tone adjusted: ${tone}]`
-  );
+export async function adjustTone(content: string, tone: string) {
+  const gen = await callGenerate({ task: "tone", content, tone });
+  return gen?.text?.trim() || content;
 }
 
 export interface EmailCampaignInput {
@@ -374,8 +347,9 @@ export async function suggestSendTime(userId: string, teamId?: string) {
   };
 }
 
-export function generateSubjectVariants(base: string) {
-  return generateVariants(base, 4);
+export async function generateSubjectVariants(base: string) {
+  const gen = await callGenerate({ task: "subjects", base });
+  return gen?.items?.length ? gen.items : [base];
 }
 
 // --- Platform Account Integration Stubs (extend with OAuth tokens in production) ---

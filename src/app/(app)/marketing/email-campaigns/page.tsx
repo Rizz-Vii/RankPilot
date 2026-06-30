@@ -130,7 +130,7 @@ function VariantDialog({ open, base, onClose }: VariantDialogProps) {
   const [variants, setVariants] = useState<string[]>([]);
   useEffect(() => {
     if (open) {
-      setVariants(generateSubjectVariants(base));
+      void generateSubjectVariants(base).then(setVariants);
     }
   }, [open, base]);
   if (!open) return null;
