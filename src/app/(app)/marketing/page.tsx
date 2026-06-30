@@ -11,6 +11,7 @@ import { TrendSparkline } from "@/components/metrics/TrendSparkline";
 import { ActionCard } from "@/components/shared/action-card";
 import { FeatureGate } from "@/components/subscription/FeatureGate";
 import { ToolPageHeader } from "@/components/tool-page-header";
+import DashboardEmptyState from "@/components/dashboard/DashboardEmptyState";
 import { AdaptiveProgress } from "@/components/ui/adaptive-progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -295,6 +296,16 @@ export default function MarketingDashboardRoot() {
               </div>
             </ToolPageHeader>
             <ProvenanceLegend />
+            {!initialLoading && (!metrics || !metrics.kpis?.length) && (
+              <DashboardEmptyState
+                title="No marketing data yet"
+                message="Impressions, leads, and channel performance appear here once your marketing channels are connected — empty until then, never sample numbers."
+                cta={{
+                  label: "Connect data sources",
+                  href: "/integrations/connections",
+                }}
+              />
+            )}
             <div className="sr-only" role="status" aria-live="polite">
               Marketing summary: impressions {summary.impr.toLocaleString()},
               leads {summary.leads.toLocaleString()}, CTR {summary.ctr} percent,
