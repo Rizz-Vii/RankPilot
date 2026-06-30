@@ -1,5 +1,7 @@
-// Marketing Automation AI Utility (deterministic pseudo-AI for offline/dev use)
-import { db } from "@/lib/firebase";
+// Marketing Automation AI Utility. Content generation calls the real-AI route
+// (/api/marketing/generate, gemini-2.5-flash); the remaining helpers stay deterministic until
+// converted to the same async path.
+import { auth, db } from "@/lib/firebase";
 import { stripForbiddenDerivedFields } from "@/lib/guards/forbidden-derived-fields";
 import {
   addDoc,
@@ -30,6 +32,27 @@ function randFrom(seed: number) {
     const v = (Math.sin(seed++) + 1) / 2;
     return Math.round(min + v * (max - min));
   };
+}
+
+/** Calls the real-AI marketing generation route with the signed-in user's token. */
+async function callGenerate(
+  payload: Record<string, unknown>
+): Promise<{ text?: string; items?: string[] } | null> {
+  try {
+    const token = await auth.currentUser?.getIdToken?.();
+    const res = await fetch("/api/marketing/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { text?: string; items?: string[] };
+  } catch {
+    return null;
+  }
 }
 
 export async function importLeads(
@@ -231,21 +254,19 @@ export async function generateContentAsset(
   userId: string,
   teamId?: string
 ) {
-  const seed = hash(type + topic);
-  const r = randFrom(seed);
-  const paragraphs = r(2, 5);
-  const body = Array.from({ length: paragraphs })
-    .map(
-      (_, i) =>
-        `${type.toUpperCase()} ${i + 1}. ${topic} insight ${hash(topic + i).toString(36)} generated for conversion.`
-    )
-    .join("\n\n");
+  // Real AI content (gemini-2.5-flash) via the server route; falls back honestly if unavailable.
+  const gen = await callGenerate({ task: "content", type, topic });
+  const isLive = !!gen?.text;
+  const body =
+    gen?.text?.trim() ||
+    `Draft ${type} about "${topic}". AI generation was unavailable — please try again.`;
   const docRef = await addDoc(collection(db, "contentAssets"), {
     userId,
     teamId,
     type,
     topic,
     body,
+    provenance: isLive ? "live" : "synthetic",
     createdAt: Timestamp.now(),
   });
   const campaign = {
