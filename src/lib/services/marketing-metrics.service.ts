@@ -1,5 +1,6 @@
 // Marketing Metrics Service - aggregates campaign data with realtime subscription
 import { getMockMetrics } from "@/lib/domain/mockMetrics";
+import { allowDemoContent } from "@/lib/flags/demo";
 import { db } from "@/lib/firebase";
 import { mapDocs } from "@/lib/firebase/snapshot-map";
 import { managedOnSnapshot } from "@/lib/firebase/write-guard";
@@ -214,6 +215,10 @@ export async function fetchMarketingMetrics(
     if (!campaigns.length) throw new Error("empty");
     return aggregateCampaigns(campaigns, months);
   } catch {
+    // Pre-launch: real users (demo off) get an honest EMPTY state, never sample marketing KPIs.
+    if (!allowDemoContent()) {
+      return { kpis: [], campaigns: [], channelPerformance: [], trendSeries: [] };
+    }
     const mock = await getMockMetrics("marketing");
     return {
       kpis: mock.kpis,

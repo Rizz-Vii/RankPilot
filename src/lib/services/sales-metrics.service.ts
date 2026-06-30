@@ -1,6 +1,7 @@
 // Sales Metrics Service - Firestore aggregation with graceful mock fallback
 // NOTE: Collections assumed: salesDeals, salesForecastSnapshots. Adjust to real schema.
 import { getMockMetrics } from "@/lib/domain/mockMetrics";
+import { allowDemoContent } from "@/lib/flags/demo";
 import { db } from "@/lib/firebase";
 import { mapDocs } from "@/lib/firebase/snapshot-map";
 import { managedOnSnapshot } from "@/lib/firebase/write-guard";
@@ -241,6 +242,16 @@ export async function fetchSalesMetrics(
         : String(e);
     salesDiagnostics.lastIngestError =
       msg.length > 140 ? msg.slice(0, 140) : msg;
+    // Pre-launch: real users (demo off) get an honest EMPTY state, never hardcoded sample funnels.
+    if (!allowDemoContent()) {
+      return {
+        kpis: [],
+        funnel: [],
+        forecastSeries: [],
+        coverage: { pipeline: 0, target: 0, coverageRatio: 0 },
+        velocity: [],
+      };
+    }
     const mock = await getMockMetrics("sales");
     return {
       kpis: mock.kpis.map((k) => ({
