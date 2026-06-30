@@ -55,6 +55,36 @@ async function callGenerate(
   }
 }
 
+interface ScoredLead {
+  id: string;
+  score: number;
+  tier: "hot" | "warm" | "cold";
+  reasoning: string;
+}
+
+/** Calls the real-AI lead-scoring route. Returns [] (no fabricated fallback) if AI is unavailable. */
+async function callScoreLeads(
+  leads: { id: string; name: string }[],
+  businessContext?: string
+): Promise<ScoredLead[]> {
+  try {
+    const token = await auth.currentUser?.getIdToken?.();
+    const res = await fetch("/api/marketing/score-leads", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ leads, businessContext }),
+    });
+    if (!res.ok) return [];
+    const j = (await res.json()) as { scored?: ScoredLead[] };
+    return j.scored || [];
+  } catch {
+    return [];
+  }
+}
+
 export async function importLeads(
   raw: string,
   userId: string,
@@ -66,15 +96,14 @@ export async function importLeads(
     .filter(Boolean);
   const results: { name: string; id: string }[] = [];
   for (const line of lines.slice(0, 500)) {
-    const seed = hash(line);
-    const r = randFrom(seed);
-    const score = r(10, 95);
     const docRef = await addDoc(collection(db, "leads"), {
       userId,
       teamId,
       name: line,
-      score,
-      status: score > 70 ? "qualified" : "new",
+      // Unscored until AI qualification runs — no fabricated score on import.
+      score: null,
+      status: "new",
+      scoreProvenance: "unscored",
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
@@ -100,31 +129,47 @@ export async function importLeads(
   return { count: results.length, results };
 }
 
-export async function scoreLeads(userId: string, teamId?: string) {
+export async function scoreLeads(
+  userId: string,
+  teamId?: string,
+  businessContext?: string
+) {
   const q = query(
     collection(db, "leads"),
     where(teamId ? "teamId" : "userId", "==", teamId || userId),
     limit(400)
   );
   const snap = await getDocs(q);
-  const updates: string[] = [];
-  for (const d of snap.docs) {
-    const data = d.data();
-    const seed = hash(d.id + (data.name || ""));
-    const rand = randFrom(seed);
-    const score = rand(15, 98);
-    await updateDoc(doc(db, "leads", d.id), {
-      score,
-      status: score > 75 ? "qualified" : "nurture",
+  const leads = snap.docs.map((d) => ({
+    id: d.id,
+    name: (d.data().name as string) || "",
+  }));
+  if (!leads.length) return { updated: 0, provenance: "estimated" as const };
+
+  // Real AI qualification in batches of 50. No random fallback — if the model is unavailable we
+  // honestly update nothing rather than fabricate a score.
+  const scored: ScoredLead[] = [];
+  for (let i = 0; i < leads.length; i += 50) {
+    scored.push(...(await callScoreLeads(leads.slice(i, i + 50), businessContext)));
+  }
+
+  let updated = 0;
+  for (const s of scored) {
+    await updateDoc(doc(db, "leads", s.id), {
+      score: s.score,
+      status:
+        s.tier === "hot" ? "qualified" : s.tier === "warm" ? "nurture" : "new",
+      scoreReasoning: s.reasoning,
+      scoreProvenance: "estimated",
       updatedAt: Timestamp.now(),
     });
-    updates.push(d.id);
+    updated++;
   }
-  if (updates.length) {
+  if (updated) {
     const campaign = {
       userId,
       teamId,
-      name: `Lead Score (${updates.length})`,
+      name: `Lead Score (${updated})`,
       channel: "lead-gen",
       impressions: 0,
       clicks: 0,
@@ -136,7 +181,7 @@ export async function scoreLeads(userId: string, teamId?: string) {
     stripForbiddenDerivedFields(campaign);
     await addDoc(collection(db, "marketingCampaigns"), campaign);
   }
-  return { updated: updates.length };
+  return { updated, provenance: "estimated" as const };
 }
 
 export async function routeLeads(userId: string, teamId?: string) {
