@@ -12,6 +12,7 @@ import {
   listSites,
   querySearchAnalytics,
 } from "./gsc";
+import { nangoCategoryToChannels } from "./nango";
 import type { BusinessHealth, ChannelMetrics } from "./registry";
 import { getRevenueSnapshot } from "./stripe-connect";
 
@@ -75,10 +76,12 @@ export async function getBusinessHealth(uid: string): Promise<BusinessHealth> {
   const channelArrays = await Promise.all([
     stripeToChannels(uid),
     gscToChannels(uid),
-    // Unified-API category adapters land here once Nango/Merge is wired:
-    //   nangoCategoryToChannels(uid, "ecommerce"),
-    //   nangoCategoryToChannels(uid, "ads"),
-    //   nangoCategoryToChannels(uid, "pos"),
+    // Unified-API (Nango) category adapters — return [] until NANGO_SECRET_KEY + connections exist,
+    // then light up automatically. This is the whole leverage of the normalized model.
+    nangoCategoryToChannels(uid, "ecommerce"),
+    nangoCategoryToChannels(uid, "ads"),
+    nangoCategoryToChannels(uid, "pos"),
+    nangoCategoryToChannels(uid, "accounting"),
   ]);
   const channels = channelArrays.flat();
 
