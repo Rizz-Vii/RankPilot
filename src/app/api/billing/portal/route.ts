@@ -11,8 +11,9 @@ export const runtime = "nodejs";
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) return null;
-  // Use account default API version to avoid build-time/type union drift
-  return new Stripe(key);
+  // Use account default API version to avoid build-time/type union drift.
+  // Fetch HTTP client: Node's default transport throws StripeConnectionError in Cloud Run.
+  return new Stripe(key, { httpClient: Stripe.createFetchHttpClient() });
 }
 
 export const POST = withProvenance(

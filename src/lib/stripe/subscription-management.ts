@@ -7,7 +7,8 @@ import { STRIPE_PLANS, type PlanType } from "./tiers";
 function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("Stripe not configured");
-  return new Stripe(key);
+  // Fetch HTTP client: Node's default transport throws StripeConnectionError in Cloud Run.
+  return new Stripe(key, { httpClient: Stripe.createFetchHttpClient() });
 }
 type StripeSubLike = {
   current_period_end?: number;

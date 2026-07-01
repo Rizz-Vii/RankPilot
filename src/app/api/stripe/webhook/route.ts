@@ -86,7 +86,8 @@ async function upsertFinanceInvoice(invoice: unknown) {
 function getStripe(): Stripe | null {
     const key = process.env.STRIPE_SECRET_KEY;
     if (!key) return null;
-    return new Stripe(key);
+    // Fetch HTTP client: Node's default transport throws StripeConnectionError in Cloud Run.
+    return new Stripe(key, { httpClient: Stripe.createFetchHttpClient() });
 }
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 

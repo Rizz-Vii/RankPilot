@@ -380,6 +380,8 @@ import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
+  // Fetch HTTP client: Node's default transport throws StripeConnectionError in Cloud Run.
+  httpClient: Stripe.createFetchHttpClient(),
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;

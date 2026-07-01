@@ -8,7 +8,10 @@ import Stripe from "stripe";
 const logger = getLogger("billing-payment-method");
 const stripeKey = process.env.STRIPE_SECRET_KEY;
 // Use account default API version to avoid literal drift with SDK typings
-const stripe = stripeKey ? new Stripe(stripeKey) : null;
+// Fetch HTTP client: Node's default transport throws StripeConnectionError in Cloud Run.
+const stripe = stripeKey
+  ? new Stripe(stripeKey, { httpClient: Stripe.createFetchHttpClient() })
+  : null;
 
 export const GET = withProvenance(
   async function GET(req: Request) {
