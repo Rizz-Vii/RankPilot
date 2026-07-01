@@ -13,8 +13,10 @@ import { useProvenance } from "@/hooks/useProvenance";
 import { trackDashboardView } from "@/lib/domain/dashboardAnalytics";
 import { getLogger } from "@/lib/logging/app-logger";
 import { fetchRecentSalesMetricsSnapshots } from "@/lib/services/sales-automation-snapshots";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { NewSequenceModal } from "../../_parts/new-sequence-modal";
+import { OptimizeCopyModal } from "../../_parts/optimize-copy-modal";
 import { OutreachForm } from "../OutreachForm";
 import { VoiceCallHistory } from "../VoiceCallHistory";
 
@@ -46,7 +48,9 @@ export function SalesOutreachClient() {
     { attempted: number; succeeded: number; failed: number; ts: Date }[]
   >([]);
   const { trigger, running } = useAutomationTrigger();
+  const router = useRouter();
   const [seqOpen, setSeqOpen] = useState(false);
+  const [optimizeOpen, setOptimizeOpen] = useState(false);
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
 
   useEffect(() => {
@@ -191,6 +195,7 @@ export function SalesOutreachClient() {
           /* no immediate metric impact */
         }}
       />
+      <OptimizeCopyModal open={optimizeOpen} onOpenChange={setOptimizeOpen} />
       <ToolPageHeader
         title="Outbound Outreach"
         description="Sequence performance, reply velocity & optimization insights across outbound motions."
@@ -202,10 +207,18 @@ export function SalesOutreachClient() {
           <Button size="sm" variant="outline" onClick={() => setSeqOpen(true)}>
             New Sequence
           </Button>
-          <Button size="sm" variant="outline">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setOptimizeOpen(true)}
+          >
             Optimize Copy
           </Button>
-          <Button size="sm" variant="default">
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => router.push("/marketing/lead-generation")}
+          >
             Import Leads
           </Button>
         </div>
@@ -303,26 +316,23 @@ export function SalesOutreachClient() {
           <ActionCard
             title="Optimize Copy"
             desc="Improve open & reply rates"
-            action={() => {
-              /* future: open optimize modal */
-            }}
+            action={() => setOptimizeOpen(true)}
             label="Optimize"
           />
           <ActionCard
             title="Import Leads"
             desc="Bulk import + enrichment"
-            action={() => {
-              /* future: open import flow */
-            }}
+            action={() => router.push("/marketing/lead-generation")}
             label="Import"
           />
           <ActionCard
             title="Reply Analysis"
-            desc="Sentiment & intent signals"
+            desc="Sentiment & intent — coming soon"
             action={() => {
-              /* future: navigate to replies */
+              /* no reply-data source yet — honestly disabled */
             }}
-            label="Analyze"
+            label="Soon"
+            disabled
           />
           <ActionCard
             title="Refresh Metrics"
