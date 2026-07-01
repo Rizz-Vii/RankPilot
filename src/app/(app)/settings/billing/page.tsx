@@ -13,17 +13,42 @@ import { useSubscription, usePlanComparison } from "@/hooks/useSubscription";
 import { CheckCircle, Clock, CreditCard, Star, Zap, Crown } from "lucide-react";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { STRIPE_PLANS } from "@/lib/stripe";
+import { auth } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 function BillingPage() {
   const { subscription, loading } = useSubscription();
   const { plans } = usePlanComparison();
+  const { toast } = useToast();
 
-  const handleUpgrade = (planId: string) => {
-    // In a real app, this would redirect to Stripe Checkout
-    console.log("Upgrading to plan:", planId);
-    alert(
-      `Upgrade to ${planId} plan initiated. In production, this would redirect to Stripe Checkout.`
-    );
+  // Real Stripe Checkout: create a session for the tier and redirect to Stripe's hosted page.
+  const handleUpgrade = async (planId: string) => {
+    try {
+      const token = await auth.currentUser?.getIdToken?.();
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ tier: planId, billingInterval: "monthly" }),
+      });
+      const j = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !j.url) {
+        throw new Error(
+          j.error === "Stripe not configured"
+            ? "Billing isn't enabled yet — please try again shortly."
+            : j.error || "Could not start checkout."
+        );
+      }
+      window.location.href = j.url; // → Stripe Checkout
+    } catch (e: unknown) {
+      toast({
+        title: "Checkout failed",
+        description: e instanceof Error ? e.message : String(e),
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
