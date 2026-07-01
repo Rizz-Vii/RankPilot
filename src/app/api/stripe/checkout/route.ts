@@ -14,7 +14,10 @@ export const dynamic = "force-dynamic";
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) return null;
-  return new Stripe(key);
+  // Use the fetch HTTP client. Node's default http transport throws StripeConnectionError
+  // ("connection to Stripe… retried N times") in this Cloud Run / Next.js serverless runtime, while
+  // fetch works — the same transport the gemini + self-fetch calls use successfully.
+  return new Stripe(key, { httpClient: Stripe.createFetchHttpClient() });
 }
 
 export async function POST(request: NextRequest) {
